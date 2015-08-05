@@ -15,7 +15,7 @@ $$
   []
   {\whnf{\app{f}{a}}{b'}}
 {
-  \whnf{f}{\lam{x}{b}}
+  \whnf{f}{\lam{x}{A}{b}}
   &
   \whnf{a}{a'}
   &
@@ -90,6 +90,47 @@ $$
   \conv{a}{b}
   &
   \conv{b}{c}
+}
+$$
+
+%% TODO conversion rules
+
+\end{figure}
+
+\begin{figure}[h]
+\caption{Type Synthesis}
+
+$$
+\infer
+  []
+  {\synthG{\lam{x}{A}{b}}{\pie{x}{A}{B}}}
+{
+  \synth{\Gamma, x : A}{b}{B}
+}
+$$
+
+$$
+\infer
+  []
+  {\synthG{x}{A}}
+{
+  \Gamma_1, x : A, \Gamma_2
+}
+$$
+
+\end{figure}
+
+\begin{figure}[h]
+\caption{Type Checking}
+
+$$
+\infer
+  []
+  {\chek{\Gamma}{a}{A}}
+{
+  \synthG{a}{B}
+  &
+  \conv{A}{B}
 }
 $$
 
