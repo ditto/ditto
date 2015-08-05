@@ -23,6 +23,18 @@ $$
 $$
 \infer
   []
+  {\whnf{\con{elimD}~(\con{c}_i~\vec{a})~P~\vec{m}}{p}}
+{
+  i \leq |\vec{m}|
+  &
+  \whnf{m_i~\vec{a}~\vec{r}}{p}
+}
+$$
+
+
+$$
+\infer
+  []
   {\whnf{x}{a'}}
 {
   \Sigma_1, \sigd{x}{A}{a}, \Sigma_2
