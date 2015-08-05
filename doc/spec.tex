@@ -7,6 +7,9 @@
 \begin{document}
 \maketitle
 
+\begin{figure}[h]
+\caption{Weak head normal form}
+
 $$
 \infer
   []
@@ -43,7 +46,45 @@ $$
 }
 $$
 
+\end{figure}
 
+\begin{figure}[h]
+\caption{Conversion}
+
+$$
+\infer
+  []
+  {\conv{a}{a'}}
+{
+  \whnf{a}{a'}
+}
+$$
+
+$$
+\infer
+  []
+  {\conv{a}{a}}
+{
+}
+\quad
+\infer
+  []
+  {\conv{a}{b}}
+{
+  \conv{b}{a}
+}
+\quad
+\infer
+  []
+  {\conv{a}{c}}
+{
+  \conv{a}{b}
+  &
+  \conv{b}{c}
+}
+$$
+
+\end{figure}
 
 \end{document}
 

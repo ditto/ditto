@@ -1,5 +1,9 @@
 %%% Common packages %%%
 
+\usepackage{float}
+\floatstyle{boxed}
+\restylefloat{figure}
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{proof}
@@ -17,7 +21,10 @@
 \newcommand{\pie}[3]{\ensuremath{\Pi~(#2\mathrel{:}#1)~#3}}
 
 \newcommand{\app}[2]{\ensuremath{#1~#2}}
+
 \newcommand{\whnf}[2]{\ensuremath{#1\mathrel{\Downarrow} #2}}
+
+\newcommand{\conv}[2]{\ensuremath{#1\mathrel{\approx} #2}}
 
 %%% BNF syntax %%%
 
