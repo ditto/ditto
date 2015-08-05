@@ -30,6 +30,7 @@ typeOf = λ u → caseUnit₁ u Set Unit
 
 copy : (u : typeOf unit) → typeOf u
 -- copy unit = tt
+-- tt on rhs represents using
 copy = λ u → elimUnit u typeOf tt
 
 

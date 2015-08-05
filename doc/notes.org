@@ -4,6 +4,9 @@
 * examples
 ** checking not with Church boolean in core calculus
 ** checking Nat with identity view in core calculus
+* another way of thinking of our contribution
+** type and coverage checking for pattern synonyms
+*** or elaborating pattern synonyms (views?)
 * uses
 ** pattern matching for refactoring
 ** pattern matching for computational types
