@@ -1,0 +1,3 @@
+* examples
+** checking not with Church boolean in core calculus
+** checking Nat with identity view in core calculus
