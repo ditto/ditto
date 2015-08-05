@@ -95,6 +95,26 @@ $$
 }
 $$
 
+$$
+\infer
+  []
+  {\conv{\lam{x}{A_1}{b_1}}{\lam{x}{A_2}{b_2}}}
+{
+  \conv{A_1}{A_2}
+  &
+  \conv{b_1}{b_2}
+}
+\quad
+\infer
+  []
+  {\conv{\pie{x}{A_1}{B_1}}{\pie{x}{A_2}{B_2}}}
+{
+  \conv{A_1}{A_2}
+  &
+  \conv{B_1}{B_2}
+}
+$$
+
 %% TODO conversion rules
 
 \end{figure}
