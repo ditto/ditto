@@ -2,10 +2,36 @@
 
 \input{prelude}
 
-\title{PDX -- Beer, bikes, and refactoring of dependlty typed programs}
+\title{PDX -- Beer, bikes, and refactoring of dependently typed programs}
 
 \begin{document}
 \maketitle
+
+$$
+\infer
+  []
+  {\whnf{\app{f}{a}}{b'}}
+{
+  \whnf{f}{\lam{x}{b}}
+  &
+  \whnf{a}{a'}
+  &
+  \whnf{\sub{b}{x}{a'}}{b'}
+}
+$$
+
+$$
+\infer
+  []
+  {\whnf{x}{a'}}
+{
+  \Sigma_1, \sigd{x}{A}{a}, \Sigma_2
+  &
+  \whnf{a}{a'}
+}
+$$
+
+
 
 \end{document}
 
