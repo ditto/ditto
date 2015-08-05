@@ -1,5 +1,7 @@
 \documentclass{article}
 
+\usepackage[margin=0.5in]{geometry}
+
 \input{prelude}
 
 \title{PDX -- Beer, bikes, and refactoring of dependently typed programs}
@@ -98,7 +100,7 @@ $$
 \end{figure}
 
 \begin{figure}[h]
-\caption{Type Synthesis}
+\caption{Type synthesis and checking}
 
 $$
 \infer
@@ -106,6 +108,15 @@ $$
   {\synthG{\lam{x}{A}{b}}{\pie{x}{A}{B}}}
 {
   \synth{\Gamma, x : A}{b}{B}
+}
+\quad
+\infer
+  []
+  {\synthG{\app{f}{a}}{\sub{B}{x}{a}}}
+{
+  \synthG{f}{\pie{x}{A}{B}}
+  &
+  \chekG{a}{A}
 }
 $$
 
@@ -116,17 +127,10 @@ $$
 {
   \Gamma_1, x : A, \Gamma_2
 }
-$$
-
-\end{figure}
-
-\begin{figure}[h]
-\caption{Type Checking}
-
-$$
+\quad
 \infer
   []
-  {\chek{\Gamma}{a}{A}}
+  {\chekG{a}{A}}
 {
   \synthG{a}{B}
   &
