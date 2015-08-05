@@ -1,3 +1,11 @@
+* todos
+** whnf/conversion/typing rules for Types (Pi, Type)
+*** universe levels?
 * examples
 ** checking not with Church boolean in core calculus
 ** checking Nat with identity view in core calculus
+* uses
+** pattern matching for refactoring
+** pattern matching for computational types
+** pattern matching for computational descriptions
+** pretty printing up to whnf
