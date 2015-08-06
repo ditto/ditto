@@ -2,7 +2,7 @@ module Ditto.Syntax where
 
 type Name = String
 
-data Exp = EVar Name | Pi Name Exp Exp | Lam Name Exp Exp | Exp :@: Exp
+data Exp = EVar Name | Type | Pi Name Exp Exp | Lam Name Exp Exp | Exp :@: Exp
   deriving (Show, Read, Eq)
 
 type Tel = [(Name, Exp)]

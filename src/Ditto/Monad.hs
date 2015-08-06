@@ -11,9 +11,22 @@ data DittoS = DittoS
 
 data DittoR = DittoR
   { ctx :: Tel
+  , rhoExpandable :: Bool
   }
 
 type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
 
+initialR :: DittoR
+initialR = DittoR
+  { ctx = []
+  , rhoExpandable = False
+  }
+
 lookupDef :: Name -> TCM (Maybe Exp)
-lookupDef = error "lookup not implemented"
+lookupDef nm = do
+  dittoR <- ask
+  if rhoExpandable dittoR
+  then error "lookup virtual definition not implemented"
+  else error "lookup definition not implemented"
+
+
