@@ -1,3 +1,6 @@
+* implementation details
+** conversion and first-order unfification as same algorith with extra argument
+*** different in variable and extend context cases
 * todos
 ** whnf/conversion/typing rules for Types (Pi, Type)
 *** universe levels?
@@ -12,3 +15,6 @@
 ** pattern matching for computational types
 ** pattern matching for computational descriptions
 ** pretty printing up to whnf
+* unification
+** ρ expansion similar to δ expansion
+*** try unexpanded, if it fails try to expand
