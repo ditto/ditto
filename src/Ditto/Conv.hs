@@ -8,6 +8,7 @@ import Control.Monad.Except
 alpha :: Exp -> Exp -> TCM Bool
 alpha a b = error "alpha equality not defined"
 
+-- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
 conv a b = do
   q <- alpha a b

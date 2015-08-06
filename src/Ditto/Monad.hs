@@ -23,10 +23,15 @@ initialR = DittoR
   }
 
 lookupDef :: Name -> TCM (Maybe Exp)
-lookupDef nm = do
+lookupDef x = do
   dittoR <- ask
   if rhoExpandable dittoR
   then error "lookup virtual definition not implemented"
   else error "lookup definition not implemented"
 
+lookupType :: Name -> TCM (Maybe Exp)
+-- TODO lookup type in sigma or in ctx
+lookupType x = error "lookup type not implemented"
 
+extCtx :: Name -> Exp -> DittoR -> DittoR
+extCtx x _A r = r { ctx = (x , _A) : ctx r }
