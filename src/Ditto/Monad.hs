@@ -16,6 +16,17 @@ data DittoR = DittoR
 
 type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
 
+runTCM :: TCM a -> Either String a
+runTCM = runIdentity
+  . runExceptT
+  . flip runReaderT initialR
+  . flip evalStateT initialS
+
+initialS :: DittoS
+initialS = DittoS
+  { sig = []
+  }
+
 initialR :: DittoR
 initialR = DittoR
   { ctx = []

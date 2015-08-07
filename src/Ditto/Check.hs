@@ -7,11 +7,20 @@ import Ditto.Sub
 import Control.Monad.Except
 import Control.Monad.Reader
 
+----------------------------------------------------------------------
+
+runCheck :: Exp -> Exp -> Either String ()
+runCheck a _A = runTCM (check a _A)
+
+----------------------------------------------------------------------
+
 inferExt :: (Name, Exp) -> Exp -> TCM Exp
 inferExt (x , _A) b = local (extCtx x _A) (infer b)
 
 checkExt :: (Name, Exp) -> Exp -> Exp -> TCM ()
 checkExt (x , _A) b _B = local (extCtx x _A) (check b _B)
+
+----------------------------------------------------------------------
 
 check :: Exp -> Exp -> TCM ()
 check a _A = do
@@ -41,3 +50,4 @@ infer (f :@: a) = do
       return (sub (x, a) _B)
     otherwise -> throwError "Function does not have Pi type"
 
+----------------------------------------------------------------------

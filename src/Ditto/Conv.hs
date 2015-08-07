@@ -40,7 +40,9 @@ conv' :: Exp -> Exp -> TCM Exp
 conv' (EVar x) (EVar y) =
   if x == y
   then return (EVar x)
-  else throwError "Variables not convertible"
+  else throwError $ 
+    "Variables not convertible\n"
+    ++ show x ++ " != " ++ show y
 conv' Type Type = return Type
 conv' (f1 :@: a1) (f2 :@: a2) = do
   f' <- conv f1 f2
@@ -54,4 +56,6 @@ conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _A' <- conv _A1 _A2
   _B' <- conv _B1 (sub (x2, EVar x1) _B2)
   return $ Pi x1 _A' _B'
-conv' a b = throwError "Terms not convertible"
+conv' a b = throwError $ 
+  "Terms not convertible\n"
+  ++ show a ++ " != " ++ show b
