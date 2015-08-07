@@ -3,18 +3,30 @@ import Ditto.Syntax
 import Ditto.Parse
 import Ditto.Check
 import Ditto.Conv
+import Ditto.Whnf
 import Test.HUnit
 
 ----------------------------------------------------------------------
 
-_Identity = "(A : Type) (a : A) : A"
+_Identity = "((A : Type) (a : A) : A)"
 identity = "((A : Type) (a : A) -> a)"
+_PiWh = "((A : Type) : " ++ identity ++ " Type Type)"
+
+whnfTests :: Test
+whnfTests = "Whnf tests" ~:
+  [ testWhnf "Type" "Type"
+  , testWhnf "((A : Type) (a : A) -> a) Type Type" "Type"
+  , testWhnf ("((A : Type) (a : A) -> a) Type " ++ _Identity) _Identity
+  , testWhnf (identity ++ " Type " ++ _PiWh) _PiWh
+  , testWhnfFails (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
+  ]
 
 convTests :: Test
 convTests = "Conv tests" ~:
   [ testConv "Type" "Type"
   , testConv (identity ++ "Type Type") "Type"
   , testConv "(A : Type) (a : A) -> a" "(B : Type) (b : B) -> b"
+  , testConv (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
 
 checkTests :: Test
@@ -43,7 +55,7 @@ parseTests = "Parse tests" ~:
 ----------------------------------------------------------------------
 
 unitTests :: Test
-unitTests = TestList [parseTests, checkTests, convTests]
+unitTests = TestList [parseTests, checkTests, convTests, whnfTests]
 
 runTests :: IO Counts
 runTests = runTestTT unitTests
@@ -56,6 +68,22 @@ asExp :: String -> Exp
 asExp s = case parseE s of
   Right a -> a
   Left e -> error (show e)
+
+----------------------------------------------------------------------
+
+testWhnf :: String -> String -> Test
+testWhnf a b = TestCase $ case runWhnf (asExp a) of
+  Left error -> assertFailure ("Whnf error:\n" ++ error)
+  Right a' -> let
+    error = "Whnf error:\n" ++ show a' ++ " != " ++ show (asExp b)
+    in assertBool error (alpha a' (asExp b))
+
+testWhnfFails :: String -> String -> Test
+testWhnfFails a b = TestCase $ case runWhnf (asExp a) of
+  Left error -> assertFailure ("Unexpected whnf error:\n" ++ error)
+  Right a' -> let
+    error = "Whnf reduced too much error:\n" ++ show a'
+    in assertBool error (not (alpha a' (asExp b)))
 
 ----------------------------------------------------------------------
 

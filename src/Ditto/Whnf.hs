@@ -5,6 +5,21 @@ import Ditto.Sub
 import Control.Monad.Reader
 import Control.Monad.Except
 
+----------------------------------------------------------------------
+
+runWhnf :: Exp -> Either String Exp
+runWhnf a = runTCM (whnf a)
+
+----------------------------------------------------------------------
+
+whnfVirt :: Exp -> TCM Exp
+whnfVirt = local (\ r -> r { rhoExpandable = True }) . whnf'
+
+whnf :: Exp -> TCM Exp
+whnf = local (\ r -> r { rhoExpandable = False }) . whnf'
+
+----------------------------------------------------------------------
+
 whnf' :: Exp -> TCM Exp
 whnf' Type = return Type
 whnf' (f :@: a) = do
@@ -20,8 +35,4 @@ whnf' (EVar x) = do
     Nothing -> return $ EVar x
 whnf' x = return x
 
-whnfVirt :: Exp -> TCM Exp
-whnfVirt = local (\ r -> r { rhoExpandable = True }) . whnf'
-
-whnf :: Exp -> TCM Exp
-whnf = local (\ r -> r { rhoExpandable = False }) . whnf'
+----------------------------------------------------------------------

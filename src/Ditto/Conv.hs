@@ -13,32 +13,31 @@ runConv a b = runTCM (conv a b)
 
 ----------------------------------------------------------------------
 
-alpha :: Exp -> Exp -> TCM Bool
+alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 
-alpha' :: [(Name, Name)] -> Exp -> Exp -> TCM Bool
+alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
 alpha' dict (EVar x) (EVar y) =
-  return $ case lookup x dict of
+  case lookup x dict of
     Nothing -> x == y
     Just x' -> x' == y
 alpha' dict (Lam x _A1 a1) (Lam y _A2 a2) =
-  (&&) <$> alpha' dict' _A1 _A2 <*> alpha' dict' a1 a2
+  alpha' dict' _A1 _A2 && alpha' dict' a1 a2
     where dict' = (x, y) : dict
 alpha' dict (Pi x _A1 _B1) (Pi y _A2 _B2) =
-  (&&) <$> alpha' dict' _A1 _A2 <*> alpha' dict' _B1 _B2
+  alpha' dict' _A1 _A2 && alpha' dict' _B1 _B2
     where dict' = (x, y) : dict
 alpha' dict (f1 :@: a1) (f2 :@: a2) =
-  (&&) <$> alpha' dict f1 f2 <*> alpha' dict a1 a2
-alpha' dict Type Type = return True
-alpha' dict _ _ = return False
+  alpha' dict f1 f2 && alpha' dict a1 a2
+alpha' dict Type Type = True
+alpha' dict _ _ = False
 
 ----------------------------------------------------------------------
 
 -- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
 conv a b = do
-  q <- alpha a b
-  if q
+  if alpha a b
   then return a
   else do
     a' <- whnfVirt a
