@@ -14,6 +14,11 @@ testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
   Left error -> assertFailure ("Check error:\n" ++ error)
   Right () -> return ()
 
+testCheckFails :: String -> String -> Test
+testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
+  Right () -> assertFailure ("Expected check failure:\n" ++ (a ++ " : " ++ _A))
+  Left error -> return ()
+
 testParse :: String -> Maybe Exp -> Test
 testParse s ma = TestCase $ case parseE s of
   Left error -> assertFailure ("Parse error:\n" ++ show error)
@@ -22,9 +27,11 @@ testParse s ma = TestCase $ case parseE s of
 checkTests :: Test
 checkTests = "Check tests" ~:
   [ testCheck "Type" "Type"
+  , testCheckFails "(x : A) : B x" "Type"
   , testCheck "(x : Type) : Type" "Type"
   , testCheck _Identity "Type"
   , testCheck identity _Identity
+  , testCheckFails identity "Type"
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   ]
   where
