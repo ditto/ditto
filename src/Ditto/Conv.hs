@@ -6,7 +6,23 @@ import Ditto.Sub
 import Control.Monad.Except
 
 alpha :: Exp -> Exp -> TCM Bool
-alpha a b = error "alpha equality not defined"
+alpha a b = alpha' [] a b
+
+alpha' :: [(Name, Name)] -> Exp -> Exp -> TCM Bool
+alpha' dict (EVar x) (EVar y) =
+  return $ case lookup x dict of
+    Nothing -> x == y
+    Just x' -> x' == y
+alpha' dict (Lam x _A1 a1) (Lam y _A2 a2) =
+  liftM2 (&&) (alpha' dict' _A1 _A2) (alpha' dict' a1 a2)
+    where dict' = (x, y) : dict
+alpha' dict (Pi x _A1 _B1) (Pi y _A2 _B2) =
+  liftM2 (&&) (alpha' dict' _A1 _A2) (alpha' dict' _B1 _B2)
+    where dict' = (x, y) : dict
+alpha' dict (f1 :@: a1) (f2 :@: a2) =
+  liftM2 (&&) (alpha' dict f1 f2) (alpha' dict a1 a2)
+alpha' dict Type Type = return True
+alpha' dict _ _ = return False
 
 -- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
