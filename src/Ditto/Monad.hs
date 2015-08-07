@@ -24,14 +24,38 @@ initialR = DittoR
 
 lookupDef :: Name -> TCM (Maybe Exp)
 lookupDef x = do
-  dittoR <- ask
-  if rhoExpandable dittoR
-  then error "lookup virtual definition not implemented"
-  else error "lookup definition not implemented"
+  DittoR {rhoExpandable = expand} <- ask
+  DittoS {sig = sig} <- get
+  return $ lookupDefType x expand LuDef sig
+
+
+lookupVirt :: Name -> TCM (Maybe Exp)
+lookupVirt x = do
+  DittoS {sig = sig} <- get
+  return $ lookupDefType x True LuDef sig
+
+data LookupK =
+    LuDef -- lookup the definition of a name
+  | LuTyp -- lookup the type of a name
+
+lookupDefType:: Name -> Bool -> LookupK -> [Sigma] -> Maybe Exp
+lookupDefType x virt LuDef ((Def y a _):sig) | x == y  = Just a
+lookupDefType x virt LuTyp ((Def y _ a):sig) | x == y  = Just a
+lookupDefType x True LuDef ((Virt y a _):sig) | x == y  = Just a
+lookupDefType x True LuTyp ((Virt y _ a):sig) | x == y  = Just a
+lookupDefType x virt LuTyp ((Data{dname = _, dpars = _, dixs = _, dcons = _}) : sig) =
+  error "lookup of datatypes not implemented"
+lookupDefType x virt lu (_ : sig) = lookupDefType x virt lu sig
+lookupDefType _ _ _ [] = Nothing
+
 
 lookupType :: Name -> TCM (Maybe Exp)
--- TODO lookup type in sigma or in ctx
-lookupType x = error "lookup type not implemented"
+lookupType x = do
+  DittoR {rhoExpandable = expand, ctx = ctx} <- ask
+  DittoS {sig = sig} <- get
+  case lookupDefType x expand LuTyp sig of
+    Just a -> return $ Just a
+    Nothing -> return $ lookup x ctx
 
 extCtx :: Name -> Exp -> DittoR -> DittoR
 extCtx x _A r = r { ctx = (x , _A) : ctx r }
