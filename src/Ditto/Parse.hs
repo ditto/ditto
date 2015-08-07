@@ -17,8 +17,11 @@ parseExp :: Parser Exp
 parseExp = choice [
     parsePi
   , parseLam
-  , parseAtom
+  , parseApps
   ]
+
+parseApps :: Parser Exp
+parseApps = apps <$> many1 parseAtom
 
 parseAtom :: Parser Exp
 parseAtom = choice [

@@ -36,5 +36,9 @@ pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)
 lams :: Tel -> Exp -> Exp
 lams = flip $ foldr (\ (x , _A) _B -> Lam x _A _B)
 
+apps :: [Exp] -> Exp
+apps (x:xs) = foldl (:@:) x xs
+apps [] = error "Application must have at least one argument"
+
 ----------------------------------------------------------------------
 
