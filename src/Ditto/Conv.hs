@@ -60,11 +60,11 @@ conv' (f1 :@: a1) (f2 :@: a2) = do
   return $ f' :@: a'
 conv' (Lam x1 _A1 b1) (Lam x2 _A2 b2) = do
   _A' <- conv _A1 _A2
-  b' <- conv b1 (sub (x2, EVar x1) b2)
+  b' <- conv b1 =<< sub (x2, EVar x1) b2
   return $ Lam x1 _A' b'
 conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _A' <- conv _A1 _A2
-  _B' <- conv _B1 (sub (x2, EVar x1) _B2)
+  _B' <- conv _B1 =<< sub (x2, EVar x1) _B2
   return $ Pi x1 _A' _B'
 conv' a b = throwError $ 
   "Terms not convertible\n"

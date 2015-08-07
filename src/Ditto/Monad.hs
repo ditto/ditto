@@ -10,6 +10,7 @@ import Data.List
 
 data DittoS = DittoS
   { sig :: [Sigma]
+  , nameId :: Integer
   }
 
 data DittoR = DittoR
@@ -27,6 +28,7 @@ runTCM = runIdentity
 initialS :: DittoS
 initialS = DittoS
   { sig = []
+  , nameId = 0
   }
 
 initialR :: DittoR
@@ -36,6 +38,13 @@ initialR = DittoR
 
 extCtx :: Name -> Exp -> DittoR -> DittoR
 extCtx x _A r = r { ctx = (x , _A) : ctx r }
+
+gensym :: TCM Name
+gensym = do
+  state@DittoS {nameId = nameId} <- get
+  let nameId' = succ nameId
+  put state { nameId = nameId' }
+  return $ "$x" ++ show nameId'
 
 ----------------------------------------------------------------------
 
