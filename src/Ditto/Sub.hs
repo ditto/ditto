@@ -12,7 +12,7 @@ fv (a :@: b) = fv a ++ fv b
 
 sub :: (Name , Exp) -> Exp -> Exp
 sub (x, a) (EVar y) | x == y = a
-sub (x, a) (EVar y) | x /= y = a
+sub (x, a) (EVar y) | x /= y = y
 sub (x, a) Type = Type
 sub (x, a) (Lam y _B b) | x == y = (Lam y (sub (x, a) _B) b)
 sub (x, a) (Lam y _B b) | x /= y && y `notElem` (fv a) =
