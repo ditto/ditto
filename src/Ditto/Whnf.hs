@@ -13,26 +13,25 @@ runWhnf a = runTCM (whnf a)
 ----------------------------------------------------------------------
 
 whnfVirt :: Exp -> TCM Exp
-whnfVirt = local (\ r -> r { rhoExpandable = True }) . whnf'
+whnfVirt = whnf' Rho
 
 whnf :: Exp -> TCM Exp
-whnf = local (\ r -> r { rhoExpandable = False }) . whnf'
+whnf = whnf' BetaDelta
 
 ----------------------------------------------------------------------
 
-whnf' :: Exp -> TCM Exp
-whnf' Type = return Type
-whnf' (f :@: a) = do
-  f' <- whnf' f
-  a' <- whnf' a
+whnf' :: Normality -> Exp -> TCM Exp
+whnf' n (f :@: a) = do
+  f' <- whnf' n f
+  a' <- whnf' n a
   case f' of
-    Lam x _A b -> whnf' $ sub (x , a') b
+    Lam x _A b -> whnf' n $ sub (x , a') b
     otherwise -> return $ f' :@: a'
-whnf' (EVar x) = do
-  ma <- lookupDef x
+whnf' n (EVar x) = do
+  ma <- lookupDef n x
   case ma of
-    Just a -> whnf' a
+    Just a -> whnf' n a
     Nothing -> return $ EVar x
-whnf' x = return x
+whnf' n x = return x
 
 ----------------------------------------------------------------------

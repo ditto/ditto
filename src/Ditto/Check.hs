@@ -30,7 +30,7 @@ check a _A = do
 
 infer :: Exp -> TCM Exp
 infer (EVar x) = do
-  ma <- lookupType x
+  ma <- lookupCtx x
   case ma of
     Just _A -> return _A
     Nothing -> throwError "Variable not in scope"
@@ -42,6 +42,8 @@ infer (Pi x _A _B) = do
 infer (Lam x _A b) = do
   _B <- inferExt (x, _A) b
   return $ Pi x _A _B
+infer (Form x is) = error "infer type former not implemented"
+infer (Con x as) = error "infer constructor former not implemented"
 infer (f :@: a) = do
   _AB <- infer f
   case _AB of

@@ -5,11 +5,15 @@ import Data.List
 fv :: Exp -> [Name]
 fv (EVar x) = [x]
 fv Type = []
+fv (Form _ is) = concatMap fv is
+fv (Con _ as) = concatMap fv as
 fv (Pi n _A _B) = fv _A ++ (n `delete` (fv _B))
 fv (Lam n _A a) = fv _A ++ (n `delete` (fv a))
 fv (a :@: b) = fv a ++ fv b
 
 sub :: (Name , Exp) -> Exp -> Exp
+sub (x, a) (Form y is) = error "sub into form not implemented"
+sub (x, a) (Con y as) = error "sub into con not implemented"
 sub (x, a) (EVar y) | x == y = a
 sub (x, a) (EVar y) | x /= y = EVar y
 sub (x, a) Type = Type

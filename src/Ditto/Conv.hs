@@ -13,6 +13,8 @@ runConv a b = runTCM (conv a b)
 
 ----------------------------------------------------------------------
 
+-- TODO alpha and convert Form and Con
+
 alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 
