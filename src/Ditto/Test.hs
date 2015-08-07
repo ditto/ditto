@@ -14,6 +14,7 @@ convTests :: Test
 convTests = "Conv tests" ~:
   [ testConv "Type" "Type"
   , testConv (identity ++ "Type Type") "Type"
+  , testConv "(A : Type) (a : A) -> a" "(B : Type) (b : B) -> b"
   ]
 
 checkTests :: Test
@@ -23,6 +24,7 @@ checkTests = "Check tests" ~:
   , testCheck "(x : Type) : Type" "Type"
   , testCheck _Identity "Type"
   , testCheck identity _Identity
+  , testCheck "(B : Type) (b : B) -> b" _Identity
   , testCheckFails identity "Type"
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   ]
