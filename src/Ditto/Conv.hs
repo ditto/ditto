@@ -6,6 +6,13 @@ import Ditto.Sub
 import Control.Monad.Except
 import Control.Applicative
 
+----------------------------------------------------------------------
+
+runConv :: Exp -> Exp -> Either String Exp
+runConv a b = runTCM (conv a b)
+
+----------------------------------------------------------------------
+
 alpha :: Exp -> Exp -> TCM Bool
 alpha a b = alpha' [] a b
 
@@ -24,6 +31,8 @@ alpha' dict (f1 :@: a1) (f2 :@: a2) =
   (&&) <$> alpha' dict f1 f2 <*> alpha' dict a1 a2
 alpha' dict Type Type = return True
 alpha' dict _ _ = return False
+
+----------------------------------------------------------------------
 
 -- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
@@ -59,3 +68,5 @@ conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
 conv' a b = throwError $ 
   "Terms not convertible\n"
   ++ show a ++ " != " ++ show b
+
+----------------------------------------------------------------------
