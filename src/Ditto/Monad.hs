@@ -43,8 +43,6 @@ lookupDefType x virt LuDef ((Def y a _):sig) | x == y  = Just a
 lookupDefType x virt LuTyp ((Def y _ a):sig) | x == y  = Just a
 lookupDefType x True LuDef ((Virt y a _):sig) | x == y  = Just a
 lookupDefType x True LuTyp ((Virt y _ a):sig) | x == y  = Just a
-lookupDefType x virt LuTyp ((Data{dname = _, dpars = _, dixs = _, dcons = _}) : sig) =
-  error "lookup of datatypes not implemented"
 lookupDefType x virt lu (_ : sig) = lookupDefType x virt lu sig
 lookupDefType _ _ _ [] = Nothing
 

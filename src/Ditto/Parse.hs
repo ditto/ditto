@@ -9,6 +9,8 @@ import Control.Monad
 
 ----------------------------------------------------------------------
 
+parseE = parse parseExp ""
+
 keywords = ["Type", "data", "def", "end"]
 
 ----------------------------------------------------------------------
@@ -33,7 +35,7 @@ parseAtom = choice [
 ----------------------------------------------------------------------
 
 parseType :: Parser Exp
-parseType = try $ symbol "type" >> return Type
+parseType = try $ symbol "Type" >> return Type
 
 parseVar :: Parser Exp
 parseVar = try $ EVar <$> parseName
