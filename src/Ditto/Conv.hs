@@ -4,6 +4,7 @@ import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
 import Control.Monad.Except
+import Control.Applicative
 
 alpha :: Exp -> Exp -> TCM Bool
 alpha a b = alpha' [] a b
@@ -14,13 +15,13 @@ alpha' dict (EVar x) (EVar y) =
     Nothing -> x == y
     Just x' -> x' == y
 alpha' dict (Lam x _A1 a1) (Lam y _A2 a2) =
-  liftM2 (&&) (alpha' dict' _A1 _A2) (alpha' dict' a1 a2)
+  (&&) <$> alpha' dict' _A1 _A2 <*> alpha' dict' a1 a2
     where dict' = (x, y) : dict
 alpha' dict (Pi x _A1 _B1) (Pi y _A2 _B2) =
-  liftM2 (&&) (alpha' dict' _A1 _A2) (alpha' dict' _B1 _B2)
+  (&&) <$> alpha' dict' _A1 _A2 <*> alpha' dict' _B1 _B2
     where dict' = (x, y) : dict
 alpha' dict (f1 :@: a1) (f2 :@: a2) =
-  liftM2 (&&) (alpha' dict f1 f2) (alpha' dict a1 a2)
+  (&&) <$> alpha' dict f1 f2 <*> alpha' dict a1 a2
 alpha' dict Type Type = return True
 alpha' dict _ _ = return False
 
