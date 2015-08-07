@@ -7,13 +7,6 @@ import Test.HUnit
 
 ----------------------------------------------------------------------
 
-testConv :: String -> String -> Test
-testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
-  Left error -> assertFailure ("Conv error:\n" ++ error)
-  Right _ -> return ()
-
-----------------------------------------------------------------------
-
 _Identity = "(A : Type) (a : A) : A"
 identity = "((A : Type) (a : A) -> a)"
 
@@ -22,7 +15,6 @@ convTests = "Conv tests" ~:
   [ testConv "Type" "Type"
   , testConv (identity ++ "Type Type") "Type"
   ]
-
 
 checkTests :: Test
 checkTests = "Check tests" ~:
@@ -63,6 +55,15 @@ asExp s = case parseE s of
   Right a -> a
   Left e -> error (show e)
 
+----------------------------------------------------------------------
+
+testConv :: String -> String -> Test
+testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
+  Left error -> assertFailure ("Conv error:\n" ++ error)
+  Right _ -> return ()
+
+----------------------------------------------------------------------
+
 testCheck :: String -> String -> Test
 testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
   Left error -> assertFailure ("Check error:\n" ++ error)
@@ -72,6 +73,8 @@ testCheckFails :: String -> String -> Test
 testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
   Right () -> assertFailure ("Expected check failure:\n" ++ (a ++ " : " ++ _A))
   Left error -> return ()
+
+----------------------------------------------------------------------
 
 testParse :: String -> Maybe Exp -> Test
 testParse s ma = TestCase $ case parseE s of
