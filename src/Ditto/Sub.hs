@@ -14,8 +14,8 @@ fv (Lam n _A a) = fv _A ++ (n `delete` (fv a))
 fv (a :@: b) = fv a ++ fv b
 
 sub :: (Name , Exp) -> Exp -> TCM Exp
-sub (x, a) (Form y is) = error "sub into form not implemented"
-sub (x, a) (Con y as) = error "sub into con not implemented"
+sub (x, a) (Form y is) = Form y <$> mapM (sub (x, a)) is
+sub (x, a) (Con y as) = Con y <$> mapM (sub (x, a)) as
 sub (x, a) (EVar y) | x == y = return a
 sub (x, a) (EVar y) = return $ EVar y
 sub (x, a) Type = return Type
