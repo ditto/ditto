@@ -4,7 +4,7 @@ import Text.Parsec (parse, try)
 import Text.Parsec.String
 import Text.Parsec.Char
 import Text.Parsec.Combinator
-import Control.Applicative
+import Control.Applicative ((<*), many, (<$>), (<*>))
 import Control.Monad
 
 ----------------------------------------------------------------------
@@ -12,12 +12,13 @@ import Control.Monad
 parseE = parse (whitespace >> parseExp <* eof) ""
 parseP = parse (whitespace >> parseStmts <* eof) ""
 
-keywords = choice $ map symbol ["Type", "data", "def", "where", "end"]
+keywords = choice $ map symbol
+  ["Type", "data", "def", "where", "end"]
 
 ----------------------------------------------------------------------
 
 parseStmts :: Parser [Stmt]
-parseStmts = many $ choice [
+parseStmts = many1 $ choice [
     parseDef
   ]
 
@@ -25,7 +26,7 @@ parseDef :: Parser Stmt
 parseDef = try $ do
   symbol "def"
   x <- parseName
-  symbol ":"
+  optional $ symbol ":"
   _A <- parseExp
   symbol "where"
   a <- parseExp

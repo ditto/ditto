@@ -13,7 +13,7 @@ identity = "((A : Type) (a : A) -> a)"
 _PiWh = "((A : Type) : " ++ identity ++ " Type Type)"
 
 idProg = unlines
-  [ "def id : (A : Type) (a : A) : A where"
+  [ "def id (A : Type) (a : A) : A where"
   , "(A : Type) (a : A) -> a"
   , "end"
 
@@ -62,7 +62,7 @@ parseTests = "Parse tests" ~:
   , testParse "(x : A) (y : B x) : C x y" Nothing
   , testParse "(x : A) (y : B) -> c" Nothing
   , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
-  -- , testParses idProg
+  , testParses idProg
   ]
 
 ----------------------------------------------------------------------
