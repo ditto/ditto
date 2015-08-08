@@ -17,7 +17,7 @@ idProg = unlines
   , "(A : Type) (a : A) -> a"
   , "end"
 
-  , "def KType : Type where"
+  , "def KType : id Type Type where"
   , "id Type ((A : Type) : id Type Type)"
   , "end"
   ]
