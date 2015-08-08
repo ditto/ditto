@@ -45,10 +45,10 @@ parseData = try $ do
   symbol "end"
   return $ SData x _A cons
 
-parseCon :: Parser (Name, Exp)
+parseCon :: Parser (PName, Exp)
 parseCon = try $ do
   symbol "|"
-  x <- parseName
+  x <- parsePName
   optional $ symbol ":"
   _A <- parseExp
   return (x , _A)

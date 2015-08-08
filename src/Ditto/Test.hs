@@ -46,9 +46,9 @@ dataProg = unlines
   , "| is (n : Nat) (i : Fin n) : Fin (suc n)"
   , "end"
 
-  -- , "def ione : Fin two where"
-  -- , "is iz"
-  -- , "end"
+  , "def ione : Fin two where"
+  , "is one (iz zero)"
+  , "end"
   ]
 
 whnfTests :: Test

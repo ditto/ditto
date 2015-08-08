@@ -3,18 +3,21 @@ module Ditto.Syntax where
 ----------------------------------------------------------------------
 
 type Name = String
-type Cons = [(Name, Exp)]
+type Cons = [(PName, Exp)]
 
 data Stmt = SDef Name Exp Exp
           | SData PName Exp Cons
   deriving (Show, Read, Eq)
 
 newtype PName = PName { fromPName :: Name }
-  deriving (Show, Read, Eq)
+  deriving (Read, Eq)
+
+instance Show PName where
+  show (PName x) = "#" ++ x
 
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp
-  | Form PName [Exp] | Con Name [Exp]
+  | Form PName [Exp] | Con PName [Exp]
   | Var Name | Exp :@: Exp
   deriving (Show, Read, Eq)
 
@@ -24,7 +27,7 @@ data Sigma =
     Def Name Exp Exp
   | Virt Name Exp Exp
   | DForm PName Tel
-  | DCon Name Tel PName [Exp]
+  | DCon PName Tel PName [Exp]
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | Inacc Exp | PCon Name [Pat]
@@ -32,8 +35,8 @@ data Pat = PVar Name | Inacc Exp | PCon Name [Pat]
 
 ----------------------------------------------------------------------
 
-names :: Tel -> [Exp]
-names = map (Var . fst)
+varNames :: Tel -> [Exp]
+varNames = map (Var . fst)
 
 pis :: Tel -> Exp -> Exp
 pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)

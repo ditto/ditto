@@ -58,7 +58,12 @@ addDef x a _A = addSig (Def x a _A)
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
   addSig (DForm x _Is)
-  addDef (fromPName x) (lams _Is (Form x (names _Is))) (formType _Is)
+  addDef (fromPName x) (lams _Is (Form x (varNames _Is))) (formType _Is)
+
+addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
+addCon (x, _As, _X, _Is) = do
+  addSig (DCon x _As _X _Is)
+  addDef (fromPName x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
 
 ----------------------------------------------------------------------
 
@@ -69,13 +74,13 @@ isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
 isNamed x (Virt y _ _) = x == y
 isNamed x (DForm y _) = False
-isNamed x (DCon y _ _ _) = x == y
+isNamed x (DCon y _ _ _) = False
 
 isPNamed :: PName -> Sigma -> Bool
 isPNamed x (Def y _ _) = False
 isPNamed x (Virt y _ _) = False
 isPNamed x (DForm y _) = x == y
-isPNamed x (DCon y _ _ _) = False
+isPNamed x (DCon y _ _ _) = x == y
 
 envDef :: Normality -> Sigma -> Maybe Exp
 envDef n (Def _ a _) = Just a

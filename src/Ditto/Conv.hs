@@ -3,6 +3,7 @@ import Ditto.Syntax
 import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
+import Control.Monad.State
 import Control.Monad.Except
 import Control.Applicative
 
@@ -69,12 +70,18 @@ conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _B' <- conv _B1 =<< sub (x2, Var x1) _B2
   return $ Pi x1 _A' _B'
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 = do
-  Form x1 <$> mapM (uncurry conv') (zip _Is1 _Is2)
+  Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =
   throwError "Type former names not equal"
-conv' (Con x1 as1) (Con x2 as2) = error "conv of Con not implemented"
-conv' a b = throwError $ 
-  "Terms not convertible\n"
-  ++ show a ++ " != " ++ show b
+conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
+  Con x1 <$> mapM (uncurry conv) (zip as1 as2)
+conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
+  throwError "Constructor names not equal"
+conv' a b = do
+  -- DittoS {sig = sig} <- get
+  throwError $ 
+    "Terms not convertible\n"
+    ++ show a ++ " != " ++ show b
+    -- ++ "\n" ++ unlines (map show sig)
 
 ----------------------------------------------------------------------
