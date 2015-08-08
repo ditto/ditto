@@ -42,7 +42,7 @@ check a _A = do
   return ()
 
 infer :: Exp -> TCM Exp
-infer (EVar x) = do
+infer (Var x) = do
   ma <- lookupCtx x
   case ma of
     Just _A -> return _A

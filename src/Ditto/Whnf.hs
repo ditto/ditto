@@ -27,11 +27,11 @@ whnf' n (f :@: a) = do
   case f' of
     Lam x _A b -> whnf' n =<< sub (x , a') b
     otherwise -> return $ f' :@: a'
-whnf' n (EVar x) = do
+whnf' n (Var x) = do
   ma <- lookupDef n x
   case ma of
     Just a -> whnf' n a
-    Nothing -> return $ EVar x
+    Nothing -> return $ Var x
 whnf' n x = return x
 
 ----------------------------------------------------------------------

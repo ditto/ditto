@@ -10,7 +10,7 @@ data Stmt = SDef Name Exp Exp
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp
   | Form Name [Exp] | Con Name [Exp]
-  | EVar Name | Exp :@: Exp
+  | Var Name | Exp :@: Exp
   deriving (Show, Read, Eq)
 
 type Tel = [(Name, Exp)]
@@ -43,7 +43,7 @@ formType :: Tel -> Exp
 formType _Is = pis _Is Type
 
 conType :: Tel -> Name -> [Exp] -> Exp
-conType _As _X _Is = pis _As (apps (EVar _X : _Is))
+conType _As _X _Is = pis _As (apps (Var _X : _Is))
 
 ----------------------------------------------------------------------
 

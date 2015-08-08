@@ -58,7 +58,7 @@ parseType :: Parser Exp
 parseType = try $ symbol "Type" >> return Type
 
 parseVar :: Parser Exp
-parseVar = try $ EVar <$> parseName
+parseVar = try $ Var <$> parseName
 
 parseName :: Parser Name
 parseName = try $ do
