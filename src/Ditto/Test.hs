@@ -25,6 +25,10 @@ idProg = unlines
   , "z : Nat ;"
   , "s (N : Nat) : Nat"
   , "end"
+
+  , "def num : Nat where"
+  , "s z"
+  , "end"
   ]
 
 whnfTests :: Test
