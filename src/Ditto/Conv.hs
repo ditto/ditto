@@ -13,12 +13,15 @@ runConv a b = runTCM (conv a b)
 
 ----------------------------------------------------------------------
 
--- TODO alpha and convert Form and Con
-
 alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 
 alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
+alpha' dict Type Type = True
+alpha' dict (Form x1 as1) (Form x2 as2) = 
+  x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
+alpha' dict (Con x1 as1) (Con x2 as2) =
+  x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (EVar x) (EVar y) =
   case lookup x dict of
     Nothing -> x == y
@@ -31,7 +34,6 @@ alpha' dict (Pi x _A1 _B1) (Pi y _A2 _B2) =
     where dict' = (x, y) : dict
 alpha' dict (f1 :@: a1) (f2 :@: a2) =
   alpha' dict f1 f2 && alpha' dict a1 a2
-alpha' dict Type Type = True
 alpha' dict _ _ = False
 
 ----------------------------------------------------------------------
