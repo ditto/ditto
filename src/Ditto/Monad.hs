@@ -55,19 +55,27 @@ addSig s = do
 addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = addSig (Def x a _A)
 
-addForm :: Name -> Tel -> TCM()
-addForm x tel = addSig (DForm x tel)
+addForm :: PName -> Tel -> TCM ()
+addForm x _Is = do
+  addSig (DForm x _Is)
+  addDef (fromPName x) (lams _Is (Form x (names _Is))) (formType _Is)
 
 ----------------------------------------------------------------------
 
 data Normality = BetaDelta | Rho
 data Lookup = LDef | LType
 
-envName :: Sigma -> Name
-envName (Def x _ _) = x
-envName (Virt x _ _) = x
-envName (DForm x _) = x
-envName (DCon x _ _ _) = x
+isNamed :: Name -> Sigma -> Bool
+isNamed x (Def y _ _) = x == y
+isNamed x (Virt y _ _) = x == y
+isNamed x (DForm y _) = False
+isNamed x (DCon y _ _ _) = x == y
+
+isPNamed :: PName -> Sigma -> Bool
+isPNamed x (Def y _ _) = False
+isPNamed x (Virt y _ _) = False
+isPNamed x (DForm y _) = x == y
+isPNamed x (DCon y _ _ _) = False
 
 envDef :: Normality -> Sigma -> Maybe Exp
 envDef n (Def _ a _) = Just a
@@ -85,12 +93,17 @@ envType (DCon _ _As _X _Is) = conType _As _X _Is
 lookupDef :: Normality -> Name -> TCM (Maybe Exp)
 lookupDef n x = do
   DittoS {sig = sig} <- get
-  return $ envDef n =<< find (\d -> x == envName d) sig
+  return $ envDef n =<< find (isNamed x) sig
 
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = do
   DittoS {sig = sig} <- get
-  return $ return . envType =<< find (\d -> x == envName d) sig
+  return $ return . envType =<< find (isNamed x) sig
+
+lookupPType :: PName -> TCM (Maybe Exp)
+lookupPType x = do
+  DittoS {sig = sig} <- get
+  return $ return . envType =<< find (isPNamed x) sig
 
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do

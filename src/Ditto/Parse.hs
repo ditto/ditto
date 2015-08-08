@@ -37,7 +37,7 @@ parseDef = try $ do
 parseData :: Parser Stmt
 parseData = try $ do
   symbol "data"
-  x <- parseName
+  x <- parsePName
   optional $ symbol ":"
   _A <- parseExp
   symbol "where"
@@ -79,6 +79,9 @@ parseType = try $ symbol "Type" >> return Type
 
 parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName
+
+parsePName :: Parser PName
+parsePName = PName <$> parseName
 
 parseName :: Parser Name
 parseName = try $ do

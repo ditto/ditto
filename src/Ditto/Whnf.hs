@@ -54,11 +54,13 @@ splitApp b = do
       return (head, rest ++ [a])
     otherwise -> return (b' , [])
 
-buildCon :: (Name, Exp) -> TCM Sigma
-buildCon (x, _A) = do
+buildCon :: PName -> (Name, Exp) -> TCM Sigma
+buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
-  (head, args) <- splitApp end
-  -- TODO check that head is same as datatype name
-  case head of
-    Var y -> return $ DCon x tel y args
-    otherwise -> throwError $ "Head of a constructor is not a type name"
+  end' <- whnf end
+  case end' of
+    Form _Y _Is | _X == _Y -> return $ DCon x tel _Y _Is
+    Form _Y _Is -> throwError $ "Constructor type does not match datatype\n"
+      ++ show _X ++ " != " ++ show _Y
+    otherwise -> throwError "Constructor return type is not a type former"
+

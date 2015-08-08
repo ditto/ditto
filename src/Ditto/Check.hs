@@ -32,9 +32,8 @@ checkStmt (SData x _A cs) = do
     Type -> do
       addForm x tel
       mapM_ (\ (_, _A) -> check _A Type) cs
-      mapM_ (\c ->  addSig =<< buildCon c) cs
+      mapM_ (\c -> addSig =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
-
 
 ----------------------------------------------------------------------
 
