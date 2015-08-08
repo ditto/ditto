@@ -22,12 +22,12 @@ idProg = unlines
   , "end"
 
   , "data Nat : Type where "
-  , "| z : Nat"
-  , "| s (N : Nat) : id Type Nat" -- note the not normal type at the end
+  , "| zero : Nat"
+  , "| suc (n : Nat) : id Type Nat" -- note the not normal type at the end
   , "end"
 
-  , "def num : Nat where"
-  , "s z"
+  , "def one : Nat where"
+  , "suc zero"
   , "end"
   ]
 

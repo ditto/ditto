@@ -37,27 +37,28 @@ whnf' n x = return x
 ----------------------------------------------------------------------
 
 splitTel :: Exp -> TCM (Tel , Exp)
-splitTel _A = do
-  _A' <- whnf _A
-  case _A' of
-   (Pi x _A a) -> do
-     (rest, end) <- splitTel a
-     return ((x, _A) : rest, end)
-   a -> return ([], a)
+splitTel _T = do
+  _T' <- whnf _T
+  case _T' of
+    Pi x _A _B -> do
+      (rest, end) <- splitTel _B
+      return ((x, _A) : rest, end)
+    _A -> return ([], _A)
 
 splitApp :: Exp -> TCM (Exp , [Exp])
-splitApp a = do
-  a' <- whnf a
-  case a of
-   f :@: b -> do
-     (head, rest) <- splitApp b
-     return (head, rest ++ [b])
-   a -> return (a , [])
+splitApp b = do
+  b' <- whnf b
+  case b' of
+    f :@: a -> do
+      (head, rest) <- splitApp f
+      return (head, rest ++ [a])
+    otherwise -> return (b' , [])
 
 buildCon :: (Name, Exp) -> TCM Sigma
 buildCon (x, _A) = do
-  (tel, _A') <- splitTel _A
-  (head, pars) <- splitApp _A'
+  (tel, end) <- splitTel _A
+  (head, args) <- splitApp end
+  -- TODO check that head is same as datatype name
   case head of
-   Var y -> return $ DCon x tel y pars
-   otherwise -> throwError $ "Head of a constructor is not a type name"
+    Var y -> return $ DCon x tel y args
+    otherwise -> throwError $ "Head of a constructor is not a type name"

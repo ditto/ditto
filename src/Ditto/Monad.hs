@@ -46,16 +46,17 @@ gensym = do
   put state { nameId = nameId' }
   return $ "$x" ++ show nameId'
 
-addSign :: Sigma -> TCM ()
-addSign s = do
+addSig :: Sigma -> TCM ()
+addSig s = do
+  -- TODO check unique def
   state@DittoS {sig = sig} <- get
   put state { sig = s : sig }
 
 addDef :: Name -> Exp -> Exp -> TCM ()
-addDef x a _A = addSign (Def x a _A)
+addDef x a _A = addSig (Def x a _A)
 
 addForm :: Name -> Tel -> TCM()
-addForm x tel = addSign (DForm x tel)
+addForm x tel = addSig (DForm x tel)
 
 ----------------------------------------------------------------------
 

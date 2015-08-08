@@ -27,10 +27,13 @@ checkStmt (SDef x a _A) = do
   addDef x a _A
 checkStmt (SData x _A cs) = do
   check _A Type
-  (tel, _) <- splitTel _A
-  addForm x tel
-  mapM_ (\ (_, _A) -> check _A Type) cs
-  mapM_ (\c ->  addSign =<< buildCon c) cs
+  (tel, end) <- splitTel _A
+  case end of
+    Type -> do
+      addForm x tel
+      mapM_ (\ (_, _A) -> check _A Type) cs
+      mapM_ (\c ->  addSig =<< buildCon c) cs
+    otherwise -> throwError "Datatype former does not end in Type"
 
 
 ----------------------------------------------------------------------
