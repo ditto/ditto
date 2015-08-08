@@ -4,6 +4,9 @@ module Ditto.Syntax where
 
 type Name = String
 
+data Stmt = SDef Name Exp Exp
+  deriving (Show, Read, Eq)
+
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp
   | Form Name [Exp] | Con Name [Exp]

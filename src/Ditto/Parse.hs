@@ -10,8 +10,27 @@ import Control.Monad
 ----------------------------------------------------------------------
 
 parseE = parse parseExp ""
+parseP = parse parseStmts ""
 
 keywords = ["Type", "data", "def", "end"]
+
+----------------------------------------------------------------------
+
+parseStmts :: Parser [Stmt]
+parseStmts = many $ choice [
+    parseDef
+  ]
+
+parseDef :: Parser Stmt
+parseDef = try $ do
+  symbol "def"
+  x <- parseName
+  symbol ":"
+  _A <- parseExp
+  symbol "where"
+  a <- parseExp
+  symbol "end"
+  return undefined
 
 ----------------------------------------------------------------------
 

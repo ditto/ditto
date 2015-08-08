@@ -12,6 +12,16 @@ _Identity = "((A : Type) (a : A) : A)"
 identity = "((A : Type) (a : A) -> a)"
 _PiWh = "((A : Type) : " ++ identity ++ " Type Type)"
 
+idProg = unlines
+  [ "def id : (A : Type) (a : A) : A where"
+  , "(A : Type) (a : A) -> a"
+  , "end"
+
+  , "def KType : Type where"
+  , "id ((A : Type) : id Type Type)"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -50,6 +60,7 @@ parseTests = "Parse tests" ~:
   , testParse "(x : A) (y : B x) : C x y" Nothing
   , testParse "(x : A) (y : B) -> c" Nothing
   , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
+  , testParse idProg Nothing
   ]
 
 ----------------------------------------------------------------------
@@ -105,6 +116,11 @@ testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
   Left error -> return ()
 
 ----------------------------------------------------------------------
+
+testParseProg :: String -> Test
+testParseProg s = TestCase $ case parseP s of
+  Left error -> assertFailure ("Parse error:\n" ++ show error)
+  Right xs -> return ()
 
 testParse :: String -> Maybe Exp -> Test
 testParse s ma = TestCase $ case parseE s of
