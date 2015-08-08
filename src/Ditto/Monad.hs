@@ -48,20 +48,29 @@ gensym = do
 
 addSig :: Sigma -> TCM ()
 addSig s = do
-  -- TODO check unique def
   state@DittoS {sig = sig} <- get
   put state { sig = s : sig }
 
 addDef :: Name -> Exp -> Exp -> TCM ()
-addDef x a _A = addSig (Def x a _A)
+addDef x a _A = do
+  DittoS {sig = sig} <- get
+  when (any (isNamed x) sig) $ throwError
+    $ "Definition with name already exists: " ++ show x
+  addSig (Def x a _A)
 
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
+  DittoS {sig = sig} <- get
+  when (any (isPNamed x) sig) $ throwError
+    $ "Type former with name already exists: " ++ show x
   addSig (DForm x _Is)
   addDef (fromPName x) (lams _Is (Form x (varNames _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
 addCon (x, _As, _X, _Is) = do
+  DittoS {sig = sig} <- get
+  when (any (isPNamed x) sig) $ throwError
+    $ "Constructor with name already exists: " ++ show x
   addSig (DCon x _As _X _Is)
   addDef (fromPName x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
 

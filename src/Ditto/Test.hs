@@ -49,6 +49,36 @@ dataProg = unlines
   , "def ione : Fin two where"
   , "is one (iz zero)"
   , "end"
+  
+  -- TODO partial application example
+  ]
+
+duplicateDef = unlines
+  [ "def Foo : Type where"
+  , "Type"
+  , "end"
+
+  , "def Foo : Type where"
+  , "Type"
+  , "end"
+  ]
+
+duplicateFormer = unlines
+  [ "data Foo : Type where"
+  , "end"
+
+  , "data Foo : Type where"
+  , "end"
+  ]
+
+duplicateConstructor = unlines
+  [ "data Foo : Type where"
+  , "| dup : Foo"
+  , "end"
+
+  , "data Bar : Type where"
+  , "| dup : Bar"
+  , "end"
   ]
 
 whnfTests :: Test
@@ -80,6 +110,9 @@ checkTests = "Check tests" ~:
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   , testChecks idProg
   , testChecks dataProg
+  , testChecksFails duplicateDef
+  , testChecksFails duplicateFormer
+  , testChecksFails duplicateConstructor
   ]
 
 parseTests :: Test
@@ -153,9 +186,14 @@ testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
   Left error -> assertFailure ("Check error:\n" ++ error)
   Right () -> return ()
 
+testChecksFails :: String -> Test
+testChecksFails ds = TestCase $ case runCheckProg (asProg ds) of
+  Right () -> assertFailure ("Expected check error in program:\n" ++ ds)
+  Left error -> return () 
+
 testCheckFails :: String -> String -> Test
 testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
-  Right () -> assertFailure ("Expected check failure:\n" ++ (a ++ " : " ++ _A))
+  Right () -> assertFailure ("Expected check error:\n" ++ (a ++ " : " ++ _A))
   Left error -> return ()
 
 ----------------------------------------------------------------------
