@@ -41,12 +41,13 @@ parseData = try $ do
   optional $ symbol ":"
   _A <- parseExp
   symbol "where"
-  cons <- parseCon `sepBy` (symbol ";")
+  cons <- many parseCon
   symbol "end"
   return $ SData x _A cons
 
 parseCon :: Parser (Name, Exp)
 parseCon = try $ do
+  symbol "|"
   x <- parseName
   optional $ symbol ":"
   _A <- parseExp
