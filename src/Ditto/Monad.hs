@@ -46,6 +46,11 @@ gensym = do
   put state { nameId = nameId' }
   return $ "$x" ++ show nameId'
 
+addDef :: Name -> Exp -> Exp -> TCM ()
+addDef x a _A = do
+  state@DittoS {sig = sig} <- get
+  put state { sig = Def x a _A : sig }
+
 ----------------------------------------------------------------------
 
 data Normality = BetaDelta | Rho

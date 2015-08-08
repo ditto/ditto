@@ -12,6 +12,19 @@ import Control.Monad.Reader
 runCheck :: Exp -> Exp -> Either String ()
 runCheck a _A = runTCM (check a _A)
 
+runCheckProg :: [Stmt] -> Either String ()
+runCheckProg = runTCM . checkProg
+
+----------------------------------------------------------------------
+
+checkProg :: [Stmt] -> TCM ()
+checkProg = mapM_ checkStmt
+
+checkStmt :: Stmt -> TCM ()
+checkStmt (SDef x a _A) = do
+  check a _A
+  addDef x a _A
+
 ----------------------------------------------------------------------
 
 inferExt :: (Name, Exp) -> Exp -> TCM Exp

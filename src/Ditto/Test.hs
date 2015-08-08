@@ -18,7 +18,7 @@ idProg = unlines
   , "end"
 
   , "def KType : Type where"
-  , "id ((A : Type) : id Type Type)"
+  , "id Type ((A : Type) : id Type Type)"
   , "end"
   ]
 
@@ -49,6 +49,7 @@ checkTests = "Check tests" ~:
   , testCheck "(B : Type) (b : B) -> b" _Identity
   , testCheckFails identity "Type"
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
+  , testChecks idProg
   ]
 
 parseTests :: Test
@@ -76,6 +77,11 @@ runTests = runTestTT unitTests
 main = runTests >> return ()
 
 ----------------------------------------------------------------------
+
+asProg :: String -> [Stmt]
+asProg s = case parseP s of
+  Right a -> a
+  Left e -> error (show e)
 
 asExp :: String -> Exp
 asExp s = case parseE s of
@@ -106,6 +112,11 @@ testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
   Right _ -> return ()
 
 ----------------------------------------------------------------------
+
+testChecks :: String -> Test
+testChecks ds = TestCase $ case runCheckProg (asProg ds) of
+  Left error -> assertFailure ("Check error:\n" ++ error)
+  Right () -> return ()
 
 testCheck :: String -> String -> Test
 testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
