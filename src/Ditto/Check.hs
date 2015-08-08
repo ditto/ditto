@@ -6,6 +6,7 @@ import Ditto.Monad
 import Ditto.Sub
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Applicative
 
 ----------------------------------------------------------------------
 
@@ -24,6 +25,13 @@ checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = do
   check a _A
   addDef x a _A
+checkStmt (SData x _A cs) = do
+  check _A Type
+  (tel, _) <- splitTel _A
+  addForm x tel
+  mapM_ (\ (_, _A) -> check _A Type) cs
+  mapM_ (\c ->  addSign =<< buildCon c) cs
+
 
 ----------------------------------------------------------------------
 
@@ -46,12 +54,12 @@ infer (Var x) = do
   ma <- lookupCtx x
   case ma of
     Just _A -> return _A
-    Nothing -> throwError "Variable not in scope"
+    Nothing -> throwError $ "Variable not in scope: " ++ x
 infer Type = return Type
 infer (Pi x _A _B) = do
   check _A Type
   checkExt (x , _A) _B Type
-  return Type  
+  return Type
 infer (Lam x _A b) = do
   _B <- inferExt (x, _A) b
   return $ Pi x _A _B

@@ -20,6 +20,7 @@ keywords = choice $ map symbol
 parseStmts :: Parser [Stmt]
 parseStmts = many1 $ choice [
     parseDef
+  , parseData
   ]
 
 parseDef :: Parser Stmt
@@ -32,6 +33,24 @@ parseDef = try $ do
   a <- parseExp
   symbol "end"
   return $ SDef x a _A
+
+parseData :: Parser Stmt
+parseData = try $ do
+  symbol "data"
+  x <- parseName
+  optional $ symbol ":"
+  _A <- parseExp
+  symbol "where"
+  cons <- parseCon `sepBy` (symbol ";")
+  symbol "end"
+  return $ SData x _A cons
+
+parseCon :: Parser (Name, Exp)
+parseCon = try $ do
+  x <- parseName
+  optional $ symbol ":"
+  _A <- parseExp
+  return (x , _A)
 
 ----------------------------------------------------------------------
 
@@ -111,8 +130,3 @@ whitespace :: Parser ()
 whitespace = void $ many $ oneOf " \n\t"
 
 ----------------------------------------------------------------------
-
-
-
-
-

@@ -35,3 +35,29 @@ whnf' n (Var x) = do
 whnf' n x = return x
 
 ----------------------------------------------------------------------
+
+splitTel :: Exp -> TCM (Tel , Exp)
+splitTel _A = do
+  _A' <- whnf _A
+  case _A' of
+   (Pi x _A a) -> do
+     (rest, end) <- splitTel a
+     return ((x, _A) : rest, end)
+   a -> return ([], a)
+
+splitApp :: Exp -> TCM (Exp , [Exp])
+splitApp a = do
+  a' <- whnf a
+  case a of
+   f :@: b -> do
+     (head, rest) <- splitApp b
+     return (head, rest ++ [b])
+   a -> return (a , [])
+
+buildCon :: (Name, Exp) -> TCM Sigma
+buildCon (x, _A) = do
+  (tel, _A') <- splitTel _A
+  (head, pars) <- splitApp _A'
+  case head of
+   Var y -> return $ DCon x tel y pars
+   otherwise -> throwError $ "Head of a constructor is not a type name"

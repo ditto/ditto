@@ -46,10 +46,16 @@ gensym = do
   put state { nameId = nameId' }
   return $ "$x" ++ show nameId'
 
-addDef :: Name -> Exp -> Exp -> TCM ()
-addDef x a _A = do
+addSign :: Sigma -> TCM ()
+addSign s = do
   state@DittoS {sig = sig} <- get
-  put state { sig = Def x a _A : sig }
+  put state { sig = s : sig }
+
+addDef :: Name -> Exp -> Exp -> TCM ()
+addDef x a _A = addSign (Def x a _A)
+
+addForm :: Name -> Tel -> TCM()
+addForm x tel = addSign (DForm x tel)
 
 ----------------------------------------------------------------------
 
@@ -91,4 +97,3 @@ lookupCtx x = do
   maybe (return $ lookup x ctx) (return . Just) =<< lookupType x
 
 ----------------------------------------------------------------------
-

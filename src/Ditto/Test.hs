@@ -20,6 +20,11 @@ idProg = unlines
   , "def KType : id Type Type where"
   , "id Type ((A : Type) : id Type Type)"
   , "end"
+
+  , "data Nat : Type where "
+  , "z : Nat ;"
+  , "s (N : Nat) : Nat"
+  , "end"
   ]
 
 whnfTests :: Test

@@ -5,6 +5,7 @@ module Ditto.Syntax where
 type Name = String
 
 data Stmt = SDef Name Exp Exp
+          | SData Name Exp [( Name, Exp )]
   deriving (Show, Read, Eq)
 
 data Exp =
@@ -46,4 +47,3 @@ conType :: Tel -> Name -> [Exp] -> Exp
 conType _As _X _Is = pis _As (apps (Var _X : _Is))
 
 ----------------------------------------------------------------------
-
