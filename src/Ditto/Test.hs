@@ -25,10 +25,30 @@ idProg = unlines
   , "| zero : Nat"
   , "| suc (n : Nat) : id Type Nat" -- note the not normal type at the end
   , "end"
+  ]
+
+dataProg = unlines
+  [ "data Nat : Type where "
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
 
   , "def one : Nat where"
   , "suc zero"
   , "end"
+
+  , "def two : Nat where"
+  , "suc one"
+  , "end"
+
+  , "data Fin (n : Nat) : Type where "
+  , "| iz (n : Nat) : Fin (suc n)"
+  , "| is (n : Nat) (i : Fin n) : Fin (suc n)"
+  , "end"
+
+  -- , "def ione : Fin two where"
+  -- , "is iz"
+  -- , "end"
   ]
 
 whnfTests :: Test
@@ -59,6 +79,7 @@ checkTests = "Check tests" ~:
   , testCheckFails identity "Type"
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   , testChecks idProg
+  , testChecks dataProg
   ]
 
 parseTests :: Test
