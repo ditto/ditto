@@ -56,11 +56,13 @@ parseTests = "Parse tests" ~:
   [ testParse "Type" (Just Type)
   , testParse "A" (Just (EVar "A"))
   , testParse "F x y z" Nothing
+  , testParseFails "(x : where) (y : B) : Type"
+  , testParseFails "(Type : A) (y : B) : Type"
   , testParse "(x : A) (y : B) : Type" Nothing
   , testParse "(x : A) (y : B x) : C x y" Nothing
   , testParse "(x : A) (y : B) -> c" Nothing
   , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
-  , testParse idProg Nothing
+  -- , testParses idProg
   ]
 
 ----------------------------------------------------------------------
@@ -117,8 +119,8 @@ testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
 
 ----------------------------------------------------------------------
 
-testParseProg :: String -> Test
-testParseProg s = TestCase $ case parseP s of
+testParses :: String -> Test
+testParses s = TestCase $ case parseP s of
   Left error -> assertFailure ("Parse error:\n" ++ show error)
   Right xs -> return ()
 
@@ -126,5 +128,10 @@ testParse :: String -> Maybe Exp -> Test
 testParse s ma = TestCase $ case parseE s of
   Left error -> assertFailure ("Parse error:\n" ++ show error)
   Right a -> maybe (return ()) (@=? a) ma
+
+testParseFails :: String -> Test
+testParseFails s = TestCase $ case parseE s of
+  Left error -> return ()
+  Right a -> assertFailure ("Expected parse error:\n" ++ show a)
 
 ----------------------------------------------------------------------

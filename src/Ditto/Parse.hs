@@ -12,7 +12,7 @@ import Control.Monad
 parseE = parse (whitespace >> parseExp <* eof) ""
 parseP = parse (whitespace >> parseStmts <* eof) ""
 
-keywords = ["Type", "data", "def", "end"]
+keywords = choice $ map symbol ["Type", "data", "def", "where", "end"]
 
 ----------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ parseDef = try $ do
   symbol "where"
   a <- parseExp
   symbol "end"
-  return undefined
+  return $ SDef x a _A
 
 ----------------------------------------------------------------------
 
@@ -60,7 +60,9 @@ parseVar :: Parser Exp
 parseVar = try $ EVar <$> parseName
 
 parseName :: Parser Name
-parseName = try $ lexeme ((:) <$> firstChar <*> many nextChar)
+parseName = try $ do
+  notFollowedBy keywords
+  lexeme ((:) <$> firstChar <*> many nextChar)
   where
   firstChar = letter
   nextChar = alphaNum
