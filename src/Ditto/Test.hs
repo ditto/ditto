@@ -50,7 +50,9 @@ dataProg = unlines
   , "is one (iz zero)"
   , "end"
   
-  -- TODO partial application example
+  , "def ioneAlmost (i : Fin one) : Fin two where"
+  , "is one"
+  , "end"
   ]
 
 duplicateDef = unlines
