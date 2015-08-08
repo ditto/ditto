@@ -9,8 +9,8 @@ import Control.Monad
 
 ----------------------------------------------------------------------
 
-parseE = parse parseExp ""
-parseP = parse parseStmts ""
+parseE = parse (whitespace >> parseExp <* eof) ""
+parseP = parse (whitespace >> parseStmts <* eof) ""
 
 keywords = ["Type", "data", "def", "end"]
 
