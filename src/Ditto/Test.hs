@@ -23,7 +23,7 @@ idProg = unlines
 
   , "data Nat : Type where "
   , "z : Nat ;"
-  , "s (N : Nat) : Nat"
+  , "s (N : Nat) : id Type Nat" -- note the not normal type at the end
   , "end"
 
   , "def num : Nat where"
