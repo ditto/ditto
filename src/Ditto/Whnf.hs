@@ -12,6 +12,7 @@ runWhnf a = runTCM (whnf a)
 
 ----------------------------------------------------------------------
 
+-- TODO rho expand Form with virtual definition, not variables
 whnfVirt :: Exp -> TCM Exp
 whnfVirt = whnf' Rho
 
@@ -63,5 +64,10 @@ buildCon _X (x, _A) = do
     Form _Y _Is -> throwError $ "Constructor type does not match datatype\n"
       ++ show _X ++ " != " ++ show _Y
     otherwise -> throwError "Constructor return type is not a type former"
+
+----------------------------------------------------------------------
+
+-- buildElimType :: PName -> TCM Exp
+-- buildElimType x = do
 
 ----------------------------------------------------------------------

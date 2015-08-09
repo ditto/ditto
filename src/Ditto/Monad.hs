@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
+import Data.Maybe
 
 ----------------------------------------------------------------------
 
@@ -40,11 +41,14 @@ extCtx :: Name -> Exp -> DittoR -> DittoR
 extCtx x _A r = r { ctx = (x , _A) : ctx r }
 
 gensym :: TCM Name
-gensym = do
+gensym = gensymHint "x"
+
+gensymHint :: Name -> TCM Name
+gensymHint x = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
   put state { nameId = nameId' }
-  return $ "$x" ++ show nameId'
+  return $ "$" ++ show x ++ show nameId'
 
 addSig :: Sigma -> TCM ()
 addSig s = do
@@ -91,6 +95,10 @@ isPNamed x (Virt y _ _) = False
 isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
 
+conOf :: PName -> Sigma -> Maybe (PName, Tel, [Exp])
+conOf _X (DCon x _As _Y _Is) | _X == _Y = Just (x, _As, _Is)
+conOf _X _ = Nothing
+
 envDef :: Normality -> Sigma -> Maybe Exp
 envDef n (Def _ a _) = Just a
 envDef Rho (Virt _ a _) = Just a
@@ -123,5 +131,17 @@ lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
   DittoR {ctx = ctx} <- ask
   maybe (return $ lookup x ctx) (return . Just) =<< lookupType x
+
+-- Former index types
+-- List of: Constructor name, constructor argument types,
+--   and constructor former indices
+lookupForElim :: PName -> TCM (Tel, [(PName, Tel, [Exp])])
+lookupForElim _X = do
+  DittoS {sig = sig} <- get
+  case find (isPNamed _X) sig of
+    Just (DForm _ _Is) -> do
+      let _Cs = mapMaybe (conOf _X) sig
+      return (_Is , _Cs)
+    otherwise -> throwError "Type former not found"
 
 ----------------------------------------------------------------------

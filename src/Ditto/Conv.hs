@@ -77,6 +77,10 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
   Con x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
   throwError "Constructor names not equal"
+conv' (Elim x1 as1) (Elim x2 as2) | x1 == x2 = do
+  Elim x1 <$> mapM (uncurry conv) (zip as1 as2)
+conv' (Elim x1 as1) (Elim x2 as2) | x1 /= x2 =
+  throwError "Elimination names not equal"
 conv' a b = do
   -- DittoS {sig = sig} <- get
   throwError $ 
