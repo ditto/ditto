@@ -1,3 +1,6 @@
+* sources of inconsistency
+** type in type
+** no datatype positivity check
 * implementation details
 ** conversion and first-order unfification as same algorith with extra argument
 *** different in variable and extend context cases
