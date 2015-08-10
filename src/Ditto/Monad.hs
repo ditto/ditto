@@ -1,5 +1,6 @@
 module Ditto.Monad where
 import Ditto.Syntax
+import Ditto.Util
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Identity
@@ -43,7 +44,13 @@ extCtx x _A r = r { ctx = (x , _A) : ctx r }
 gensym :: TCM Name
 gensym = gensymHint "x"
 
-gensymHint :: Name -> TCM Name
+gensymP :: TCM PName
+gensymP = undefined
+
+gensymPHint :: String -> TCM PName
+gensymPHint x = undefined
+
+gensymHint :: String -> TCM Name
 gensymHint x = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
@@ -77,6 +84,21 @@ addCon (x, _As, _X, _Is) = do
     $ "Constructor with name already exists: " ++ show x
   addSig (DCon x _As _X _Is)
   addDef (fromPName x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+
+addElim :: PName -> TCM ()
+addElim _X = do
+  (_Is, _Cs) <- lookupForElim _X
+  t <- gensymHint "t"  -- target name
+  _P <- gensymHint "P" -- motive name
+  _Cs' <- mapM (\(c, _As, is) -> do n <- gensymHint ("m"++ fromPName c)
+                                    return (n , _As, is))_Cs
+  -- type of the eliminator
+  let (etel, res) = elimType _X (t, _P, _Is, _Cs')
+  -- body of the eliminator
+  let a = lams etel (Elim _X $ varNames etel)
+  -- add the delta equivalent term
+  addDef ("elim" ++ fromPName _X) a (pis etel res)
+
 
 ----------------------------------------------------------------------
 
