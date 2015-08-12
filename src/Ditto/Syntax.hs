@@ -57,8 +57,8 @@ conType :: Tel -> PName -> [Exp] -> Exp
 conType _As _X _Is = pis _As (Form _X _Is)
 
 -- TODO add inductive hypotheses
-elimMethod :: PName -> Name -> (Name, Tel, [Exp]) -> (Name, Exp)
-elimMethod _X _P (m, _As, is) = (m, pis _As (apps (Var _P:is)))
+elimMethod :: PName -> Name -> (Name, PName, Tel, [Exp]) -> (Name, Exp)
+elimMethod _X _P (m, c, _As, is) = (m, pis _As (apps (Var _P : [(Con c is)])))
 
 elimTarget :: PName -> Name -> Tel -> (Name, Exp)
 elimTarget _X t _Is = (t, Form _X (varNames _Is))
@@ -66,7 +66,7 @@ elimTarget _X t _Is = (t, Form _X (varNames _Is))
 elimMotive :: PName -> Name -> Name -> Tel -> (Name, Exp)
 elimMotive _X _P t _Is = (_P, pis (_Is ++ [elimTarget _X t _Is]) Type)
 
-elimType :: PName -> (Name, Name, Tel, [(Name, Tel, [Exp])]) -> (Tel, Exp)
+elimType :: PName -> (Name, Name, Tel, [(Name, PName, Tel, [Exp])]) -> (Tel, Exp)
 elimType _X (t, _P, _Is, _Cs) =
     ( (_Is ++ [elimMotive _X _P t _Is] ++ [elimTarget _X t _Is] ++ map (elimMethod _X _P) _Cs)
     , (apps ((Var _P) : (varNames _Is) ++ [Var t])))
