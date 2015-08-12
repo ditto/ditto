@@ -3,9 +3,11 @@ import Ditto.Syntax
 import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Pretty
 import Control.Monad.State
 import Control.Monad.Except
 import Control.Applicative
+import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
@@ -19,7 +21,7 @@ alpha a b = alpha' [] a b
 
 alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
 alpha' dict Type Type = True
-alpha' dict (Form x1 as1) (Form x2 as2) = 
+alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Con x1 as1) (Con x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
@@ -53,7 +55,7 @@ conv' :: Exp -> Exp -> TCM Exp
 conv' (Var x) (Var y) =
   if x == y
   then return (Var x)
-  else throwError $ 
+  else throwError $
     "Variables not convertible\n"
     ++ show x ++ " != " ++ show y
 conv' Type Type = return Type
@@ -78,10 +80,10 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
   throwError "Constructor names not equal"
 conv' a b = do
-  -- DittoS {sig = sig} <- get
-  throwError $ 
+--  DittoS {sig = sig} <- get
+  throwError $
     "Terms not convertible\n"
     ++ show a ++ " != " ++ show b
-    -- ++ "\n" ++ unlines (map show sig)
+    -- ++ "\n" ++ unlines (map (render . ppSig) sig)
 
 ----------------------------------------------------------------------
