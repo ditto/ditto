@@ -55,7 +55,7 @@ gensymHint x = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
   put state { nameId = nameId' }
-  return $ "$" ++ x ++ show nameId'
+  return $ "$" ++ show x ++ show nameId'
 
 addSig :: Sigma -> TCM ()
 addSig s = do
@@ -96,9 +96,7 @@ addElim _X = do
   let (etel, res) = elimType _X (t, _P, _Is, _Cs')
   -- body of the eliminator
   let a = lams etel (Elim _X $ varNames etel)
-  -- add the delta equivalent term it would be nice to type-check
-  -- this, but the check module uses this one, so one can't call it
-  -- from here
+  -- add the delta equivalent term
   addDef ("elim" ++ fromPName _X) a (pis etel res)
 
 

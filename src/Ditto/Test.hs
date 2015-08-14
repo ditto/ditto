@@ -49,21 +49,10 @@ dataProg = unlines
   , "def ione : Fin two where"
   , "is one (iz zero)"
   , "end"
-
+  
   , "def ioneAlmost (i : Fin one) : Fin two where"
   , "is one"
   , "end"
-  ]
-
-elimProg = unlines
-  [ "data Bool : Type where"
-  , "| True : Bool"
-  , "| False : Bool"
-  , "end"
-
-  -- , "def copy (B : Bool) : Bool where"
-  -- , "(B : Bool) -> elimBool B ((X : Bool) -> Type) True False"
-  -- , "end"
   ]
 
 duplicateDef = unlines
@@ -123,7 +112,6 @@ checkTests = "Check tests" ~:
   , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   , testChecks idProg
   , testChecks dataProg
-  , testChecks elimProg
   , testChecksFails duplicateDef
   , testChecksFails duplicateFormer
   , testChecksFails duplicateConstructor
@@ -203,7 +191,7 @@ testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
 testChecksFails :: String -> Test
 testChecksFails ds = TestCase $ case runCheckProg (asProg ds) of
   Right () -> assertFailure ("Expected check error in program:\n" ++ ds)
-  Left error -> return ()
+  Left error -> return () 
 
 testCheckFails :: String -> String -> Test
 testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
