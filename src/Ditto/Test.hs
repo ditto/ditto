@@ -83,6 +83,41 @@ duplicateConstructor = unlines
   , "end"
   ]
 
+enumerationPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true : Bool"
+  , "| false : Bool"
+  , "end"
+
+  , "defn not (b : Bool) : Bool where"
+  , "| (true) = false"
+  , "| (false) = true"
+  , "end"
+
+  , "data RGB : Type where"
+  , "| red : RGB"
+  , "| green : RGB"
+  , "| blue : RGB"
+  , "end"
+
+  , "defn colorBlind (r : RGB) : Bool where"
+  , "| (green) = false"
+  , "| r = true"
+  , "end"
+  ]
+
+nonDependentPatterns = unlines
+  [ "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "defn pred (n : Nat) : Nat where"
+  , "| (zero) = zero"
+  , "| (suc n) = n"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -129,6 +164,8 @@ parseTests = "Parse tests" ~:
   , testParse "(x : A) (y : B) -> c" Nothing
   , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
   , testParses idProg
+  , testParses enumerationPatterns
+  , testParses nonDependentPatterns
   ]
 
 ----------------------------------------------------------------------

@@ -34,6 +34,9 @@ checkStmt (SData x _A cs) = do
       mapM_ (\ (_, _A) -> check _A Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
+checkStmt (SDefn x _A cs) = do
+  check _A Type
+  error "Checking pattern definitions not yet supported"
 
 ----------------------------------------------------------------------
 

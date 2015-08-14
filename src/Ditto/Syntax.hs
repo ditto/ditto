@@ -5,8 +5,10 @@ module Ditto.Syntax where
 type Name = String
 type Cons = [(PName, Exp)]
 
-data Stmt = SDef Name Exp Exp
-          | SData PName Exp Cons
+data Stmt =
+    SDef Name Exp Exp
+  | SData PName Exp Cons
+  | SDefn PName Exp [Clause]
   deriving (Show, Read, Eq)
 
 newtype PName = PName { fromPName :: Name }

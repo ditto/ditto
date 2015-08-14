@@ -12,8 +12,24 @@ import Control.Monad
 parseE = parse (whitespace >> parseExp <* eof) ""
 parseP = parse (whitespace >> parseStmts <* eof) ""
 
-keywords = choice $ map symbol
-  ["Type", "data", "def", "where", "end"]
+keyType = symbol "Type"
+keyData = symbol "data"
+keyDef = symbol "def"
+keyDefn = symbol "defn"
+keyWhere = symbol "where"
+keyEnd = symbol "end"
+
+keywords = choice
+  [keyType, keyData, keyDef, keyDefn, keyWhere, keyEnd]
+
+symAscribe = symbol ":"
+symChoice = symbol "|"
+symInacc = symbol "*"
+symArrow = symbol "->"
+symEq = symbol "="
+
+symLParen = symbol "("
+symRParen = symbol ")"
 
 ----------------------------------------------------------------------
 
@@ -21,35 +37,82 @@ parseStmts :: Parser [Stmt]
 parseStmts = many1 $ choice [
     parseDef
   , parseData
+  , parseDefn
   ]
 
 parseDef :: Parser Stmt
 parseDef = try $ do
-  symbol "def"
+  keyDef
   x <- parseName
-  optional $ symbol ":"
+  optional $ symAscribe
   _A <- parseExp
-  symbol "where"
+  keyWhere
   a <- parseExp
-  symbol "end"
+  keyEnd
   return $ SDef x a _A
+
+----------------------------------------------------------------------
+
+parseDefn :: Parser Stmt
+parseDefn = try $ do
+  keyDefn
+  x <- parsePName
+  optional $ symAscribe
+  _A <- parseExp
+  keyWhere
+  cs <- many parseClause
+  keyEnd
+  return $ SDefn x _A cs
+
+parseClause :: Parser Clause
+parseClause = try $ do
+  symChoice
+  ps <- many parsePattern
+  symEq
+  a <- parseExp
+  return (ps , a)
+
+----------------------------------------------------------------------
+
+parsePattern :: Parser Pat
+parsePattern = choice
+  [ parsePVar
+  , parsePInacc
+  , parsePCon
+  ]
+
+parsePCon :: Parser Pat
+parsePCon = try $ parens $ do
+  x <- parseName
+  xs <- many parseName
+  return $ PCon x xs
+
+parsePVar :: Parser Pat
+parsePVar = try $ PVar <$> parseName
+
+parsePInacc :: Parser Pat
+parsePInacc = try $ do
+  symInacc
+  error "Inaccessible patterns not yet supported"
+
+----------------------------------------------------------------------
 
 parseData :: Parser Stmt
 parseData = try $ do
-  symbol "data"
+  keyData
   x <- parsePName
-  optional $ symbol ":"
+  optional $ symAscribe
   _A <- parseExp
-  symbol "where"
+  keyWhere
   cons <- many parseCon
-  symbol "end"
+  keyEnd
   return $ SData x _A cons
 
 parseCon :: Parser (PName, Exp)
 parseCon = try $ do
-  symbol "|"
+  symChoice
   x <- parsePName
-  optional $ symbol ":"
+  optional $ symAscribe
   _A <- parseExp
   return (x , _A)
 
@@ -75,7 +138,7 @@ parseAtom = choice [
 ----------------------------------------------------------------------
 
 parseType :: Parser Exp
-parseType = try $ symbol "Type" >> return Type
+parseType = try $ keyType >> return Type
 
 parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName
@@ -96,14 +159,14 @@ parseName = try $ do
 parsePi :: Parser Exp
 parsePi = try $ do
   _As <- parseTel
-  symbol ":"
+  symAscribe
   _A <- parseExp
   return $ pis _As _A
 
 parseLam :: Parser Exp
 parseLam = try $ do
   _As <- parseTel
-  symbol "->"
+  symArrow
   b <- parseExp
   return $ lams _As b
 
@@ -115,14 +178,14 @@ parseTel = many1 (parens parseAnnot)
 parseAnnot :: Parser (Name, Exp)
 parseAnnot = do
   x <- parseName
-  symbol ":"
+  symAscribe
   a <- parseExp
   return (x , a)
 
 ----------------------------------------------------------------------
 
 parens :: Parser a -> Parser a
-parens = between (symbol "(") (symbol ")")
+parens = between symLParen symRParen
 
 symbol :: String -> Parser String
 symbol s = lexeme $ string s
