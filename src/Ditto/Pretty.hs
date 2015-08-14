@@ -15,7 +15,6 @@ ppExp (Pi x _A _B) = parens (ppName x <+> oft <+> ppExp _A) <+> oft <+> ppExp _B
 ppExp (Lam x _A a) = parens (ppName x <+> oft <+> ppExp _A) <+> arr <+> ppExp a
 ppExp (Form _X _Is) = ppPName _X
 ppExp (Con _X as) = ppPName _X
-ppExp (Elim _X _) = parens $ text "elim" <+> ppPName _X <+> text "..."
 ppExp (Var x) = ppName x
 ppExp (f :@: a) = (parens $ ppExp f) <+> (parens $ ppExp a)
 
