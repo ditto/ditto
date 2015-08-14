@@ -61,18 +61,9 @@ elimProg = unlines
   , "| False : Bool"
   , "end"
 
-  , "def motive (B : Bool) : Type where"
-  , "(B : Bool) -> Bool"
-  , "end"
-
-  , "def copy (B : Bool) : Bool where"
-  , "(B : Bool) -> elimBool motive B True False"
-  , "end"
-
-  , "def copy2 (B : Bool) : Bool where"
-  , "(B : Bool) -> elimBool ((B : Bool) -> Bool) B True False"
-  , "end"
-
+  -- , "def copy (B : Bool) : Bool where"
+  -- , "(B : Bool) -> elimBool B ((X : Bool) -> Type) True False"
+  -- , "end"
   ]
 
 duplicateDef = unlines

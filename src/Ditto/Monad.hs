@@ -1,5 +1,6 @@
 module Ditto.Monad where
 import Ditto.Syntax
+import Ditto.Util
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Identity
@@ -90,7 +91,7 @@ addElim _X = do
   t <- gensymHint "t"  -- target name
   _P <- gensymHint "P" -- motive name
   _Cs' <- mapM (\(c, _As, is) -> do n <- gensymHint ("m"++ fromPName c)
-                                    return (n , c, _As, is))_Cs
+                                    return (n , _As, is))_Cs
   -- type of the eliminator
   let (etel, res) = elimType _X (t, _P, _Is, _Cs')
   -- body of the eliminator
