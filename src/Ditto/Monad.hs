@@ -80,11 +80,13 @@ isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
 isNamed x (DForm y _) = False
 isNamed x (DCon y _ _ _) = False
+isNamed x (DRed y _) = False
 
 isPNamed :: PName -> Sigma -> Bool
 isPNamed x (Def y _ _) = False
 isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
+isPNamed x (DRed y _) = x == y
 
 envDef :: Sigma -> Maybe Exp
 envDef (Def _ a _) = Just a
@@ -94,6 +96,7 @@ envType :: Sigma -> Exp
 envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
+envType (DRed _ _) = error "Type of reduction not yet implemented"
 
 ----------------------------------------------------------------------
 

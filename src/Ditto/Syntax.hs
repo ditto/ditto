@@ -18,18 +18,21 @@ instance Show PName where
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp
   | Form PName [Exp] | Con PName [Exp]
-  | Var Name | Exp :@: Exp
+  | Var Name | Exp :@: Exp | Red PName [Exp]
   deriving (Show, Read, Eq)
 
 type Tel = [(Name, Exp)]
+type Clause = ([Pat], Exp)
 
 data Sigma =
     Def Name Exp Exp
   | DForm PName Tel
   | DCon PName Tel PName [Exp]
+  -- TODO store Tel (args) and Exp (return type)
+  | DRed PName [Clause]
   deriving (Show, Read, Eq)
 
-data Pat = PVar Name | Inacc Exp | PCon Name [Pat]
+data Pat = PVar Name | PCon Name [Name]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

@@ -25,6 +25,8 @@ alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Con x1 as1) (Con x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
+alpha' dict (Red x1 as1) (Red x2 as2) =
+  x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Var x) (Var y) =
   case lookup x dict of
     Nothing -> x == y
@@ -78,6 +80,10 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
   Con x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
   throwError "Constructor names not equal"
+conv' (Red x1 as1) (Red x2 as2) | x1 == x2 = do
+  Red x1 <$> mapM (uncurry conv) (zip as1 as2)
+conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
+  throwError "Reduction names not equal"
 conv' a b = do
 --  DittoS {sig = sig} <- get
   throwError $

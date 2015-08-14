@@ -24,6 +24,7 @@ whnf (Var x) = do
   case ma of
     Just a -> whnf a
     Nothing -> return $ Var x
+-- TODO beta rules for reduction as a more restricted form of "match"
 whnf x = return x
 
 ----------------------------------------------------------------------

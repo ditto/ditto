@@ -7,6 +7,7 @@ ppSig :: Sigma -> Box
 ppSig (Def x a _A) = ppName x <+> oft <+> ppExp _A <+> def <+> ppExp a
 ppSig (DForm _X _Is) = ppPName _X <+> text "Data"
 ppSig (DCon _Y _As _X _Is) = ppPName _Y <+> text "constructor of" <+> ppPName _X
+ppSig (DRed _X _As) = ppPName _X <+> text "constructor of" <+> ppPName _X
 
 ppExp :: Exp -> Box
 ppExp Type = text "Type"
@@ -14,6 +15,7 @@ ppExp (Pi x _A _B) = parens (ppName x <+> oft <+> ppExp _A) <+> oft <+> ppExp _B
 ppExp (Lam x _A a) = parens (ppName x <+> oft <+> ppExp _A) <+> arr <+> ppExp a
 ppExp (Form _X _Is) = ppPName _X
 ppExp (Con _X as) = ppPName _X
+ppExp (Red _X as) = ppPName _X
 ppExp (Var x) = ppName x
 ppExp (f :@: a) = (parens $ ppExp f) <+> (parens $ ppExp a)
 
