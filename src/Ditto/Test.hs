@@ -94,6 +94,11 @@ enumerationPatterns = unlines
   , "| (false) = true"
   , "end"
 
+  , "defn nand (b1 : Bool) (b2 : Bool) : Bool where"
+  , "| (true) (true) = false"
+  , "| b1 b2 = true"
+  , "end"
+
   , "data RGB : Type where"
   , "| red : RGB"
   , "| green : RGB"
