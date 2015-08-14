@@ -30,8 +30,7 @@ data Sigma =
     Def Name Exp Exp
   | DForm PName Tel
   | DCon PName Tel PName [Exp]
-  -- TODO store Tel (args) and Exp (return type)
-  | DRed PName [Clause]
+  | DRed PName [Clause] Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | PCon Name [Name]

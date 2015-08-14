@@ -7,7 +7,7 @@ ppSig :: Sigma -> Box
 ppSig (Def x a _A) = ppName x <+> oft <+> ppExp _A <+> def <+> ppExp a
 ppSig (DForm _X _Is) = ppPName _X <+> text "Data"
 ppSig (DCon _Y _As _X _Is) = ppPName _Y <+> text "constructor of" <+> ppPName _X
-ppSig (DRed _X _As) = ppPName _X <+> text "constructor of" <+> ppPName _X
+ppSig (DRed x cs _As _B) = ppPName x <+> text "Reduction"
 
 ppExp :: Exp -> Box
 ppExp Type = text "Type"

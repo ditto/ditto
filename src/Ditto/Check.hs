@@ -36,6 +36,7 @@ checkStmt (SData x _A cs) = do
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   check _A Type
+  (tel, end) <- splitTel _A
   error "Checking pattern definitions not yet supported"
 
 ----------------------------------------------------------------------
