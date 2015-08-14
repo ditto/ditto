@@ -17,7 +17,7 @@ instance Show PName where
 
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp
-  | Form PName [Exp] | Con PName [Exp] | Elim PName [Exp]
+  | Form PName [Exp] | Con PName [Exp]
   | Var Name | Exp :@: Exp
   deriving (Show, Read, Eq)
 
@@ -55,18 +55,5 @@ formType _Is = pis _Is Type
 
 conType :: Tel -> PName -> [Exp] -> Exp
 conType _As _X _Is = pis _As (Form _X _Is)
-
--- TODO add inductive hypotheses
-elimMethod :: PName -> Name -> Name -> Tel -> [Exp] -> (Name, Exp)
-elimMethod _X m _P _As is = (m, pis _As (apps (Var _P:is)))
-
-elimTarget :: PName -> Name -> Tel -> (Name, Exp)
-elimTarget _X t _Is = (t, Form _X (varNames _Is))
-
-elimMotive :: PName -> Name -> Name -> Tel -> (Name, Exp)
-elimMotive _X _P t _Is = (_P, pis (_Is ++ [elimTarget _X t _Is]) Type)
-
--- elimType :: PName -> (Name, Name, Tel, [(Name, PName, Tel, [Exp])]) -> Exp
--- elimType _X (t, _P, _Is, _Cs) = pis undefined (apps ((Var _P):? ++ Var t))
 
 ----------------------------------------------------------------------

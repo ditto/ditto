@@ -9,7 +9,6 @@ fv (Var x) = [x]
 fv Type = []
 fv (Form _ is) = concatMap fv is
 fv (Con _ as) = concatMap fv as
-fv (Elim _ as) = concatMap fv as
 fv (Pi n _A _B) = fv _A ++ (n `delete` (fv _B))
 fv (Lam n _A a) = fv _A ++ (n `delete` (fv a))
 fv (a :@: b) = fv a ++ fv b
@@ -17,7 +16,6 @@ fv (a :@: b) = fv a ++ fv b
 sub :: (Name , Exp) -> Exp -> TCM Exp
 sub (x, a) (Form y is) = Form y <$> mapM (sub (x, a)) is
 sub (x, a) (Con y as) = Con y <$> mapM (sub (x, a)) as
-sub (x, a) (Elim y as) = Elim y <$> mapM (sub (x, a)) as
 sub (x, a) (Var y) | x == y = return a
 sub (x, a) (Var y) = return $ Var y
 sub (x, a) Type = return Type

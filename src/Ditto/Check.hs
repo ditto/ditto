@@ -67,7 +67,6 @@ infer (Lam x _A b) = do
   return $ Pi x _A _B
 infer (Form x is) = error "infer type former not implemented"
 infer (Con x as) = error "infer constructor former not implemented"
-infer (Elim x as) = error "infer eliminator not implemented"
 infer (f :@: a) = do
   _AB <- infer f
   case _AB of
