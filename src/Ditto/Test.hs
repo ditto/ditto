@@ -94,7 +94,7 @@ enumerationPatterns = unlines
   , "| (false) = true"
   , "end"
 
-  , "defn nand (b1 : Bool) (b2 : Bool) : Bool where"
+  , "defn nand (b1 b2 : Bool) : Bool where"
   , "| (true) (true) = false"
   , "| b1 b2 = true"
   , "end"

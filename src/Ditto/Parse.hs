@@ -173,14 +173,14 @@ parseLam = try $ do
 ----------------------------------------------------------------------
 
 parseTel :: Parser Tel
-parseTel = many1 (parens parseAnnot)
+parseTel = concat <$> many1 (parens parseAnnot)
 
-parseAnnot :: Parser (Name, Exp)
+parseAnnot :: Parser Tel
 parseAnnot = do
-  x <- parseName
+  xs <- many1 parseName
   symAscribe
   a <- parseExp
-  return (x , a)
+  return $ map (\ x -> (x , a)) xs
 
 ----------------------------------------------------------------------
 
