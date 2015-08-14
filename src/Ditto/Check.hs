@@ -25,18 +25,14 @@ checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = do
   check a _A
   addDef x a _A
-checkStmt (SData _X _A cs) = do
+checkStmt (SData x _A cs) = do
   check _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
-      addForm _X tel
+      addForm x tel
       mapM_ (\ (_, _A) -> check _A Type) cs
-      mapM_ (\c -> addCon =<< buildCon _X c) cs
-      addElim _X
-
-
-
+      mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
 
 ----------------------------------------------------------------------
