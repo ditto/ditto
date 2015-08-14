@@ -25,7 +25,6 @@ type Tel = [(Name, Exp)]
 
 data Sigma =
     Def Name Exp Exp
-  | Virt Name Exp Exp
   | DForm PName Tel
   | DCon PName Tel PName [Exp]
   deriving (Show, Read, Eq)

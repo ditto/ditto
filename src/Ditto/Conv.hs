@@ -41,14 +41,13 @@ alpha' dict _ _ = False
 
 ----------------------------------------------------------------------
 
--- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
 conv a b = do
   if alpha a b
   then return a
   else do
-    a' <- whnfVirt a
-    b' <- whnfVirt b
+    a' <- whnf a
+    b' <- whnf b
     conv' a' b'
 
 conv' :: Exp -> Exp -> TCM Exp

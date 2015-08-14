@@ -76,38 +76,31 @@ addCon (x, _As, _X, _Is) = do
 
 ----------------------------------------------------------------------
 
-data Normality = BetaDelta | Rho
-data Lookup = LDef | LType
-
 isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
-isNamed x (Virt y _ _) = x == y
 isNamed x (DForm y _) = False
 isNamed x (DCon y _ _ _) = False
 
 isPNamed :: PName -> Sigma -> Bool
 isPNamed x (Def y _ _) = False
-isPNamed x (Virt y _ _) = False
 isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
 
-envDef :: Normality -> Sigma -> Maybe Exp
-envDef n (Def _ a _) = Just a
-envDef Rho (Virt _ a _) = Just a
-envDef _ _ = Nothing
+envDef :: Sigma -> Maybe Exp
+envDef (Def _ a _) = Just a
+envDef _ = Nothing
 
 envType :: Sigma -> Exp
 envType (Def _ _ _A) = _A
-envType (Virt _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
 
 ----------------------------------------------------------------------
 
-lookupDef :: Normality -> Name -> TCM (Maybe Exp)
-lookupDef n x = do
+lookupDef :: Name -> TCM (Maybe Exp)
+lookupDef x = do
   DittoS {sig = sig} <- get
-  return $ envDef n =<< find (isNamed x) sig
+  return $ envDef =<< find (isNamed x) sig
 
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = do
