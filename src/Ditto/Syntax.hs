@@ -33,7 +33,7 @@ data Sigma =
   | DRed PName [Clause] Tel Exp
   deriving (Show, Read, Eq)
 
-data Pat = PVar Name | PCon Name [Name]
+data Pat = PVar Name | Inacc (Maybe Exp) | PCon Name [Pat]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

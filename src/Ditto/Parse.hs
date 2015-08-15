@@ -84,7 +84,7 @@ parsePattern = choice
 parsePCon :: Parser Pat
 parsePCon = try $ parens $ do
   x <- parseName
-  xs <- many parseName
+  xs <- many parsePattern
   return $ PCon x xs
 
 parsePVar :: Parser Pat
@@ -93,7 +93,7 @@ parsePVar = try $ PVar <$> parseName
 parsePInacc :: Parser Pat
 parsePInacc = try $ do
   symInacc
-  error "Inaccessible patterns not yet supported"
+  return $ Inacc Nothing
 
 ----------------------------------------------------------------------
 
