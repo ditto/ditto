@@ -2,13 +2,15 @@ module Ditto.Cover where
 import Ditto.Syntax
 import Ditto.Monad
 import Control.Monad.Except
+import Control.Applicative
 
 ----------------------------------------------------------------------
 
 type CtxMap = (Tel, [Pat])
 type Sub = [(Name, Pat)]
 
-data Match = MStuck [Name] | MSub Sub | MFail String
+data Match = MSub Sub | MStuck [Name] | MFail String
+data Cover = CSub Exp Sub | CStuck Name | CFail
 
 ----------------------------------------------------------------------
 
@@ -43,5 +45,39 @@ split = undefined
 
 findSplit :: Tel -> Name -> (Tel, Name, Exp, Tel)
 findSplit = undefined
+
+----------------------------------------------------------------------
+
+psubTel :: Tel -> Sub -> TCM Tel
+psubTel = undefined
+
+psub :: Exp -> Sub -> TCM Exp
+psub = undefined
+
+findMatch :: [Clause] -> [Pat] -> Cover
+findMatch = undefined
+
+----------------------------------------------------------------------
+
+     --  [σ = rhs]   Δ        δ       →      [Δ ⊢ match σ δ = rhs]
+cover :: [Clause] -> Tel -> [Pat] -> TCM [(Tel, [Pat], Exp)]
+cover cs _As qs = case findMatch cs qs of
+  CSub rhs rs -> do
+    rhs' <- psub rhs rs
+    return [(_As, qs, rhs')]
+  CStuck x -> undefined
+  CFail -> throwError "Coverage error"
+
+-- cover cs _As qs | allMatchesFail cs qs = 
+
+isMatchFail :: Match -> Bool
+isMatchFail (MFail _) = True
+isMatchFail _ = False
+
+allMatchesFail :: [Clause] -> [Pat] -> Bool
+allMatchesFail cs qs
+  = all (\ ps -> isMatchFail (match ps qs)) pss
+  where pss = map fst cs
+
 
 ----------------------------------------------------------------------

@@ -37,7 +37,7 @@ checkStmt (SData x _A cs) = do
 checkStmt (SDefn x _A cs) = do
   check _A Type
   (tel, end) <- splitTel _A
-  error "Checking pattern definitions not yet supported"
+  error "Checking pattern definitions not implemented"
 
 ----------------------------------------------------------------------
 
