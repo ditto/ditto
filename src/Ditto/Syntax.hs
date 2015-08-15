@@ -24,6 +24,8 @@ data Exp =
   deriving (Show, Read, Eq)
 
 type Tel = [(Name, Exp)]
+type Sub = [(Name, Exp)]
+type PSub = [(Name, Pat)]
 type Clause = ([Pat], Exp)
 
 data Sigma =
@@ -33,7 +35,7 @@ data Sigma =
   | DRed PName [Clause] Tel Exp
   deriving (Show, Read, Eq)
 
-data Pat = PVar Name | Inacc (Maybe Exp) | PCon Name [Pat]
+data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName [Pat]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

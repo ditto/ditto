@@ -83,7 +83,7 @@ parsePattern = choice
 
 parsePCon :: Parser Pat
 parsePCon = try $ parens $ do
-  x <- parseName
+  x <- parsePName
   xs <- many parsePattern
   return $ PCon x xs
 
