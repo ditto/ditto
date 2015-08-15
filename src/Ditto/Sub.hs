@@ -58,4 +58,7 @@ subs = foldM (flip sub)
 psubs :: Exp -> PSub -> TCM Exp
 psubs a xs = subs a (map (\ (x, p) -> (x, embedPat p)) xs)
 
+pcomp :: [Pat] -> PSub -> TCM PSub
+pcomp = error "TODO"
+
 ----------------------------------------------------------------------

@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
+import Data.Maybe
 
 ----------------------------------------------------------------------
 
@@ -88,9 +89,17 @@ isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
 isPNamed x (DRed y _ _ _) = x == y
 
+isConOf :: PName -> Sigma -> Bool
+isConOf x (DCon _ _ y _) = x == y
+isConOf x _ = False
+
 envDef :: Sigma -> Maybe Exp
 envDef (Def _ a _) = Just a
 envDef _ = Nothing
+
+conSig :: Sigma -> Maybe (PName, Tel, [Exp])
+conSig (DCon x _As _ is) = Just (x, _As, is)
+conSig _ = Nothing
 
 envType :: Sigma -> Exp
 envType (Def _ _ _A) = _A
@@ -99,6 +108,11 @@ envType (DCon _ _As _X _Is) = conType _As _X _Is
 envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
 
 ----------------------------------------------------------------------
+
+lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
+lookupCons x = do
+  DittoS {sig = sig} <- get
+  return . catMaybes . map conSig . filter (isConOf x) $ sig
 
 lookupDef :: Name -> TCM (Maybe Exp)
 lookupDef x = do
