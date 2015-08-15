@@ -9,69 +9,86 @@ import Control.Applicative
 type CtxMap = (Tel, [Pat])
 type Sub = [(Name, Pat)]
 
-data Match = MSub Sub | MStuck [Name] | MFail String
-data Cover = CSub Exp Sub | CStuck Name | CFail
+data Match = MSolve Sub | MStuck [Name] | MClash Name Name
+data Cover = CMatch Sub Exp | CSplit Name | CMiss
 
 ----------------------------------------------------------------------
 
-union :: Match -> Match -> Match
-union (MSub xs) (MSub ys) = MSub (xs ++ ys)
-union (MStuck xs) (MStuck ys) = MStuck (xs ++ ys)
-union (MFail e) _ = MFail e
-union _ (MFail e) = MFail e
-union (MStuck xs) _ = MStuck xs
-union _ (MStuck xs) = MStuck xs
+munion :: Match -> Match -> Match
+munion (MSolve xs) (MSolve ys) = MSolve (xs ++ ys)
+munion (MStuck xs) (MStuck ys) = MStuck (xs ++ ys)
+munion (MClash x y) _ = MClash x y
+munion _ (MClash x y) = MClash x y
+munion (MStuck xs) _ = MStuck xs
+munion _ (MStuck xs) = MStuck xs
 
 ----------------------------------------------------------------------
 
 match1 :: Pat -> Pat -> Match
-match1 (PVar x) p = MSub [(x, p)]
-match1 (Inacc _) _ = MSub []
+match1 (PVar x) p = MSolve [(x, p)]
+match1 (Inacc _) _ = MSolve []
 match1 (PCon x ps) (PCon y qs) | x == y = match ps qs
-match1 (PCon x _) (PCon y _) = MFail $ "Constructors clash: " ++ x ++ " != " ++ y
+match1 (PCon x _) (PCon y _) = MClash x y
 match1 (PCon x ps) (PVar y) = MStuck [y]
 match1 (PCon x ps) (Inacc _) = MStuck []
 
 match :: [Pat] -> [Pat] -> Match
-match [] [] = MSub []
-match (p:ps) (q:qs) = match1 p q `union` match ps qs
+match [] [] = MSolve []
+match (p:ps) (q:qs) = match1 p q `munion` match ps qs
 match _ _ = error "matching pattern clauses of different lengths"
 
 ----------------------------------------------------------------------
 
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ σ]
 split :: Tel -> Name -> Exp -> Tel -> TCM [CtxMap]
-split = undefined
+split = error "TODO"
 
 findSplit :: Tel -> Name -> (Tel, Name, Exp, Tel)
-findSplit = undefined
+findSplit = error "TODO"
 
 ----------------------------------------------------------------------
 
 psubTel :: Tel -> Sub -> TCM Tel
-psubTel = undefined
+psubTel = error "TODO"
 
 psub :: Exp -> Sub -> TCM Exp
-psub = undefined
-
-findMatch :: [Clause] -> [Pat] -> Cover
-findMatch = undefined
+psub = error "TODO"
 
 ----------------------------------------------------------------------
 
-     --  [σ = rhs]   Δ        δ       →      [Δ ⊢ match σ δ = rhs]
+cunion :: Cover -> Cover -> Cover
+cunion x@(CMatch _ _) _ = x
+cunion _ x@(CMatch _ _) = x
+cunion x@(CSplit _) _ = x
+cunion _ x@(CSplit _) = x
+cunion _ _ = CMiss
+
+----------------------------------------------------------------------
+
+matchClause :: Clause -> [Pat] -> Cover
+matchClause (ps, rhs) qs = case match ps qs of
+  MSolve rs -> CMatch rs rhs
+  MStuck xs -> CSplit (head xs)
+  MClash _ _ -> CMiss
+
+matchClauses :: [Clause] -> [Pat] -> Cover
+matchClauses cs qs = foldl (\ acc c -> acc `cunion` matchClause c qs) CMiss cs
+
+----------------------------------------------------------------------
+
+     --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ' = rhs']
 cover :: [Clause] -> Tel -> [Pat] -> TCM [(Tel, [Pat], Exp)]
-cover cs _As qs = case findMatch cs qs of
-  CSub rhs rs -> do
+cover cs _As qs = case matchClauses cs qs of
+  CMatch rs rhs -> do
     rhs' <- psub rhs rs
     return [(_As, qs, rhs')]
-  CStuck x -> undefined
-  CFail -> throwError "Coverage error"
+  CSplit xs -> error "TODO"
+  CMiss -> throwError "Coverage error"
 
 -- cover cs _As qs | allMatchesFail cs qs = 
 
 isMatchFail :: Match -> Bool
-isMatchFail (MFail _) = True
+isMatchFail (MClash _ _) = True
 isMatchFail _ = False
 
 allMatchesFail :: [Clause] -> [Pat] -> Bool
