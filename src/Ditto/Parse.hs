@@ -15,12 +15,11 @@ parseP = parse (whitespace >> parseStmts <* eof) ""
 keyType = symbol "Type"
 keyData = symbol "data"
 keyDef = symbol "def"
-keyDefn = symbol "defn"
 keyWhere = symbol "where"
 keyEnd = symbol "end"
 
 keywords = choice
-  [keyType, keyData, keyDef, keyDefn, keyWhere, keyEnd]
+  [keyType, keyData, keyDef, keyWhere, keyEnd]
 
 symAscribe = symbol ":"
 symChoice = symbol "|"
@@ -36,8 +35,8 @@ symRParen = symbol ")"
 parseStmts :: Parser [Stmt]
 parseStmts = many1 $ choice [
     parseDef
-  , parseData
   , parseDefn
+  , parseData
   ]
 
 parseDef :: Parser Stmt
@@ -55,12 +54,12 @@ parseDef = try $ do
 
 parseDefn :: Parser Stmt
 parseDefn = try $ do
-  keyDefn
+  keyDef
   x <- parsePName
   optional $ symAscribe
   _A <- parseExp
   keyWhere
-  cs <- many parseClause
+  cs <- many1 parseClause
   keyEnd
   return $ SDefn x _A cs
 

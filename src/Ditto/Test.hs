@@ -89,12 +89,12 @@ enumerationPatterns = unlines
   , "| false : Bool"
   , "end"
 
-  , "defn not (b : Bool) : Bool where"
+  , "def not (b : Bool) : Bool where"
   , "| (true) = false"
   , "| (false) = true"
   , "end"
 
-  , "defn nand (b1 b2 : Bool) : Bool where"
+  , "def nand (b1 b2 : Bool) : Bool where"
   , "| (true) (true) = false"
   , "| b1 b2 = true"
   , "end"
@@ -105,7 +105,7 @@ enumerationPatterns = unlines
   , "| blue : RGB"
   , "end"
 
-  , "defn colorBlind (r : RGB) : Bool where"
+  , "def colorBlind (r : RGB) : Bool where"
   , "| (green) = false"
   , "| r = true"
   , "end"
@@ -117,7 +117,7 @@ nonDependentPatterns = unlines
   , "| suc (n : Nat) : Nat"
   , "end"
 
-  , "defn pred (n : Nat) : Nat where"
+  , "def pred (n : Nat) : Nat where"
   , "| (zero) = zero"
   , "| (suc n) = n"
   , "end"
