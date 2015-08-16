@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Ditto.Cover where
 import Ditto.Syntax
 import Ditto.Monad
@@ -15,14 +16,12 @@ split _As x = splitOn _As1 x _A _As2
 
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitOn :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitOn _As x _B _Cs = do
-  _B' <- whnf _B
-  case _B' of
-    Form _X [] -> do
-      _Bs <- lookupCons _X
-      error "TODO"
-    Form _X is -> error "Splitting on indexed datatype not yet implemented"
-    otherwise -> throwError "Case splitting is only allowed on datatypes"
+splitOn _As x _B _Cs = whnf _B >>= \case
+  Form _X [] -> do
+    _Bs <- lookupCons _X
+    error "TODO"
+  Form _X is -> error "Splitting on indexed datatype not yet implemented"
+  otherwise -> throwError "Case splitting is only allowed on datatypes"
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)
