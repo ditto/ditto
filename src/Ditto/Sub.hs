@@ -58,7 +58,7 @@ subs = foldM (flip sub)
 psubs :: Exp -> PSub -> TCM Exp
 psubs a xs = subs a (map (\ (x, p) -> (x, embedPat p)) xs)
 
-pcomp :: [Pat] -> PSub -> TCM PSub
-pcomp = error "TODO"
+pcomp :: [Pat] -> PSub -> TCM [Pat]
+pcomp = error "TODO: non-avoiding sub into pats and capture-avoid in Inacc"
 
 ----------------------------------------------------------------------

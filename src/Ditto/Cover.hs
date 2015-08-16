@@ -9,9 +9,12 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
+split :: Tel -> Name -> TCM [(Tel, PSub)]
+split = error "TODO"
+
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ σ]
-split :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, [Pat])]
-split _As x _B _Cs = do
+splitOn :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
+splitOn _As x _B _Cs = do
   _B' <- whnf _B
   case _B' of
     Form _X [] -> do
@@ -31,7 +34,10 @@ cover cs _As qs = case matchClauses cs qs of
   CMatch rs rhs -> do
     rhs' <- psubs rhs rs
     return [(_As, qs, rhs')]
-  CSplit xs -> error "TODO"
+  CSplit x -> do
+    qss <- split _As x
+    css <- mapM (\(_As' , qs') -> cover cs _As' =<< pcomp qs qs') qss
+    return $ concat css
   CMiss -> throwError "Coverage error"
 
 ----------------------------------------------------------------------
