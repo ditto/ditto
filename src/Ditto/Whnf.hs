@@ -17,7 +17,7 @@ whnf (f :@: a) = do
   f' <- whnf f
   a' <- whnf a
   case f' of
-    Lam x _A b -> whnf =<< sub (x , a') b
+    Lam x _A b -> whnf =<< sub1 (x , a') b
     otherwise -> return $ f' :@: a'
 whnf (Var x) = do
   ma <- lookupDef x

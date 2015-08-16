@@ -28,15 +28,15 @@ findSplit = error "TODO"
 
 ----------------------------------------------------------------------
 
-     --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ' = rhs']
+     --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover :: [Clause] -> Tel -> [Pat] -> TCM [(Tel, [Pat], Exp)]
 cover cs _As qs = case matchClauses cs qs of
   CMatch rs rhs -> do
-    rhs' <- psubs rhs rs
+    rhs' <- psub rhs rs
     return [(_As, qs, rhs')]
   CSplit x -> do
     qss <- split _As x
-    css <- mapM (\(_As' , qs') -> cover cs _As' =<< pcomp qs qs') qss
+    css <- mapM (\(_As' , qs') -> cover cs _As' =<< psubPats qs qs') qss
     return $ concat css
   CMiss -> throwError "Coverage error"
 

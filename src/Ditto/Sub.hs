@@ -19,28 +19,28 @@ fv (a :@: b) = fv a ++ fv b
 
 ----------------------------------------------------------------------
 
-sub :: (Name , Exp) -> Exp -> TCM Exp
-sub (x, a) (Form y is) = Form y <$> mapM (sub (x, a)) is
-sub (x, a) (Con y as) = Con y <$> mapM (sub (x, a)) as
-sub (x, a) (Red y as) = Red y <$> mapM (sub (x, a)) as
-sub (x, a) (Var y) | x == y = return a
-sub (x, a) (Var y) = return $ Var y
-sub (x, a) Type = return Type
-sub (x, a) (Lam y _B b) | x == y = Lam y <$> sub (x, a) _B <*> pure b
-sub (x, a) (Lam y _B b) | y `notElem` (fv a) =
-  Lam y <$> sub (x, a) _B <*> sub (x, a) b
-sub (x, a) (Lam y _B b) = do
+sub1 :: (Name , Exp) -> Exp -> TCM Exp
+sub1 (x, a) (Form y is) = Form y <$> mapM (sub1 (x, a)) is
+sub1 (x, a) (Con y as) = Con y <$> mapM (sub1 (x, a)) as
+sub1 (x, a) (Red y as) = Red y <$> mapM (sub1 (x, a)) as
+sub1 (x, a) (Var y) | x == y = return a
+sub1 (x, a) (Var y) = return $ Var y
+sub1 (x, a) Type = return Type
+sub1 (x, a) (Lam y _B b) | x == y = Lam y <$> sub1 (x, a) _B <*> pure b
+sub1 (x, a) (Lam y _B b) | y `notElem` (fv a) =
+  Lam y <$> sub1 (x, a) _B <*> sub1 (x, a) b
+sub1 (x, a) (Lam y _B b) = do
   y' <- gensym
-  b' <- sub (y, Var y') b
-  Lam y' <$> sub (x, a) _B <*> sub (x, a) b'
-sub (x, a) (Pi y _A _B) | x == y = Pi y <$> sub (x, a) _A <*> pure _B
-sub (x, a) (Pi y _A _B) | y `notElem` (fv a) =
-  Pi y <$> sub (x, a) _A <*> sub (x, a) _B
-sub (x, a) (Pi y _A _B) = do
+  b' <- sub1 (y, Var y') b
+  Lam y' <$> sub1 (x, a) _B <*> sub1 (x, a) b'
+sub1 (x, a) (Pi y _A _B) | x == y = Pi y <$> sub1 (x, a) _A <*> pure _B
+sub1 (x, a) (Pi y _A _B) | y `notElem` (fv a) =
+  Pi y <$> sub1 (x, a) _A <*> sub1 (x, a) _B
+sub1 (x, a) (Pi y _A _B) = do
   y' <- gensym
-  _B' <- sub (y, Var y') _B
-  Pi y' <$> sub (x, a) _A <*> sub (x, a) _B'
-sub (x, a) (f :@: b) = (:@:) <$> sub (x, a) f <*> sub (x, a) b
+  _B' <- sub1 (y, Var y') _B
+  Pi y' <$> sub1 (x, a) _A <*> sub1 (x, a) _B'
+sub1 (x, a) (f :@: b) = (:@:) <$> sub1 (x, a) f <*> sub1 (x, a) b
 
 ----------------------------------------------------------------------
 
@@ -52,13 +52,19 @@ embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a 
 
 ----------------------------------------------------------------------
 
-subs :: Exp -> Sub -> TCM Exp
-subs = foldM (flip sub)
+sub :: Exp -> Sub -> TCM Exp
+sub = foldM (flip sub1)
 
-psubs :: Exp -> PSub -> TCM Exp
-psubs a xs = subs a (map (\ (x, p) -> (x, embedPat p)) xs)
+psub :: Exp -> PSub -> TCM Exp
+psub a xs = sub a (map (\ (x, p) -> (x, embedPat p)) xs)
 
-pcomp :: [Pat] -> PSub -> TCM [Pat]
-pcomp = error "TODO: non-avoiding sub into pats and capture-avoid in Inacc"
+psubPat :: Pat -> PSub -> TCM Pat
+psubPat (PVar x) xs = return $ maybe (PVar x) id (lookup x xs)
+psubPat (PCon x ps) xs = PCon x <$> psubPats ps xs
+psubPat (Inacc Nothing) xs = return $ Inacc Nothing
+psubPat (Inacc (Just a)) xs = Inacc . Just <$> psub a xs
+
+psubPats :: [Pat] -> PSub -> TCM [Pat]
+psubPats ps xs = mapM (flip psubPat xs) ps
 
 ----------------------------------------------------------------------

@@ -77,7 +77,7 @@ infer (f :@: a) = do
   case _AB of
     Pi x _A _B -> do
       check a _A
-      sub (x, a) _B
+      sub1 (x, a) _B
     otherwise -> throwError "Function does not have Pi type"
 
 ----------------------------------------------------------------------
