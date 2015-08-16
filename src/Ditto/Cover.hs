@@ -10,9 +10,10 @@ import Control.Applicative
 ----------------------------------------------------------------------
 
 split :: Tel -> Name -> TCM [(Tel, PSub)]
-split = error "TODO"
+split _As x = splitOn _As1 x _A _As2
+  where (_As1, _A, _As2) = findSplit _As x
 
---       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ σ]
+--       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitOn :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitOn _As x _B _Cs = do
   _B' <- whnf _B
@@ -23,8 +24,9 @@ splitOn _As x _B _Cs = do
     Form _X is -> error "Splitting on indexed datatype not yet implemented"
     otherwise -> throwError "Case splitting is only allowed on datatypes"
 
-findSplit :: Tel -> Name -> (Tel, Name, Exp, Tel)
-findSplit = error "TODO"
+findSplit :: Tel -> Name -> (Tel, Exp, Tel)
+findSplit _As x = (_As1, snd (head _As2), tail _As2)
+  where (_As1, _As2) = break ((x ==) . fst) _As
 
 ----------------------------------------------------------------------
 
@@ -36,8 +38,7 @@ cover cs _As qs = case matchClauses cs qs of
     return [(_As, qs, rhs')]
   CSplit x -> do
     qss <- split _As x
-    css <- mapM (\(_As' , qs') -> cover cs _As' =<< psubPats qs qs') qss
-    return $ concat css
+    concat <$> mapM (\(_As' , qs') -> cover cs _As' =<< psubPats qs qs') qss
   CMiss -> throwError "Coverage error"
 
 ----------------------------------------------------------------------
