@@ -59,8 +59,14 @@ data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName [Pat]
 
 ----------------------------------------------------------------------
 
+names :: Tel -> [Name]
+names = map fst
+
 varNames :: Tel -> [Exp]
 varNames = map (Var . fst)
+
+pvarNames :: Tel -> [Pat]
+pvarNames = map (PVar . fst)
 
 pis :: Tel -> Exp -> Exp
 pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)
@@ -68,9 +74,8 @@ pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)
 lams :: Tel -> Exp -> Exp
 lams = flip $ foldr (\ (x , _A) _B -> Lam x _A _B)
 
-apps :: [Exp] -> Exp
-apps (x:xs) = foldl (:@:) x xs
-apps [] = error "Application must have at least one argument"
+apps :: Exp -> [Exp] -> Exp
+apps x xs = foldl (:@:) x xs
 
 ----------------------------------------------------------------------
 

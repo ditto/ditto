@@ -125,7 +125,7 @@ parseExp = choice [
   ]
 
 parseApps :: Parser Exp
-parseApps = apps <$> many1 parseAtom
+parseApps = apps <$> parseAtom <*> many parseAtom
 
 parseAtom :: Parser Exp
 parseAtom = choice [

@@ -79,13 +79,22 @@ embedPat (PCon x as) = Con x (map embedPat as)
 embedPat (Inacc (Just a)) = a
 embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 
+embedPSub :: PSub -> Sub
+embedPSub = map (\ (x, p) -> (x, embedPat p))
+
 ----------------------------------------------------------------------
 
 sub :: Exp -> Sub -> TCM Exp
 sub = foldM (flip sub1)
 
+subTel :: Tel -> Sub -> TCM Tel
+subTel _As qs = foldM (flip subTel1) _As qs
+
 psub :: Exp -> PSub -> TCM Exp
-psub a xs = sub a (map (\ (x, p) -> (x, embedPat p)) xs)
+psub a xs = sub a (embedPSub xs)
+
+psubTel :: Tel -> PSub -> TCM Tel
+psubTel _As qs = subTel _As (embedPSub qs)
 
 psubPat :: Pat -> PSub -> TCM Pat
 psubPat (PVar x) xs = return $ maybe (PVar x) id (lookup x xs)
