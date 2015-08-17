@@ -17,6 +17,10 @@ fv (Pi n _A _B) = fv _A ++ (n `delete` (fv _B))
 fv (Lam n _A a) = fv _A ++ (n `delete` (fv a))
 fv (a :@: b) = fv a ++ fv b
 
+fvTel :: Tel -> [Name]
+fvTel [] = []
+fvTel ((_X, _A):_As) = fv _A ++ (_X `delete` fvTel _As)
+
 ----------------------------------------------------------------------
 
 sub1 :: (Name , Exp) -> Exp -> TCM Exp
@@ -41,6 +45,20 @@ sub1 (x, a) (Pi y _A _B) = do
   _B' <- sub1 (y, Var y') _B
   Pi y' <$> sub1 (x, a) _A <*> sub1 (x, a) _B'
 sub1 (x, a) (f :@: b) = (:@:) <$> sub1 (x, a) f <*> sub1 (x, a) b
+
+subTel1 :: (Name, Exp) -> Tel -> TCM Tel
+subTel1 (x, a) [] = return []
+subTel1 (x, a) ((y, _B):_Bs) | x == y = do
+  _B' <- sub1 (x, a) _B
+  return $ (y, _B'):_Bs
+subTel1 (x, a) ((y, _B):_Bs) | y `notElem` (fv _B) = do
+  _B' <- sub1 (x, a) _B
+  ((y, _B'):) <$> subTel1 (x, a) _Bs
+subTel1 (x, a) ((y, _B):_Bs) = do
+  y' <- gensymHint y
+  _Bs' <- subTel1 (y, Var y') _Bs
+  _B' <- sub1 (x, a) _B
+  ((y', _B'):) <$> subTel1 (x, a) _Bs'
 
 ----------------------------------------------------------------------
 
