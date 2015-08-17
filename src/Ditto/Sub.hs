@@ -62,6 +62,17 @@ subTel1 (x, a) ((y, _B):_Bs) = do
 
 ----------------------------------------------------------------------
 
+freshFor :: [Name] -> Tel -> TCM Tel
+freshFor xs [] = return []
+freshFor xs ((x, _A):_As) | x `notElem` xs =
+  ((x, _A):) <$> freshFor xs _As
+freshFor xs ((x, _A):_As) = do
+  x' <- gensymHint x
+  _As' <- subTel1 (x, Var x') _As
+  ((x', _A):) <$> freshFor xs _As'
+
+----------------------------------------------------------------------
+
 embedPat :: Pat -> Exp
 embedPat (PVar x) = Var x
 embedPat (PCon x as) = Con x (map embedPat as)
