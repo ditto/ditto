@@ -155,6 +155,8 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateDef
   , testChecksFails duplicateFormer
   , testChecksFails duplicateConstructor
+  , testChecks enumerationPatterns
+  , testChecks nonDependentPatterns
   ]
 
 parseTests :: Test

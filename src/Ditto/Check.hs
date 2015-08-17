@@ -4,6 +4,7 @@ import Ditto.Whnf
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Cover
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Applicative
@@ -36,8 +37,11 @@ checkStmt (SData x _A cs) = do
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   check _A Type
-  (tel, end) <- splitTel _A
-  error "Checking pattern definitions not implemented"
+  (_As, _B) <- splitTel _A
+  cover cs _As (pvarNames _As)
+  return ()
+  -- TODO check RHS (end)
+  -- TODO add DRed to sigma
 
 ----------------------------------------------------------------------
 
