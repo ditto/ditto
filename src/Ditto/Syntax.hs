@@ -2,7 +2,32 @@ module Ditto.Syntax where
 
 ----------------------------------------------------------------------
 
-type Name = String
+data Name = Name String (Maybe Integer)
+  deriving (Read, Eq)
+
+instance Show Name where
+  show (Name x Nothing) = show x
+  show (Name x (Just n)) = show x ++ "$" ++ show n
+
+s2n :: String -> Name
+s2n x = Name x Nothing
+
+uniqName :: Name -> Integer -> Name
+uniqName (Name x _) n = Name x (Just n)
+
+----------------------------------------------------------------------
+
+newtype PName = PName String
+  deriving (Read, Eq)
+
+instance Show PName where
+  show (PName x) = "#" ++ x
+
+pname2name :: PName -> Name
+pname2name (PName x) = Name x Nothing
+
+----------------------------------------------------------------------
+
 type Cons = [(PName, Exp)]
 
 data Stmt =
@@ -10,12 +35,6 @@ data Stmt =
   | SData PName Exp Cons
   | SDefn PName Exp [Clause]
   deriving (Show, Read, Eq)
-
-newtype PName = PName { fromPName :: Name }
-  deriving (Read, Eq)
-
-instance Show PName where
-  show (PName x) = "#" ++ x
 
 data Exp =
     Type | Pi Name Exp Exp | Lam Name Exp Exp

@@ -143,10 +143,13 @@ parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName
 
 parsePName :: Parser PName
-parsePName = PName <$> parseName
+parsePName = PName <$> parseIdent
 
 parseName :: Parser Name
-parseName = try $ do
+parseName = s2n <$> parseIdent
+
+parseIdent :: Parser String
+parseIdent = try $ do
   notFollowedBy keywords
   lexeme ((:) <$> firstChar <*> many nextChar)
   where

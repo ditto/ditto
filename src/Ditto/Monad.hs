@@ -40,12 +40,12 @@ initialR = DittoR
 extCtx :: Name -> Exp -> DittoR -> DittoR
 extCtx x _A r = r { ctx = (x , _A) : ctx r }
 
-gensym :: TCM Name
-gensym = do
+gensymHint :: Name -> TCM Name
+gensymHint x = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
   put state { nameId = nameId' }
-  return $ "$x" ++ show nameId'
+  return $ uniqName x nameId'
 
 addSig :: Sigma -> TCM ()
 addSig s = do
@@ -65,7 +65,7 @@ addForm x _Is = do
   when (any (isPNamed x) sig) $ throwError
     $ "Type former with name already exists: " ++ show x
   addSig (DForm x _Is)
-  addDef (fromPName x) (lams _Is (Form x (varNames _Is))) (formType _Is)
+  addDef (pname2name x) (lams _Is (Form x (varNames _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
 addCon (x, _As, _X, _Is) = do
@@ -73,7 +73,7 @@ addCon (x, _As, _X, _Is) = do
   when (any (isPNamed x) sig) $ throwError
     $ "Constructor with name already exists: " ++ show x
   addSig (DCon x _As _X _Is)
-  addDef (fromPName x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+  addDef (pname2name x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
 
 ----------------------------------------------------------------------
 

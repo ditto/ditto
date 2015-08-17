@@ -30,14 +30,14 @@ sub1 (x, a) (Lam y _B b) | x == y = Lam y <$> sub1 (x, a) _B <*> pure b
 sub1 (x, a) (Lam y _B b) | y `notElem` (fv a) =
   Lam y <$> sub1 (x, a) _B <*> sub1 (x, a) b
 sub1 (x, a) (Lam y _B b) = do
-  y' <- gensym
+  y' <- gensymHint y
   b' <- sub1 (y, Var y') b
   Lam y' <$> sub1 (x, a) _B <*> sub1 (x, a) b'
 sub1 (x, a) (Pi y _A _B) | x == y = Pi y <$> sub1 (x, a) _A <*> pure _B
 sub1 (x, a) (Pi y _A _B) | y `notElem` (fv a) =
   Pi y <$> sub1 (x, a) _A <*> sub1 (x, a) _B
 sub1 (x, a) (Pi y _A _B) = do
-  y' <- gensym
+  y' <- gensymHint y
   _B' <- sub1 (y, Var y') _B
   Pi y' <$> sub1 (x, a) _A <*> sub1 (x, a) _B'
 sub1 (x, a) (f :@: b) = (:@:) <$> sub1 (x, a) f <*> sub1 (x, a) b

@@ -20,10 +20,10 @@ ppExp (Var x) = ppName x
 ppExp (f :@: a) = (parens $ ppExp f) <+> (parens $ ppExp a)
 
 ppName :: Name -> Box
-ppName = text
+ppName = text . show
 
 ppPName :: PName -> Box
-ppPName = text . ("#"++) . fromPName
+ppPName = text . show
 
 ----------------------------------------------------------------------
 
