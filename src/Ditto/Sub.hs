@@ -105,4 +105,7 @@ psubPat (Inacc (Just a)) xs = Inacc . Just <$> psub a xs
 psubPats :: [Pat] -> PSub -> TCM [Pat]
 psubPats ps xs = mapM (flip psubPat xs) ps
 
+subClauseType :: Exp -> Tel -> [Pat] -> TCM Exp
+subClauseType _B _As ps = psub _B (zip (names _As) ps)
+
 ----------------------------------------------------------------------

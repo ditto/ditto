@@ -38,7 +38,10 @@ initialR = DittoR
   }
 
 extCtx :: Name -> Exp -> DittoR -> DittoR
-extCtx x _A r = r { ctx = (x , _A) : ctx r }
+extCtx x _A r = extCtxs [(x, _A)] r
+
+extCtxs :: Tel -> DittoR -> DittoR
+extCtxs _As r = r { ctx = _As ++ ctx r }
 
 gensymHint :: Name -> TCM Name
 gensymHint x = do

@@ -46,8 +46,12 @@ checkStmt (SDefn x _A cs) = do
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
-  -- TODO check RHS (end)
+  mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
   addRed x cs' _As _B
+
+checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
+checkRHS _Delta lhs rhs _As _B
+  = checkExts _Delta rhs =<< subClauseType _B _As lhs
 
 ----------------------------------------------------------------------
 
@@ -55,7 +59,10 @@ inferExt :: (Name, Exp) -> Exp -> TCM Exp
 inferExt (x , _A) b = local (extCtx x _A) (infer b)
 
 checkExt :: (Name, Exp) -> Exp -> Exp -> TCM ()
-checkExt (x , _A) b _B = local (extCtx x _A) (check b _B)
+checkExt _A b _B = checkExts [_A] b _B
+
+checkExts :: Tel -> Exp -> Exp -> TCM ()
+checkExts _As b _B = local (extCtxs _As) (check b _B)
 
 ----------------------------------------------------------------------
 
