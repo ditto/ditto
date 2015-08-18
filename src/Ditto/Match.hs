@@ -17,7 +17,7 @@ munion (MStuck xs) (MStuck ys) = MStuck (xs ++ ys)
 munion (MClash x y) _ = MClash x y
 munion _ (MClash x y) = MClash x y
 munion (MStuck xs) _ = MStuck xs
-munion _ (MStuck xs) = MStuck xs
+munion _ (MStuck ys) = MStuck ys
 
 ----------------------------------------------------------------------
 
@@ -38,10 +38,8 @@ match _ _ = error "matching pattern clauses of different lengths"
 
 cunion :: Cover -> Cover -> Cover
 cunion x@(CMatch _ _) _ = x
-cunion _ x@(CMatch _ _) = x
 cunion x@(CSplit _) _ = x
-cunion _ x@(CSplit _) = x
-cunion _ _ = CMiss
+cunion _ y = y
 
 ----------------------------------------------------------------------
 
