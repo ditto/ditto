@@ -26,6 +26,7 @@ symChoice = symbol "|"
 symInacc = symbol "*"
 symArrow = symbol "->"
 symEq = symbol "="
+symComma = symbol ","
 
 symLParen = symbol "("
 symRParen = symbol ")"
@@ -105,15 +106,15 @@ parseData = try $ do
   keyWhere
   cons <- many parseCon
   keyEnd
-  return $ SData x _A cons
+  return $ SData x _A (concat cons)
 
-parseCon :: Parser (PName, Exp)
+parseCon :: Parser Cons
 parseCon = try $ do
   symChoice
-  x <- parsePName
+  xs <- commaSep parsePName
   optional $ symAscribe
   _A <- parseExp
-  return (x , _A)
+  return (map (\x -> (x, _A)) xs)
 
 ----------------------------------------------------------------------
 
@@ -179,12 +180,15 @@ parseTel = concat <$> many1 (parens parseAnnot)
 
 parseAnnot :: Parser Tel
 parseAnnot = do
-  xs <- many1 parseName
+  xs <- commaSep parseName
   symAscribe
   a <- parseExp
   return $ map (\ x -> (x , a)) xs
 
 ----------------------------------------------------------------------
+
+commaSep :: Parser a -> Parser [a]
+commaSep p = p `sepBy1` symComma
 
 parens :: Parser a -> Parser a
 parens = between symLParen symRParen
