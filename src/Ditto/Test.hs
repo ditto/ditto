@@ -118,6 +118,22 @@ nonDependentPatterns = unlines
   , "| (zero) = zero"
   , "| (suc n) = n"
   , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| (zero) m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "def mult (n m : Nat) : Nat where"
+  , "| (zero) m = zero"
+  , "| (suc n) m = add n (mult n m)"
+  , "end"
+
+  , "def max (x y : Nat) : Nat where"
+  , "| x (zero) = x"
+  , "| (zero) y = y"
+  , "| (suc x) (suc y) = suc (max x y)"
+  , "end"
   ]
 
 unreachableNonDependent = unlines
