@@ -56,14 +56,14 @@ addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = do
   DittoS {sig = sig} <- get
   when (any (isNamed x) sig) $ throwError
-    $ "Definition with name already exists: " ++ show x
+    $ "Definition name already exists in the environment: " ++ show x
   addSig (Def x a _A)
 
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
   DittoS {sig = sig} <- get
   when (any (isPNamed x) sig) $ throwError
-    $ "Type former with name already exists: " ++ show x
+    $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x _Is)
   addDef (pname2name x) (lams _Is (Form x (varNames _Is))) (formType _Is)
 
@@ -71,9 +71,17 @@ addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
 addCon (x, _As, _X, _Is) = do
   DittoS {sig = sig} <- get
   when (any (isPNamed x) sig) $ throwError
-    $ "Constructor with name already exists: " ++ show x
+    $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
   addDef (pname2name x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+
+addRed :: PName -> [CheckedClause] -> Tel -> Exp -> TCM ()
+addRed x cs _As _B = do
+  DittoS {sig = sig} <- get
+  when (any (isPNamed x) sig) $ throwError
+    $ "Reduction name already exists in the environment: " ++ show x
+  addSig (DRed x cs _As _B)
+  addDef (pname2name x) (lams _As (Red x (varNames _As))) (pis _As _B)
 
 ----------------------------------------------------------------------
 

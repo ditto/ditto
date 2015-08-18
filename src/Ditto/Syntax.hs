@@ -52,7 +52,7 @@ data Sigma =
     Def Name Exp Exp
   | DForm PName Tel
   | DCon PName Tel PName [Exp]
-  | DRed PName [Clause] Tel Exp
+  | DRed PName [CheckedClause] Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName [Pat]

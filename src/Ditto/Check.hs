@@ -47,7 +47,7 @@ checkStmt (SDefn x _A cs) = do
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
   -- TODO check RHS (end)
-  -- TODO add DRed to sigma
+  addRed x cs' _As _B
 
 ----------------------------------------------------------------------
 
