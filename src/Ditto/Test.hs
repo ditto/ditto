@@ -123,6 +123,30 @@ nonDependentPatterns = unlines
   , "end"
   ]
 
+unreachableNonDependent = unlines
+  [ "data Bool : Type where"
+  , "| true : Bool"
+  , "| false : Bool"
+  , "end"
+
+  , "def illNot (b : Bool) : Bool where"
+  , "| (zero) = false"
+  , "| b = true"
+  , "end"
+  ]
+
+uncoveredNonDependent = unlines
+  [ "data Bool : Type where"
+  , "| true : Bool"
+  , "| false : Bool"
+  , "end"
+
+  , "def illNot (b : Bool) : Bool where"
+  , "| (zero) = false"
+  , "| (false) = true"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -157,6 +181,8 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateConstructor
   , testChecks enumerationPatterns
   , testChecks nonDependentPatterns
+  , testChecksFails unreachableNonDependent
+  , testChecksFails uncoveredNonDependent
   ]
 
 parseTests :: Test

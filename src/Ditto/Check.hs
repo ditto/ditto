@@ -42,7 +42,7 @@ checkStmt (SDefn x _A cs) = do
   cs' <- cover cs _As (pvarNames _As)
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $ do
-    throwError $ "Not all user clauses are reachable:\n"
+    throwError $ "Unreachable user clauses:\n"
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
