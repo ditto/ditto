@@ -4,6 +4,7 @@ import Ditto.Whnf
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Match
 import Ditto.Cover
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -38,8 +39,11 @@ checkStmt (SData x _A cs) = do
 checkStmt (SDefn x _A cs) = do
   check _A Type
   (_As, _B) <- splitTel _A
-  cover cs _As (pvarNames _As)
-  return ()
+  cs' <- cover cs _As (pvarNames _As)
+  let unreached = unreachableClauses cs cs'
+  unless (null unreached) $ do
+    throwError $ "Not all user clauses are reachable:\n"
+      ++ (unlines (map show unreached))
   -- TODO check RHS (end)
   -- TODO add DRed to sigma
 

@@ -46,6 +46,7 @@ type Tel = [(Name, Exp)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
 type Clause = ([Pat], Exp)
+type CheckedClause = (Tel, [Pat], Exp)
 
 data Sigma =
     Def Name Exp Exp

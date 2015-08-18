@@ -37,7 +37,7 @@ findSplit _As x = (_As1, snd (head _As2), tail _As2)
 ----------------------------------------------------------------------
 
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
-cover :: [Clause] -> Tel -> [Pat] -> TCM [(Tel, [Pat], Exp)]
+cover :: [Clause] -> Tel -> [Pat] -> TCM [CheckedClause]
 cover cs _As qs = case matchClauses cs qs of
   CMatch rs rhs -> do
     rhs' <- psub rhs rs

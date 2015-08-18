@@ -55,3 +55,14 @@ matchClauses :: [Clause] -> [Pat] -> Cover
 matchClauses cs qs = foldl (\ acc c -> acc `cunion` matchClause c qs) CMiss cs
 
 ----------------------------------------------------------------------
+
+isMatch :: Match -> Bool
+isMatch (MSolve _) = True
+isMatch _ = False
+
+unreachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
+unreachableClauses cs cs' =
+  filter (\(ps, _) -> not (any isMatch (map (match ps) qss))) cs
+  where qss = map (\(_, qs, _) -> qs) cs'
+
+----------------------------------------------------------------------
