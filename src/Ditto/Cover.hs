@@ -28,7 +28,7 @@ splitCon _As x (y, _Bs, _) _Cs = do
   _Bs' <- freshFor (names _As) _Bs
   let qs = [(x, PCon y (pvarNames _Bs'))]
   _Cs' <- psubTel _Cs qs
-  return (_Cs', qs)
+  return (_As ++ _Bs' ++ _Cs', qs)
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)
