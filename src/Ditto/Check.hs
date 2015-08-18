@@ -8,6 +8,7 @@ import Ditto.Match
 import Ditto.Cover
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Control.Applicative
 
 ----------------------------------------------------------------------
@@ -46,8 +47,8 @@ checkStmt (SDefn x _A cs) = do
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
-  mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
   addRed x cs' _As _B
+  mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
 
 checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
 checkRHS _Delta lhs rhs _As _B
@@ -79,9 +80,12 @@ infer (Var x) = do
     Just _A -> return _A
     Nothing -> do
       DittoR {ctx = ctx} <- ask
+      DittoS {sig = sig} <- get
       throwError $ "Variable not in scope: " ++ show x
         ++ "\nContext:\n"
         ++ unlines (map show ctx)
+        ++ "\nEnvironment:\n"
+        ++ unlines (map show sig)
 infer Type = return Type
 infer (Pi x _A _B) = do
   check _A Type
