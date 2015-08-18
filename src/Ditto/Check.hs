@@ -77,7 +77,11 @@ infer (Var x) = do
   ma <- lookupCtx x
   case ma of
     Just _A -> return _A
-    Nothing -> throwError $ "Variable not in scope: " ++ show x
+    Nothing -> do
+      DittoR {ctx = ctx} <- ask
+      throwError $ "Variable not in scope: " ++ show x
+        ++ "\nContext:\n"
+        ++ unlines (map show ctx)
 infer Type = return Type
 infer (Pi x _A _B) = do
   check _A Type
