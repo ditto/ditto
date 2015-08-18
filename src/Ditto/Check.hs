@@ -44,6 +44,8 @@ checkStmt (SDefn x _A cs) = do
   unless (null unreached) $ do
     throwError $ "Not all user clauses are reachable:\n"
       ++ (unlines (map show unreached))
+      ++ "\nCovered by:\n"
+      ++ (unlines (map show cs'))
   -- TODO check RHS (end)
   -- TODO add DRed to sigma
 
