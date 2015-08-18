@@ -85,7 +85,7 @@ duplicateConstructor = unlines
 
 enumerationPatterns = unlines
   [ "data Bool : Type where"
-  , "| true, false : Bool"
+  , "| true/false : Bool"
   , "end"
 
   , "def not (b : Bool) : Bool where"
@@ -93,13 +93,13 @@ enumerationPatterns = unlines
   , "| (false) = true"
   , "end"
 
-  , "def nand (b1, b2 : Bool) : Bool where"
+  , "def nand (b1 b2 : Bool) : Bool where"
   , "| (true) (true) = false"
   , "| b1 b2 = true"
   , "end"
 
   , "data RGB : Type where"
-  , "| red, green, blue : RGB"
+  , "| red/green/blue : RGB"
   , "end"
 
   , "def colorBlind (r : RGB) : Bool where"
@@ -122,7 +122,7 @@ nonDependentPatterns = unlines
 
 unreachableNonDependent = unlines
   [ "data Bool : Type where"
-  , "| true, false : Bool"
+  , "| true/false : Bool"
   , "end"
 
   , "def illNot (b : Bool) : Bool where"
@@ -133,7 +133,7 @@ unreachableNonDependent = unlines
 
 uncoveredNonDependent = unlines
   [ "data Bool : Type where"
-  , "| true, false : Bool"
+  , "| true/false : Bool"
   , "end"
 
   , "def illNot (b : Bool) : Bool where"
