@@ -1,4 +1,3 @@
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Ditto.Check where
@@ -121,7 +120,8 @@ infer (Con x as) = do
   case _C of
    Just (DCon x _As _X _Is) -> do
      foldM_ checkAndAdd [] (zip as _As)
-     let s :: Sub = zip (names _As) as
+     -- TODO is shadowing of argument names problematic?
+     let s = zip (names _As) as
      _Is' <- mapM (\a -> sub a s) _Is
      return $ Form _X _Is'
    otherwise -> throwError $ "Not a constructor name: " ++ show x
@@ -140,7 +140,5 @@ checkAndAdd s (a , (x, _A))= do
   _A' <- sub _A s
   check a' _A'
   return $ (x, a'):s
-
-
 
 ----------------------------------------------------------------------
