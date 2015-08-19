@@ -103,9 +103,9 @@ infer (Con x as) = do
   _C <- lookupPSigma x
   case _C of
    Just (DCon x _As _X _Is) -> do
-     mapM (uncurry check) (zip as (types _As))
-     let sigma :: Sub = zip (names _As) as
-     _Is' <- mapM (\a -> sub a sigma) _Is
+     foldM_ checkAndAdd [] (zip as _As)
+     let s :: Sub = zip (names _As) as
+     _Is' <- mapM (\a -> sub a s) _Is
      return $ Form _X _Is'
    otherwise -> throwError $ "Not a constructor name: " ++ show x
 infer (Red x as) = error "infer reduction not implemented"
@@ -116,5 +116,14 @@ infer (f :@: a) = do
       check a _A
       sub1 (x, a) _B
     otherwise -> throwError "Function does not have Pi type"
+
+checkAndAdd :: Sub -> (Exp, (Name, Exp)) -> TCM Sub
+checkAndAdd s (a , (x, _A))= do
+  a' <- sub a s
+  _A' <- sub _A s
+  check a' _A'
+  return $ (x, a'):s
+
+
 
 ----------------------------------------------------------------------

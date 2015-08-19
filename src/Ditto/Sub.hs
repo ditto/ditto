@@ -75,7 +75,8 @@ freshFor xs ((x, _A):_As) = do
 
 embedPat :: Pat -> Exp
 embedPat (PVar x) = Var x
-embedPat (PCon x as) = Con x (map embedPat as)
+--embedPat (PCon x as) = Con x (map embedPat as)
+embedPat (PCon x as) = Var (pname2name x) `apps` map embedPat as
 embedPat (Inacc (Just a)) = a
 embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 

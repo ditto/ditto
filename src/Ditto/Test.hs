@@ -172,6 +172,27 @@ capture = unlines
   , "end"
   ]
 
+inferringCon = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Sing (A : Type) (a : A) : Type where"
+  , "| sing (A : Type) (a : A) : Sing A a"
+  , "end"
+
+
+  , "data Foo (b : Bool) (s : Sing Bool b) : Type where"
+  , "| foo (b : Bool) (s : Sing Bool b) : Foo b s"
+  , "end"
+
+  , "def captureTest : Foo true (sing Bool true) where"
+  , "foo true (sing Bool true)"
+  , "end"
+
+  ]
+
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -216,6 +237,7 @@ checkTests = "Check tests" ~:
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
   , testChecks capture
+  , testChecks inferringCon
   ]
 
 parseTests :: Test
