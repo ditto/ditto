@@ -3,6 +3,8 @@ module Ditto.Whnf where
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
+import Data.Maybe
+import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.Except
 
@@ -20,6 +22,9 @@ whnf (f :@: a) = do
     Lam x _A b -> do
       whnf =<< sub1 (x , a') b
     f' -> return $ f' :@: a'
+whnf (Red x as) = do
+  cs <- fromJust <$> lookupRedClauses x
+  betaRed x (map (\(_, ps, rhs) -> (ps, rhs)) cs) as
 whnf (Var x) = do
   lookupDef x >>= \case
     Just a -> whnf a
@@ -27,6 +32,12 @@ whnf (Var x) = do
 whnf x = return x
 
 ----------------------------------------------------------------------
+
+betaRed :: PName -> [Clause] -> [Exp] -> TCM Exp
+betaRed x [] as = return $ Red x as
+betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
+  Just xs -> whnf =<< sub rhs xs
+  Nothing -> betaRed x cs as
 
 matchExps :: [Pat] -> [Exp] -> TCM (Maybe Sub)
 matchExps ps as = do

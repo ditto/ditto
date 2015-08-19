@@ -136,6 +136,32 @@ nonDependentPatterns = unlines
   , "end"
   ]
 
+simpleComputingPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| (zero) m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "data Bits (n : Nat) : Type where"
+  , "| nil : Bits zero"
+  , "| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)"
+  , "end"
+
+  , "def zeroPad (n m : Nat) (bs : Bits m) : Bits (add n m) where"
+  , "| (zero) m bs = bs"
+  , "| (suc n) m bs = cons (add n m) false (zeroPad n m bs)"
+  , "end"
+  ]
+
 unreachableNonDependent = unlines
   [ "data Bool : Type where"
   , "| true/false : Bool"
@@ -198,6 +224,7 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateConstructor
   , testChecks enumerationPatterns
   , testChecks nonDependentPatterns
+  , testChecks simpleComputingPatterns
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
   ]

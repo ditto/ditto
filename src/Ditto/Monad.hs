@@ -112,6 +112,10 @@ conSig :: Sigma -> Maybe (PName, Tel, [Exp])
 conSig (DCon x _As _ is) = Just (x, _As, is)
 conSig _ = Nothing
 
+redClauses :: Sigma -> Maybe [CheckedClause]
+redClauses (DRed x cs _ _) = Just cs
+redClauses _ = Nothing
+
 envType :: Sigma -> Exp
 envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
@@ -124,6 +128,11 @@ lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
 lookupCons x = do
   DittoS {sig = sig} <- get
   return . catMaybes . map conSig . filter (isConOf x) $ sig
+
+lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
+lookupRedClauses x = do
+  DittoS {sig = sig} <- get
+  return $ redClauses =<< find (isPNamed x) sig
 
 lookupDef :: Name -> TCM (Maybe Exp)
 lookupDef x = do
