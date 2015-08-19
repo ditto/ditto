@@ -69,6 +69,9 @@ varNames = map (Var . fst)
 pvarNames :: Tel -> [Pat]
 pvarNames = map (PVar . fst)
 
+types :: Tel -> [Exp]
+types = map snd
+
 pis :: Tel -> Exp -> Exp
 pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)
 

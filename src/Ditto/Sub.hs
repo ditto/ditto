@@ -75,6 +75,7 @@ freshFor xs ((x, _A):_As) = do
 
 embedPat :: Pat -> Exp
 embedPat (PVar x) = Var x
+--embedPat (PCon x as) = Con x (map embedPat as)
 embedPat (PCon x as) = Var (pname2name x) `apps` map embedPat as
 embedPat (Inacc (Just a)) = a
 embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
@@ -87,7 +88,7 @@ embedPSub = map (\ (x, p) -> (x, embedPat p))
 -- TODO probably reverse the sub and subTel arguments in case of shadowing?
 
 sub :: Exp -> Sub -> TCM Exp
-sub = foldM (flip sub1)
+sub a xs = foldM (flip sub1) a (reverse xs)
 
 subTel :: Tel -> Sub -> TCM Tel
 subTel _As qs = foldM (flip subTel1) _As qs

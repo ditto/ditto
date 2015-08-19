@@ -160,15 +160,25 @@ lookupDef x = do
   DittoS {sig = sig} <- get
   return $ envDef =<< find (isNamed x) sig
 
+lookupSigma :: Name -> TCM (Maybe Sigma)
+lookupSigma x = do
+  DittoS {sig = sig} <- get
+  return $ return =<< find (isNamed x) sig
+
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = do
+  s <- lookupSigma x
+  return $ return . envType =<< s
+
+lookupPSigma :: PName -> TCM (Maybe Sigma)
+lookupPSigma x = do
   DittoS {sig = sig} <- get
-  return $ return . envType =<< find (isNamed x) sig
+  return $ return =<< find (isPNamed x) sig
 
 lookupPType :: PName -> TCM (Maybe Exp)
 lookupPType x = do
-  DittoS {sig = sig} <- get
-  return $ return . envType =<< find (isPNamed x) sig
+  s <- lookupPSigma x
+  return $ return . envType =<< s
 
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
