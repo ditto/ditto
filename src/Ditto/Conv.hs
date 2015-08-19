@@ -25,6 +25,8 @@ alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Con x1 as1) (Con x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
+alpha' dict (Red x1 as1) (Red x2 as2) =
+  x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Var x) (Var y) =
   case lookup x dict of
     Nothing -> x == y
@@ -41,14 +43,13 @@ alpha' dict _ _ = False
 
 ----------------------------------------------------------------------
 
--- TODO we rho expand eagerly, which may be wrong
 conv :: Exp -> Exp -> TCM Exp
 conv a b = do
   if alpha a b
   then return a
   else do
-    a' <- whnfVirt a
-    b' <- whnfVirt b
+    a' <- whnf a
+    b' <- whnf b
     conv' a' b'
 
 conv' :: Exp -> Exp -> TCM Exp
@@ -65,11 +66,11 @@ conv' (f1 :@: a1) (f2 :@: a2) = do
   return $ f' :@: a'
 conv' (Lam x1 _A1 b1) (Lam x2 _A2 b2) = do
   _A' <- conv _A1 _A2
-  b' <- conv b1 =<< sub (x2, Var x1) b2
+  b' <- conv b1 =<< sub1 (x2, Var x1) b2
   return $ Lam x1 _A' b'
 conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _A' <- conv _A1 _A2
-  _B' <- conv _B1 =<< sub (x2, Var x1) _B2
+  _B' <- conv _B1 =<< sub1 (x2, Var x1) _B2
   return $ Pi x1 _A' _B'
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 = do
   Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)
@@ -79,6 +80,10 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
   Con x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
   throwError "Constructor names not equal"
+conv' (Red x1 as1) (Red x2 as2) | x1 == x2 = do
+  Red x1 <$> mapM (uncurry conv) (zip as1 as2)
+conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
+  throwError "Reduction names not equal"
 conv' a b = do
 --  DittoS {sig = sig} <- get
   throwError $

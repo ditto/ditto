@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
+import Data.Maybe
 
 ----------------------------------------------------------------------
 
@@ -37,14 +38,17 @@ initialR = DittoR
   }
 
 extCtx :: Name -> Exp -> DittoR -> DittoR
-extCtx x _A r = r { ctx = (x , _A) : ctx r }
+extCtx x _A r = extCtxs [(x, _A)] r
 
-gensym :: TCM Name
-gensym = do
+extCtxs :: Tel -> DittoR -> DittoR
+extCtxs _As r = r { ctx = _As ++ ctx r }
+
+gensymHint :: Name -> TCM Name
+gensymHint x = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
   put state { nameId = nameId' }
-  return $ "$x" ++ show nameId'
+  return $ uniqName x nameId'
 
 addSig :: Sigma -> TCM ()
 addSig s = do
@@ -55,59 +59,85 @@ addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = do
   DittoS {sig = sig} <- get
   when (any (isNamed x) sig) $ throwError
-    $ "Definition with name already exists: " ++ show x
+    $ "Definition name already exists in the environment: " ++ show x
   addSig (Def x a _A)
 
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
   DittoS {sig = sig} <- get
   when (any (isPNamed x) sig) $ throwError
-    $ "Type former with name already exists: " ++ show x
+    $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x _Is)
-  addDef (fromPName x) (lams _Is (Form x (varNames _Is))) (formType _Is)
+  addDef (pname2name x) (lams _Is (Form x (varNames _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
 addCon (x, _As, _X, _Is) = do
   DittoS {sig = sig} <- get
   when (any (isPNamed x) sig) $ throwError
-    $ "Constructor with name already exists: " ++ show x
+    $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
-  addDef (fromPName x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+  addDef (pname2name x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+
+addRed :: PName -> [CheckedClause] -> Tel -> Exp -> TCM ()
+addRed x cs _As _B = do
+  DittoS {sig = sig} <- get
+  when (any (isPNamed x) sig) $ throwError
+    $ "Reduction name already exists in the environment: " ++ show x
+  addSig (DRed x cs _As _B)
+  addDef (pname2name x) (lams _As (Red x (varNames _As))) (pis _As _B)
 
 ----------------------------------------------------------------------
-
-data Normality = BetaDelta | Rho
-data Lookup = LDef | LType
 
 isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
-isNamed x (Virt y _ _) = x == y
 isNamed x (DForm y _) = False
 isNamed x (DCon y _ _ _) = False
+isNamed x (DRed y _ _ _) = False
 
 isPNamed :: PName -> Sigma -> Bool
 isPNamed x (Def y _ _) = False
-isPNamed x (Virt y _ _) = False
 isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
+isPNamed x (DRed y _ _ _) = x == y
 
-envDef :: Normality -> Sigma -> Maybe Exp
-envDef n (Def _ a _) = Just a
-envDef Rho (Virt _ a _) = Just a
-envDef _ _ = Nothing
+isConOf :: PName -> Sigma -> Bool
+isConOf x (DCon _ _ y _) = x == y
+isConOf x _ = False
+
+envDef :: Sigma -> Maybe Exp
+envDef (Def _ a _) = Just a
+envDef _ = Nothing
+
+conSig :: Sigma -> Maybe (PName, Tel, [Exp])
+conSig (DCon x _As _ is) = Just (x, _As, is)
+conSig _ = Nothing
+
+redClauses :: Sigma -> Maybe [CheckedClause]
+redClauses (DRed x cs _ _) = Just cs
+redClauses _ = Nothing
 
 envType :: Sigma -> Exp
 envType (Def _ _ _A) = _A
-envType (Virt _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
+envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
 
 ----------------------------------------------------------------------
 
-lookupDef :: Normality -> Name -> TCM (Maybe Exp)
-lookupDef n x = do
+lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
+lookupCons x = do
   DittoS {sig = sig} <- get
-  return $ envDef n =<< find (isNamed x) sig
+  return . catMaybes . map conSig . filter (isConOf x) $ sig
+
+lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
+lookupRedClauses x = do
+  DittoS {sig = sig} <- get
+  return $ redClauses =<< find (isPNamed x) sig
+
+lookupDef :: Name -> TCM (Maybe Exp)
+lookupDef x = do
+  DittoS {sig = sig} <- get
+  return $ envDef =<< find (isNamed x) sig
 
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = do

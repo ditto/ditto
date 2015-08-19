@@ -83,6 +83,107 @@ duplicateConstructor = unlines
   , "end"
   ]
 
+enumerationPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def not (b : Bool) : Bool where"
+  , "| (true) = false"
+  , "| (false) = true"
+  , "end"
+
+  , "def nand (b1 b2 : Bool) : Bool where"
+  , "| (true) (true) = false"
+  , "| b1 b2 = true"
+  , "end"
+
+  , "data RGB : Type where"
+  , "| red/green/blue : RGB"
+  , "end"
+
+  , "def colorBlind (r : RGB) : Bool where"
+  , "| (green) = false"
+  , "| r = true"
+  , "end"
+  ]
+
+nonDependentPatterns = unlines
+  [ "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "def pred (n : Nat) : Nat where"
+  , "| (zero) = zero"
+  , "| (suc n) = n"
+  , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| (zero) m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "def mult (n m : Nat) : Nat where"
+  , "| (zero) m = zero"
+  , "| (suc n) m = add n (mult n m)"
+  , "end"
+
+  , "def max (x y : Nat) : Nat where"
+  , "| x (zero) = x"
+  , "| (zero) y = y"
+  , "| (suc x) (suc y) = suc (max x y)"
+  , "end"
+  ]
+
+simpleComputingPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| (zero) m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "data Bits (n : Nat) : Type where"
+  , "| nil : Bits zero"
+  , "| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)"
+  , "end"
+
+  , "def zeroPad (n m : Nat) (bs : Bits m) : Bits (add n m) where"
+  , "| (zero) m bs = bs"
+  , "| (suc n) m bs = cons (add n m) false (zeroPad n m bs)"
+  , "end"
+  ]
+
+unreachableNonDependent = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def illNot (b : Bool) : Bool where"
+  , "| (zero) = false"
+  , "| b = true"
+  , "end"
+  ]
+
+uncoveredNonDependent = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def illNot (b : Bool) : Bool where"
+  , "| (zero) = false"
+  , "| (false) = true"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -100,6 +201,12 @@ convTests = "Conv tests" ~:
   , testConv (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
 
+-- coversTests :: Test
+-- coversTests = "Coverage tests" ~:
+--   [ testCovers "Type" "Type"
+--   ]
+
+
 checkTests :: Test
 checkTests = "Check tests" ~:
   [ testCheck "Type" "Type"
@@ -115,12 +222,17 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateDef
   , testChecksFails duplicateFormer
   , testChecksFails duplicateConstructor
+  , testChecks enumerationPatterns
+  , testChecks nonDependentPatterns
+  , testChecks simpleComputingPatterns
+  , testChecksFails unreachableNonDependent
+  , testChecksFails uncoveredNonDependent
   ]
 
 parseTests :: Test
 parseTests = "Parse tests" ~:
   [ testParse "Type" (Just Type)
-  , testParse "A" (Just (Var "A"))
+  , testParse "A" (Just (Var (s2n "A")))
   , testParse "F x y z" Nothing
   , testParseFails "(x : where) (y : B) : Type"
   , testParseFails "(Type : A) (y : B) : Type"
@@ -129,6 +241,8 @@ parseTests = "Parse tests" ~:
   , testParse "(x : A) (y : B) -> c" Nothing
   , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
   , testParses idProg
+  , testParses enumerationPatterns
+  , testParses nonDependentPatterns
   ]
 
 ----------------------------------------------------------------------
