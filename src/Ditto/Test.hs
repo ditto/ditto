@@ -49,7 +49,7 @@ dataProg = unlines
   , "def ione : Fin two where"
   , "is one (iz zero)"
   , "end"
-  
+
   , "def ioneAlmost (i : Fin one) : Fin two where"
   , "is one"
   , "end"
@@ -158,6 +158,20 @@ uncoveredNonDependent = unlines
   , "end"
   ]
 
+capture = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Foo (b : Bool) : Type where"
+  , "| foo (b b : Bool) : Foo b"
+  , "end"
+
+  , "def captureTest : Foo true where"
+  , "foo false true"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -166,6 +180,7 @@ whnfTests = "Whnf tests" ~:
   , testWhnf (identity ++ " Type " ++ _PiWh) _PiWh
   , testWhnfFails (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
+
 
 convTests :: Test
 convTests = "Conv tests" ~:
@@ -200,6 +215,7 @@ checkTests = "Check tests" ~:
   , testChecks nonDependentPatterns
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
+  , testChecks capture
   ]
 
 parseTests :: Test
@@ -278,7 +294,7 @@ testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
 testChecksFails :: String -> Test
 testChecksFails ds = TestCase $ case runCheckProg (asProg ds) of
   Right () -> assertFailure ("Expected check error in program:\n" ++ ds)
-  Left error -> return () 
+  Left error -> return ()
 
 testCheckFails :: String -> String -> Test
 testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of

@@ -1,3 +1,6 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE LambdaCase #-}
+
 module Ditto.Check where
 import Ditto.Syntax
 import Ditto.Whnf
@@ -6,6 +9,7 @@ import Ditto.Monad
 import Ditto.Sub
 import Ditto.Match
 import Ditto.Cover
+import Data.Maybe
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -95,7 +99,15 @@ infer (Lam x _A b) = do
   _B <- inferExt (x, _A) b
   return $ Pi x _A _B
 infer (Form x is) = error "infer type former not implemented"
-infer (Con x as) = error "infer constructor former not implemented"
+infer (Con x as) = do
+  _C <- lookupPSigma x
+  case _C of
+   Just (DCon x _As _X _Is) -> do
+     mapM (uncurry check) (zip as (types _As))
+     let sigma :: Sub = zip (names _As) as
+     _Is' <- mapM (\a -> sub a sigma) _Is
+     return $ Form _X _Is'
+   otherwise -> throwError $ "Not a constructor name: " ++ show x
 infer (Red x as) = error "infer reduction not implemented"
 infer (f :@: a) = do
   _AB <- infer f
