@@ -160,6 +160,26 @@ simpleComputingPatterns = unlines
   , "| (zero) m bs = bs"
   , "| (suc n) m bs = cons (add n m) false (zeroPad n m bs)"
   , "end"
+
+  , "data Id (A : Type) (x y : A) : Type where"
+  , "| refl (A : Type) (x : A) : Id A x x"
+  , "end"
+
+  , "def one : Nat where"
+  , "suc zero"
+  , "end"
+
+  , "def two : Nat where"
+  , "suc one"
+  , "end"
+
+  , "def three : Nat where"
+  , "suc two"
+  , "end"
+
+  , "def testAdd : Id Nat three (add two one) where"
+  , "refl Nat three"
+  , "end"  
   ]
 
 simpleCapturingRHS = unlines
