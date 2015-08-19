@@ -45,7 +45,7 @@ checkStmt (SDefn x _A cs) = do
   check _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
-  _As' <- freshFor (names _As) _As
+  _As' <- freshenShadows _As
   cs' <- cover cs _As' (pvarNames _As')
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $ do

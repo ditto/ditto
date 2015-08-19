@@ -71,6 +71,17 @@ freshFor xs ((x, _A):_As) = do
   _As' <- subTel1 (x, Var x') _As
   ((x', _A):) <$> freshFor xs _As'
 
+freshenShadows :: Tel -> TCM Tel
+freshenShadows = freshenShadows' [] where
+  freshenShadows' :: [Name] -> Tel -> TCM Tel
+  freshenShadows' xs [] = return []
+  freshenShadows' xs ((x, _A):_As) | x `notElem` xs =
+    ((x, _A):) <$> freshenShadows' (x:xs) _As
+  freshenShadows' xs ((x, _A):_As) = do
+    x' <- gensymHint x
+    _As' <- subTel1 (x, Var x') _As
+    ((x', _A):) <$> freshenShadows' (x':xs) _As'
+
 ----------------------------------------------------------------------
 
 embedPat :: Pat -> Exp
