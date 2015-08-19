@@ -162,6 +162,21 @@ simpleComputingPatterns = unlines
   , "end"
   ]
 
+simpleCapturingRHS = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Sing (b : Bool) : Type where"
+  , "| sing : (b : Bool) : Sing b "
+  , "end"
+
+  , "def capture (x x : Bool) : Sing x where"
+  , "| y (true) = sing true"
+  , "| y (false) = sing false"
+  , "end"
+  ]
+
 unreachableNonDependent = unlines
   [ "data Bool : Type where"
   , "| true/false : Bool"
@@ -261,6 +276,7 @@ checkTests = "Check tests" ~:
   , testChecks enumerationPatterns
   , testChecks nonDependentPatterns
   , testChecks simpleComputingPatterns
+  , testChecks simpleCapturingRHS
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
   , testChecks capture
