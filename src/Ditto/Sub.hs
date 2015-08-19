@@ -84,6 +84,8 @@ embedPSub = map (\ (x, p) -> (x, embedPat p))
 
 ----------------------------------------------------------------------
 
+-- TODO probably reverse the sub and subTel arguments in case of shadowing?
+
 sub :: Exp -> Sub -> TCM Exp
 sub = foldM (flip sub1)
 
