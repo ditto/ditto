@@ -40,6 +40,7 @@ checkStmt (SData x _A cs) = do
 checkStmt (SDefn x _A cs) = do
   check _A Type
   (_As, _B) <- splitTel _A
+  addRedType x _As _B
   cs' <- cover cs _As (pvarNames _As)
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $ do
@@ -47,9 +48,8 @@ checkStmt (SDefn x _A cs) = do
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
-  -- TODO define red postulate, check rhs, fill in red covering?
-  addRed x cs' _As _B
   mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
+  addRedClauses x cs'
 
 checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
 checkRHS _Delta lhs rhs _As _B
