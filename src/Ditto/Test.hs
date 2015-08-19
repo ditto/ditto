@@ -294,8 +294,8 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateConstructor
   , testChecks enumerationPatterns
   , testChecks nonDependentPatterns
-  , testChecks simpleComputingPatterns
-  , testChecks simpleCapturingRHS
+  , testChecksDelta simpleComputingPatterns
+  , testChecksDelta simpleCapturingRHS
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
   , testChecksDelta captureConArgs

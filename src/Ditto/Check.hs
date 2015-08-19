@@ -121,8 +121,7 @@ infer (Form x is) = do
       return Type
     otherwise -> throwError $ "Not a type former name: " ++ show x
 infer (Con x as) = do
-  _C <- lookupPSigma x
-  case _C of
+  lookupPSigma x >>= \case
    Just (DCon x _As _X _Is) -> do
      foldM_ checkAndAdd [] (zip as _As)
      -- TODO is shadowing of argument names problematic?
@@ -130,7 +129,12 @@ infer (Con x as) = do
      _Is' <- mapM (\a -> sub a s) _Is
      return $ Form _X _Is'
    otherwise -> throwError $ "Not a constructor name: " ++ show x
-infer (Red x as) = error "infer reduction not implemented"
+infer (Red x as) = do
+  lookupPSigma x >>= \case
+    Just (DRed y cs _As _B) -> do
+      foldM_ checkAndAdd [] (zip as _As)
+      sub _B (zip (names _As) as)
+    otherwise -> throwError $ "Not a reduction name: " ++ show x
 infer (f :@: a) = do
   _AB <- infer f
   case _AB of
