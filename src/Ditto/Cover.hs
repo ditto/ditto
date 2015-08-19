@@ -25,7 +25,7 @@ splitVar _As x _B _Cs = whnf _B >>= \case
 
 splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> Tel -> TCM (Tel, PSub)
 splitCon _As x (y, _Bs, _) _Cs = do
-  _Bs' <- freshFor (names _As) _Bs
+  _Bs' <- freshFor (names (_As ++ _Cs)) _Bs
   let qs = [(x, PCon y (pvarNames _Bs'))]
   _Cs' <- psubTel _Cs qs
   return (_As ++ _Bs' ++ _Cs', qs)

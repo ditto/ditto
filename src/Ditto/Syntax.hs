@@ -6,8 +6,8 @@ data Name = Name String (Maybe Integer)
   deriving (Read, Eq)
 
 instance Show Name where
-  show (Name x Nothing) = show x
-  show (Name x (Just n)) = show x ++ "$" ++ show n
+  show (Name x Nothing) = x
+  show (Name x (Just n)) = x ++ "$" ++ show n
 
 s2n :: String -> Name
 s2n x = Name x Nothing
