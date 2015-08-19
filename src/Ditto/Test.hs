@@ -288,11 +288,11 @@ checkTests = "Check tests" ~:
   , testChecksFails duplicateConstructor
   , testChecks enumerationPatterns
   , testChecks nonDependentPatterns
-  , testChecksDelta simpleComputingPatterns
-  , testChecksDelta simpleCapturingRHS
+  , testChecks simpleComputingPatterns
+  , testChecks simpleCapturingRHS
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
-  , testChecksDelta captureConArgs
+  , testChecks captureConArgs
   , testChecks inferringCon
   ]
 
@@ -359,16 +359,8 @@ testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
 
 ----------------------------------------------------------------------
 
-testChecksDelta :: String -> Test
-testChecksDelta ds = TestCase $ case runCheckProgDelta (asProg ds) of
-  Left error -> assertFailure ("Check error:\n" ++ error)
-  Right () -> return ()
-
-
-----------------------------------------------------------------------
-
 testChecks :: String -> Test
-testChecks ds = TestCase $ case runCheckProg (asProg ds) of
+testChecks ds = TestCase $ case runCheckProgDelta (asProg ds) of
   Left error -> assertFailure ("Check error:\n" ++ error)
   Right () -> return ()
 
