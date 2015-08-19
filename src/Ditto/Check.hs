@@ -7,6 +7,7 @@ import Ditto.Delta
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Env
 import Ditto.Match
 import Ditto.Cover
 import Data.Maybe
@@ -30,8 +31,8 @@ runCheckProgDelta xs = runTCM (checkProg xs >> checkProgDelta)
 
 checkDelta :: (Name, Exp, Exp) -> TCM ()
 checkDelta (x, a, _A) = do
-  _A' <- deltaExpand _A
-  a' <- deltaExpand a
+  _A' <- whnf =<< deltaExpand _A
+  a' <- whnf =<< deltaExpand a
   check a' _A'
 
 checkProgDelta :: TCM ()
@@ -124,9 +125,8 @@ infer (Con x as) = do
   lookupPSigma x >>= \case
    Just (DCon x _As _X _Is) -> do
      foldM_ checkAndAdd [] (zip as _As)
-     -- TODO is shadowing of argument names problematic?
      let s = zip (names _As) as
-     _Is' <- mapM (\a -> sub a s) _Is
+     _Is' <- mapM (flip sub s) _Is
      return $ Form _X _Is'
    otherwise -> throwError $ "Not a constructor name: " ++ show x
 infer (Red x as) = do

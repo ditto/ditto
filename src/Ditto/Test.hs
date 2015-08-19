@@ -359,6 +359,13 @@ testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
 
 ----------------------------------------------------------------------
 
+testChecksDelta :: String -> Test
+testChecksDelta ds = TestCase $ case runCheckProgDelta (asProg ds) of
+  Left error -> assertFailure ("Check error:\n" ++ error)
+  Right () -> return ()
+
+----------------------------------------------------------------------
+
 testChecks :: String -> Test
 testChecks ds = TestCase $ case runCheckProgDelta (asProg ds) of
   Left error -> assertFailure ("Check error:\n" ++ error)
