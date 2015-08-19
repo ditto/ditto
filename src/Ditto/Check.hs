@@ -4,6 +4,7 @@
 module Ditto.Check where
 import Ditto.Syntax
 import Ditto.Whnf
+import Ditto.Delta
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
@@ -22,6 +23,20 @@ runCheck a _A = runTCM (check a _A)
 
 runCheckProg :: [Stmt] -> Either String ()
 runCheckProg = runTCM . checkProg
+
+runCheckProgDelta :: [Stmt] -> Either String ()
+runCheckProgDelta xs = runTCM (checkProg xs >> checkProgDelta)
+
+----------------------------------------------------------------------
+
+checkDelta :: (Name, Exp, Exp) -> TCM ()
+checkDelta (x, a, _A) = do
+  _A' <- deltaExpand _A
+  a' <- deltaExpand a
+  check a' _A'
+
+checkProgDelta :: TCM ()
+checkProgDelta = mapM_ checkDelta =<< lookupDefs
 
 ----------------------------------------------------------------------
 

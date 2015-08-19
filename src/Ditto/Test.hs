@@ -219,7 +219,7 @@ uncoveredNonDependent = unlines
   , "end"
   ]
 
-capture = unlines
+captureConArgs = unlines
   [ "data Bool : Type where"
   , "| true/false : Bool"
   , "end"
@@ -298,7 +298,7 @@ checkTests = "Check tests" ~:
   , testChecks simpleCapturingRHS
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
-  , testChecks capture
+  , testChecks captureConArgs
   , testChecks inferringCon
   ]
 
@@ -362,6 +362,14 @@ testConv :: String -> String -> Test
 testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
   Left error -> assertFailure ("Conv error:\n" ++ error)
   Right _ -> return ()
+
+----------------------------------------------------------------------
+
+testChecksDelta :: String -> Test
+testChecksDelta ds = TestCase $ case runCheckProgDelta (asProg ds) of
+  Left error -> assertFailure ("Check error:\n" ++ error)
+  Right () -> return ()
+
 
 ----------------------------------------------------------------------
 
