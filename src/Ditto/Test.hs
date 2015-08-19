@@ -179,7 +179,7 @@ simpleComputingPatterns = unlines
 
   , "def testAdd : Id Nat three (add two one) where"
   , "refl Nat three"
-  , "end"  
+  , "end"
   ]
 
 simpleCapturingRHS = unlines
@@ -298,7 +298,7 @@ checkTests = "Check tests" ~:
   , testChecks simpleCapturingRHS
   , testChecksFails unreachableNonDependent
   , testChecksFails uncoveredNonDependent
-  , testChecks captureConArgs
+  , testChecksDelta captureConArgs
   , testChecks inferringCon
   ]
 

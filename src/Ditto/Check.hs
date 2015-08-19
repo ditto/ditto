@@ -114,7 +114,12 @@ infer (Pi x _A _B) = do
 infer (Lam x _A b) = do
   _B <- inferExt (x, _A) b
   return $ Pi x _A _B
-infer (Form x is) = error "infer type former not implemented"
+infer (Form x is) = do
+  lookupPSigma x >>= \case
+    Just (DForm _X _Is) -> do
+      foldM_ checkAndAdd [] (zip is _Is)
+      return Type
+    otherwise -> throwError $ "Not a type former name: " ++ show x
 infer (Con x as) = do
   _C <- lookupPSigma x
   case _C of
