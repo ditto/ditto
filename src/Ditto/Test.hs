@@ -271,12 +271,6 @@ convTests = "Conv tests" ~:
   , testConv (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
 
--- coversTests :: Test
--- coversTests = "Coverage tests" ~:
---   [ testCovers "Type" "Type"
---   ]
-
-
 checkTests :: Test
 checkTests = "Check tests" ~:
   [ testCheck "Type" "Type"
