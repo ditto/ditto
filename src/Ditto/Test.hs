@@ -250,7 +250,6 @@ inferringCon = unlines
   , "def captureTest : Foo true (sing Bool true) where"
   , "foo true (sing Bool true)"
   , "end"
-
   ]
 
 
