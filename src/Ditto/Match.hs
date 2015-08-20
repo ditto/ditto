@@ -60,7 +60,7 @@ isMatch _ = False
 
 unreachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
 unreachableClauses cs cs' =
-  filter (\(ps, _) -> not (any isMatch (map (match ps) qss))) cs
+  filter (\(ps, _) -> all (not . isMatch) (map (match ps) qss)) cs
   where qss = map (\(_, qs, _) -> qs) cs'
 
 ----------------------------------------------------------------------
