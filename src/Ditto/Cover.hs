@@ -19,7 +19,7 @@ splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = whnf _B >>= \case
   Form _X [] -> do
     _Bs <- lookupCons _X
-    mapM (\_B -> splitCon _As x _B _Cs) _Bs
+    mapM (\_B' -> splitCon _As x _B' _Cs) _Bs
   Form _X is -> error "Splitting on indexed datatype not yet implemented"
   otherwise -> throwError "Case splitting is only allowed on datatypes"
 
