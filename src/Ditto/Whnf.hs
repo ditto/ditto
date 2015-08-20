@@ -75,7 +75,7 @@ buildCon :: PName -> (PName, Exp) -> TCM (PName, Tel, PName, [Exp])
 buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
   whnf end >>= \case
-    Form _Y _Is | _X == _Y -> return $ (x , tel, _Y, _Is)
+    Form _Y _Is | _X == _Y -> return (x , tel, _Y, _Is)
     Form _Y _Is -> throwError $ "Constructor type does not match datatype\n"
       ++ show _X ++ " != " ++ show _Y
     otherwise -> throwError "Constructor return type is not a type former"

@@ -53,7 +53,7 @@ checkStmt (SData x _A cs) = do
   case end of
     Type -> do
       addForm x tel
-      mapM_ (\ (_, _A) -> check _A Type) cs
+      mapM_ (\ (_, _A') -> check _A' Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
