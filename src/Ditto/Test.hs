@@ -89,12 +89,12 @@ enumerationPatterns = unlines
   , "end"
 
   , "def not (b : Bool) : Bool where"
-  , "| (true) = false"
-  , "| (false) = true"
+  , "| true = false"
+  , "| false = true"
   , "end"
 
   , "def nand (b1 b2 : Bool) : Bool where"
-  , "| (true) (true) = false"
+  , "| true true = false"
   , "| b1 b2 = true"
   , "end"
 
@@ -103,7 +103,7 @@ enumerationPatterns = unlines
   , "end"
 
   , "def colorBlind (r : RGB) : Bool where"
-  , "| (green) = false"
+  , "| green = false"
   , "| r = true"
   , "end"
   ]
@@ -115,23 +115,23 @@ nonDependentPatterns = unlines
   , "end"
 
   , "def pred (n : Nat) : Nat where"
-  , "| (zero) = zero"
+  , "| zero = zero"
   , "| (suc n) = n"
   , "end"
 
   , "def add (n m : Nat) : Nat where"
-  , "| (zero) m = m"
+  , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
 
   , "def mult (n m : Nat) : Nat where"
-  , "| (zero) m = zero"
+  , "| zero m = zero"
   , "| (suc n) m = add n (mult n m)"
   , "end"
 
   , "def max (x y : Nat) : Nat where"
-  , "| x (zero) = x"
-  , "| (zero) y = y"
+  , "| x zero = x"
+  , "| zero y = y"
   , "| (suc x) (suc y) = suc (max x y)"
   , "end"
   ]
@@ -147,7 +147,7 @@ simpleComputingPatterns = unlines
   , "end"
 
   , "def add (n m : Nat) : Nat where"
-  , "| (zero) m = m"
+  , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
 
@@ -157,7 +157,7 @@ simpleComputingPatterns = unlines
   , "end"
 
   , "def zeroPad (n m : Nat) (bs : Bits m) : Bits (add n m) where"
-  , "| (zero) m bs = bs"
+  , "| zero m bs = bs"
   , "| (suc n) m bs = cons (add n m) false (zeroPad n m bs)"
   , "end"
 
@@ -192,8 +192,8 @@ simpleCapturingRHS = unlines
   , "end"
 
   , "def capture (x x : Bool) : Sing x where"
-  , "| y (true) = sing true"
-  , "| y (false) = sing false"
+  , "| y true = sing true"
+  , "| y false = sing false"
   , "end"
   ]
 
@@ -202,8 +202,13 @@ unreachableNonDependent = unlines
   , "| true/false : Bool"
   , "end"
 
+  , "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
   , "def illNot (b : Bool) : Bool where"
-  , "| (zero) = false"
+  , "| zero = false"
   , "| b = true"
   , "end"
   ]
@@ -213,9 +218,14 @@ uncoveredNonDependent = unlines
   , "| true/false : Bool"
   , "end"
 
+  , "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
   , "def illNot (b : Bool) : Bool where"
-  , "| (zero) = false"
-  , "| (false) = true"
+  , "| zero = false"
+  , "| false = true"
   , "end"
   ]
 

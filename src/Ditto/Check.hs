@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TupleSections, LambdaCase #-}
 
 module Ditto.Check where
 import Ditto.Syntax
@@ -57,6 +57,7 @@ checkStmt (SData x _A cs) = do
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
+  cs <- atomizeClauses cs
   check _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
@@ -71,9 +72,26 @@ checkStmt (SDefn x _A cs) = do
   mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
   addRedClauses x cs'
 
+----------------------------------------------------------------------
+
 checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
 checkRHS _Delta lhs rhs _As _B
   = checkExts _Delta rhs =<< subClauseType _B _As lhs
+
+atomizeClauses :: [Clause] -> TCM [Clause]
+atomizeClauses = mapM (\(ps, rhs) -> (,rhs) <$> atomizePatterns ps)
+
+atomizePatterns :: [Pat] -> TCM [Pat]
+atomizePatterns = mapM atomizePattern
+
+atomizePattern :: Pat -> TCM Pat
+atomizePattern (PVar x) = case name2pname x of
+  Just x' -> lookupPSigma x' >>= \case
+    Just (DCon _ [] _ _) -> return $ PCon x' []
+    otherwise -> return $ PVar x
+  Nothing -> return $ PVar x
+atomizePattern (PCon x ps) = PCon x <$> atomizePatterns ps
+atomizePattern x@(Inacc _) = return x
 
 ----------------------------------------------------------------------
 

@@ -26,6 +26,10 @@ instance Show PName where
 pname2name :: PName -> Name
 pname2name (PName x) = Name x Nothing
 
+name2pname :: Name -> Maybe PName
+name2pname (Name x Nothing) = Just (PName x)
+name2pname _ = Nothing
+
 ----------------------------------------------------------------------
 
 type Cons = [(PName, Exp)]
