@@ -31,10 +31,10 @@ dataProg = unlines
   [ "data Nat : Type where "
   , "| zero : Nat"
   , "| suc (n : Nat) : Nat"
-  , "end"
+  , "end # comments never hurt nobody"
 
   , "def one : Nat where"
-  , "suc zero"
+  , "suc zero   # and comments never will   "
   , "end"
 
   , "def two : Nat where"

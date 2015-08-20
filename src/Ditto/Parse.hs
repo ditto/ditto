@@ -9,8 +9,11 @@ import Control.Monad
 
 ----------------------------------------------------------------------
 
-parseE = parse (whitespace >> parseExp <* eof) ""
-parseP = parse (whitespace >> parseStmts <* eof) ""
+parseE = parse (whitespace >> parseExp <* eof) "" . stripComments
+parseP = parse (whitespace >> parseStmts <* eof) "" . stripComments
+
+stripComments :: String -> String
+stripComments = unlines . map (takeWhile (/= '#')) . lines
 
 keyType = symbol "Type"
 keyData = symbol "data"
