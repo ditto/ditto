@@ -9,12 +9,12 @@ import Test.HUnit
 ----------------------------------------------------------------------
 
 _Identity = "((A : Type) (a : A) : A)"
-identity = "((A : Type) (a : A) -> a)"
+identity = "((A : Type) (a : A) = a)"
 _PiWh = "((A : Type) : " ++ identity ++ " Type Type)"
 
 idProg = unlines
   [ "def id (A : Type) (a : A) : A where"
-  , "(A : Type) (a : A) -> a"
+  , "(A : Type) (a : A) = a"
   , "end"
 
   , "def KType : id Type Type where"
@@ -266,8 +266,8 @@ inferringCon = unlines
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
-  , testWhnf "((A : Type) (a : A) -> a) Type Type" "Type"
-  , testWhnf ("((A : Type) (a : A) -> a) Type " ++ _Identity) _Identity
+  , testWhnf "((A : Type) (a : A) = a) Type Type" "Type"
+  , testWhnf ("((A : Type) (a : A) = a) Type " ++ _Identity) _Identity
   , testWhnf (identity ++ " Type " ++ _PiWh) _PiWh
   , testWhnfFails (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
@@ -277,7 +277,7 @@ convTests :: Test
 convTests = "Conv tests" ~:
   [ testConv "Type" "Type"
   , testConv (identity ++ "Type Type") "Type"
-  , testConv "(A : Type) (a : A) -> a" "(B : Type) (b : B) -> b"
+  , testConv "(A : Type) (a : A) = a" "(B : Type) (b : B) = b"
   , testConv (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
 
@@ -288,9 +288,9 @@ checkTests = "Check tests" ~:
   , testCheck "(x : Type) : Type" "Type"
   , testCheck _Identity "Type"
   , testCheck identity _Identity
-  , testCheck "(B : Type) (b : B) -> b" _Identity
+  , testCheck "(B : Type) (b : B) = b" _Identity
   , testCheckFails identity "Type"
-  , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
+  , testCheck ("(A : Type) (a : A) = (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   , testChecks idProg
   , testChecks dataProg
   , testChecksFails duplicateDef
@@ -315,8 +315,8 @@ parseTests = "Parse tests" ~:
   , testParseFails "(Type : A) (y : B) : Type"
   , testParse "(x : A) (y : B) : Type" Nothing
   , testParse "(x : A) (y : B x) : C x y" Nothing
-  , testParse "(x : A) (y : B) -> c" Nothing
-  , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
+  , testParse "(x : A) (y : B) = c" Nothing
+  , testParse "(x : A) (y : B x) : C (((z : A) = z) x) (g x y)" Nothing
   , testParses idProg
   , testParses enumerationPatterns
   , testParses nonDependentPatterns

@@ -24,7 +24,6 @@ keywords = choice
 symAscribe = symbol ":"
 symChoice = symbol "|"
 symInacc = symbol "*"
-symArrow = symbol "->"
 symEq = symbol "="
 symSlash = symbol "/"
 
@@ -169,7 +168,7 @@ parsePi = try $ do
 parseLam :: Parser Exp
 parseLam = try $ do
   _As <- parseTel
-  symArrow
+  symEq
   b <- parseExp
   return $ lams _As b
 
