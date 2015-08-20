@@ -1,0 +1,44 @@
+data Bool : Type where
+| true/false : Bool
+end
+
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+def add (n m : Nat) : Nat where
+| zero m = m
+| (suc n) m = suc (add n m)
+end
+
+# a vector specialized to booleans
+data Bits (n : Nat) : Type where
+| nil : Bits zero
+| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)
+end
+
+def zeroPad (n m : Nat) (bs : Bits m) : Bits (add n m) where
+| zero m bs = bs
+| (suc n) m bs = cons (add n m) false (zeroPad n m bs)
+end
+
+data Id (A : Type) (x y : A) : Type where
+| refl (A : Type) (x : A) : Id A x x
+end
+
+def one : Nat where
+suc zero
+end
+
+def two : Nat where
+suc one
+end
+
+def three : Nat where
+suc two
+end
+
+def testAdd : Id Nat three (add two one) where
+refl Nat three
+end
