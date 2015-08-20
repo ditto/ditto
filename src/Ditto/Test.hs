@@ -197,7 +197,7 @@ simpleCapturingRHS = unlines
   , "end"
   ]
 
-unreachableNonDependent = unlines
+unreachableIllTypedNonDependent = unlines
   [ "data Bool : Type where"
   , "| true/false : Bool"
   , "end"
@@ -212,6 +212,18 @@ unreachableNonDependent = unlines
   , "| b = true"
   , "end"
   ]
+
+unreachableMultipleWildcardsNonDependent = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def illNot (b : Bool) : Bool where"
+  , "| b1 = false"
+  , "| b2 = true"
+  , "end"
+  ]
+
 
 uncoveredNonDependent = unlines
   [ "data Bool : Type where"
@@ -251,7 +263,6 @@ inferringCon = unlines
   , "data Sing (A : Type) (a : A) : Type where"
   , "| sing (A : Type) (a : A) : Sing A a"
   , "end"
-
 
   , "data Foo (b : Bool) (s : Sing Bool b) : Type where"
   , "| foo (b : Bool) (s : Sing Bool b) : Foo b s"
@@ -300,7 +311,8 @@ checkTests = "Check tests" ~:
   , testChecks nonDependentPatterns
   , testChecks simpleComputingPatterns
   , testChecks simpleCapturingRHS
-  , testChecksFails unreachableNonDependent
+  , testChecksFails unreachableIllTypedNonDependent
+  , testChecksFails unreachableMultipleWildcardsNonDependent
   , testChecksFails uncoveredNonDependent
   , testChecks captureConArgs
   , testChecks inferringCon

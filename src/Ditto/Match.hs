@@ -1,6 +1,7 @@
 module Ditto.Match where
 import Ditto.Syntax
 import Ditto.Monad
+import Data.List
 import Control.Monad.Except
 import Control.Applicative
 
@@ -54,13 +55,23 @@ matchClauses cs qs = foldl (\ acc c -> acc `cunion` matchClause c qs) CMiss cs
 
 ----------------------------------------------------------------------
 
-isMatch :: Match -> Bool
-isMatch (MSolve _) = True
-isMatch _ = False
+isCovered :: Cover -> Bool
+isCovered (CMatch _ _) = True
+isCovered _ = False
+
+reachable :: [Clause] -> [Clause] -> [Pat] -> [Clause]
+reachable prev [] qs = []
+reachable prev (c:cs) qs = if prevUnreached && currReached then c:rec else rec
+  where
+  rec = reachable (prev ++ [c]) cs qs
+  prevUnreached = not . isCovered . matchClauses prev $ qs
+  currReached = isCovered (matchClause c qs)
+
+reachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
+reachableClauses cs cs' = nub $ concatMap (reachable [] cs) qss
+  where qss = map (\(_, qs, _) -> qs) cs'
 
 unreachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
-unreachableClauses cs cs' =
-  filter (\(ps, _) -> all (not . isMatch) (map (match ps) qss)) cs
-  where qss = map (\(_, qs, _) -> qs) cs'
+unreachableClauses cs cs' = cs \\ reachableClauses cs cs'
 
 ----------------------------------------------------------------------
