@@ -18,17 +18,16 @@ split _As x = splitVar _As1 x _A _As2
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X [] -> do
-    _Bs <- lookupCons _X
+    _Bs <- lookupConsFresh _X
     mapM (\_B' -> splitCon _As x _B' _Cs) _Bs
   Form _X is -> error "Splitting on indexed datatype not yet implemented"
   otherwise -> throwError "Case splitting is only allowed on datatypes"
 
 splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> Tel -> TCM (Tel, PSub)
 splitCon _As x (y, _Bs, _) _Cs = do
-  _Bs' <- freshFor (names (_As ++ _Cs)) =<< freshenShadows _Bs
-  let qs = [(x, PCon y (pvarNames _Bs'))]
+  let qs = [(x, PCon y (pvarNames _Bs))]
   _Cs' <- psubTel _Cs qs
-  return (_As ++ _Bs' ++ _Cs', qs)
+  return (_As ++ _Bs ++ _Cs', qs)
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)
@@ -38,7 +37,7 @@ findSplit _As x = (_As1, snd (head _As2), tail _As2)
 
 cover :: [Clause] -> Tel -> TCM [CheckedClause]
 cover cs _As = do
-  _As' <- freshenShadows _As
+  (_As', _) <- freshTel _As
   cover' cs _As' (pvarNames _As')
 
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']

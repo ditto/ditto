@@ -4,6 +4,7 @@ import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Pretty
+import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Except
 import Control.Applicative
@@ -83,10 +84,14 @@ conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwError "Reduction names not equal"
 conv' a b = do
---  DittoS {sig = sig} <- get
+  DittoR {ctx = ctx} <- ask
+  DittoS {sig = sig} <- get
   throwError $
     "Terms not convertible\n"
     ++ show a ++ " != " ++ show b
-    -- ++ "\n" ++ unlines (map (render . ppSig) sig)
+    ++ "\nContext:\n"
+    ++ unlines (map show ctx)
+    ++ "\nEnvironment:\n"
+    ++ unlines (map show sig)
 
 ----------------------------------------------------------------------

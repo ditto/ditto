@@ -62,14 +62,12 @@ subTel1 (x, a) ((y, _B):_Bs) = do
 
 ----------------------------------------------------------------------
 
-freshFor :: [Name] -> Tel -> TCM Tel
-freshFor xs [] = return []
-freshFor xs ((x, _A):_As) | x `notElem` xs =
-  ((x, _A):) <$> freshFor xs _As
-freshFor xs ((x, _A):_As) = do
+freshTel :: Tel -> TCM (Tel, Sub)
+freshTel [] = return ([], [])
+freshTel ((x, _A):_As) = do
   x' <- gensymHint x
-  _As' <- subTel1 (x, Var x') _As
-  ((x', _A):) <$> freshFor xs _As'
+  (_As', xs) <- freshTel =<< subTel1 (x, Var x') _As
+  return ((x', _A):_As', (x, Var x'):xs)
 
 freshenShadows :: Tel -> TCM Tel
 freshenShadows = freshenShadows' [] where
@@ -81,6 +79,17 @@ freshenShadows = freshenShadows' [] where
     x' <- gensymHint x
     _As' <- subTel1 (x, Var x') _As
     ((x', _A):) <$> freshenShadows' (x':xs) _As'
+
+----------------------------------------------------------------------
+
+freshCons :: (PName, Tel, [Exp]) -> TCM (PName, Tel, [Exp])
+freshCons (y, _Bs, is) = do
+  (_Bs', xs) <- freshTel _Bs
+  is' <- mapM (flip sub xs) is
+  return (y, _Bs', is')
+
+lookupConsFresh :: PName -> TCM [(PName, Tel, [Exp])]
+lookupConsFresh x = mapM freshCons =<< lookupCons x
 
 ----------------------------------------------------------------------
 
