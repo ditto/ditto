@@ -10,7 +10,7 @@
 
 (require 'generic-x)
 
-(define-generic-mode 'spire-mode
+(define-generic-mode 'ditto-mode
   '("#") ;; comments
   '("data" "def" "where" "end" "|") ;; keywords
   '()
