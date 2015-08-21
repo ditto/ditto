@@ -19,16 +19,14 @@ whnf :: Exp -> TCM Exp
 whnf (f :@: a) = do
   a' <- whnf a
   whnf f >>= \case
-    Lam x _A b -> do
-      whnf =<< sub1 (x , a') b
+    Lam x _A b -> whnf =<< sub1 (x , a') b
     f' -> return $ f' :@: a'
 whnf (Red x as) = do
   cs <- fromJust <$> lookupRedClauses x
   betaRed x (map (\(_, ps, rhs) -> (ps, rhs)) cs) as
-whnf (Var x) = do
-  lookupDef x >>= \case
-    Just a -> whnf a
-    Nothing -> return $ Var x
+whnf (Var x) = lookupDef x >>= \case
+  Just a -> whnf a
+  Nothing -> return $ Var x
 whnf x = return x
 
 ----------------------------------------------------------------------
@@ -56,20 +54,18 @@ matchExp' _ _ = return Nothing
 ----------------------------------------------------------------------
 
 splitTel :: Exp -> TCM (Tel , Exp)
-splitTel _T = do
-  whnf _T >>= \case
-    Pi x _A _B -> do
-      (rest, end) <- splitTel _B
-      return ((x, _A) : rest, end)
-    _A -> return ([], _A)
+splitTel _T = whnf _T >>= \case
+  Pi x _A _B -> do
+    (rest, end) <- splitTel _B
+    return ((x, _A) : rest, end)
+  _A -> return ([], _A)
 
 splitApp :: Exp -> TCM (Exp , [Exp])
-splitApp b = do
-  whnf b >>= \case
-    f :@: a -> do
-      (head, rest) <- splitApp f
-      return (head, rest ++ [a])
-    b' -> return (b' , [])
+splitApp b = whnf b >>= \case
+  f :@: a -> do
+    (head, rest) <- splitApp f
+    return (head, rest ++ [a])
+  b' -> return (b' , [])
 
 buildCon :: PName -> (PName, Exp) -> TCM (PName, Tel, PName, [Exp])
 buildCon _X (x, _A) = do

@@ -60,10 +60,8 @@ conv' (Var x) (Var y) =
     "Variables not convertible\n"
     ++ show x ++ " != " ++ show y
 conv' Type Type = return Type
-conv' (f1 :@: a1) (f2 :@: a2) = do
-  f' <- conv f1 f2
-  a' <- conv a1 a2
-  return $ f' :@: a'
+conv' (f1 :@: a1) (f2 :@: a2) =
+  (:@:) <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam x1 _A1 b1) (Lam x2 _A2 b2) = do
   _A' <- conv _A1 _A2
   b' <- conv b1 =<< sub1 (x2, Var x1) b2
@@ -72,15 +70,15 @@ conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _A' <- conv _A1 _A2
   _B' <- conv _B1 =<< sub1 (x2, Var x1) _B2
   return $ Pi x1 _A' _B'
-conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 = do
+conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =
   throwError "Type former names not equal"
-conv' (Con x1 as1) (Con x2 as2) | x1 == x2 = do
+conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
   throwError "Constructor names not equal"
-conv' (Red x1 as1) (Red x2 as2) | x1 == x2 = do
+conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwError "Reduction names not equal"

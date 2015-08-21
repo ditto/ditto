@@ -18,9 +18,8 @@ deltaExpand (f :@: a) = (:@:) <$> deltaExpand f <*> deltaExpand a
 deltaExpand (Form x as) = Form x <$> mapM deltaExpand as
 deltaExpand (Con x as) = Con x <$> mapM deltaExpand as
 deltaExpand (Red x as) = Red x <$> mapM deltaExpand as
-deltaExpand (Var x) = do
-  lookupDef x >>= \case
-    Just a -> deltaExpand a
-    Nothing -> return $ Var x
+deltaExpand (Var x) = lookupDef x >>= \case
+  Just a -> deltaExpand a
+  Nothing -> return $ Var x
 
 ----------------------------------------------------------------------
