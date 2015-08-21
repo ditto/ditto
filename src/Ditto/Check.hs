@@ -11,6 +11,7 @@ import Ditto.Env
 import Ditto.Match
 import Ditto.Cover
 import Data.Maybe
+import Data.List
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
@@ -58,6 +59,7 @@ checkStmt (SData x _A cs) = do
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   cs <- atomizeClauses cs
+  checkLinearClauses x cs
   check _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
@@ -77,6 +79,35 @@ checkStmt (SDefn x _A cs) = do
 checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
 checkRHS _Delta lhs rhs _As _B
   = checkExts _Delta rhs =<< subClauseType _B _As lhs
+
+----------------------------------------------------------------------
+
+checkLinearClauses :: PName -> [Clause] -> TCM ()
+checkLinearClauses x = mapM_ (checkLinearClause x)
+
+checkLinearClause :: PName -> Clause -> TCM ()
+checkLinearClause x (ps, rhs) =
+  unless (null xs) $ throwError $
+    unlines ["Nonlinear occurrence of variables in patterns."
+            , "Variables: " ++ show xs
+            , "Function: " ++ show x
+            , "Patterns: " ++ show ps
+            ]
+  where xs = nonLinearVars ps
+
+nonLinearVars :: [Pat] -> [Name]
+nonLinearVars ps = xs \\ nub xs
+  where xs = patternsVars ps
+
+patternsVars :: [Pat] -> [Name]
+patternsVars = concat . map patternVars
+
+patternVars :: Pat -> [Name]
+patternVars (PVar x) = [x]
+patternVars (Inacc _) = []
+patternVars (PCon _ ps) = patternsVars ps
+
+----------------------------------------------------------------------
 
 atomizeClauses :: [Clause] -> TCM [Clause]
 atomizeClauses = mapM (\(ps, rhs) -> (,rhs) <$> atomizePatterns ps)

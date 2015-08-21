@@ -224,6 +224,22 @@ unreachableMultipleWildcardsNonDependent = unlines
   , "end"
   ]
 
+nonLinearPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Bits : Type where"
+  , "| nil : Bits"
+  , "| cons (b : Bool) (bs : Bits) : Bits"
+  , "end"
+
+  , "def emptyBits (bs : Bits) : Bits where"
+  , "| nil = nil"
+  , "| (cons b b) = nil"
+  , "end"
+  ]
+
 
 uncoveredNonDependent = unlines
   [ "data Bool : Type where"
@@ -314,6 +330,7 @@ checkTests = "Check tests" ~:
   , testChecksFails unreachableIllTypedNonDependent
   , testChecksFails unreachableMultipleWildcardsNonDependent
   , testChecksFails uncoveredNonDependent
+  , testChecksFails nonLinearPatterns
   , testChecks captureConArgs
   , testChecks inferringCon
   ]
