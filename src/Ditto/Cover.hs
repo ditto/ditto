@@ -16,7 +16,7 @@ split _As x = splitVar _As1 x _A _As2
 
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitVar _As x _B _Cs = whnf _B >>= \case
+splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X [] -> do
     _Bs <- lookupCons _X
     mapM (\_B' -> splitCon _As x _B' _Cs) _Bs

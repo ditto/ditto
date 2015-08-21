@@ -64,11 +64,11 @@ conv' (f1 :@: a1) (f2 :@: a2) =
   (:@:) <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam x1 _A1 b1) (Lam x2 _A2 b2) = do
   _A' <- conv _A1 _A2
-  b' <- conv b1 =<< sub1 (x2, Var x1) b2
+  b' <- extCtx x1 _A1 . conv b1 =<< sub1 (x2, Var x1) b2
   return $ Lam x1 _A' b'
 conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
   _A' <- conv _A1 _A2
-  _B' <- conv _B1 =<< sub1 (x2, Var x1) _B2
+  _B' <- extCtx x1 _A1 . conv _B1 =<< sub1 (x2, Var x1) _B2
   return $ Pi x1 _A' _B'
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)

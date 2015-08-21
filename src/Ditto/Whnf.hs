@@ -56,21 +56,14 @@ matchExp' _ _ = return Nothing
 splitTel :: Exp -> TCM (Tel , Exp)
 splitTel _T = whnf _T >>= \case
   Pi x _A _B -> do
-    (rest, end) <- splitTel _B
+    (rest, end) <- extCtx x _A (splitTel _B)
     return ((x, _A) : rest, end)
   _A -> return ([], _A)
-
-splitApp :: Exp -> TCM (Exp , [Exp])
-splitApp b = whnf b >>= \case
-  f :@: a -> do
-    (head, rest) <- splitApp f
-    return (head, rest ++ [a])
-  b' -> return (b' , [])
 
 buildCon :: PName -> (PName, Exp) -> TCM (PName, Tel, PName, [Exp])
 buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
-  whnf end >>= \case
+  extCtxs tel (whnf end) >>= \case
     Form _Y _Is | _X == _Y -> return (x , tel, _Y, _Is)
     Form _Y _Is -> throwError $ "Constructor type does not match datatype\n"
       ++ show _X ++ " != " ++ show _Y

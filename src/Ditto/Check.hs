@@ -86,12 +86,12 @@ checkLinearClauses x = mapM_ (checkLinearClause x)
 
 checkLinearClause :: PName -> Clause -> TCM ()
 checkLinearClause x (ps, rhs) =
-  unless (null xs) $ throwError $
-    unlines ["Nonlinear occurrence of variables in patterns."
-            , "Variables: " ++ show xs
-            , "Function: " ++ show x
-            , "Patterns: " ++ show ps
-            ]
+  unless (null xs) $ throwError $ unlines
+    ["Nonlinear occurrence of variables in patterns."
+    , "Variables: " ++ show xs
+    , "Function: " ++ show x
+    , "Patterns: " ++ show ps
+    ]
   where xs = nonLinearVars ps
 
 nonLinearVars :: [Pat] -> [Name]
@@ -126,13 +126,13 @@ atomizePattern x@(Inacc _) = return x
 ----------------------------------------------------------------------
 
 inferExt :: (Name, Exp) -> Exp -> TCM Exp
-inferExt (x , _A) b = local (extCtx x _A) (infer b)
+inferExt (x , _A) b = extCtx x _A (infer b)
 
 checkExt :: (Name, Exp) -> Exp -> Exp -> TCM ()
 checkExt _A b _B = checkExts [_A] b _B
 
 checkExts :: Tel -> Exp -> Exp -> TCM ()
-checkExts _As b _B = local (extCtxs _As) (check b _B)
+checkExts _As b _B = extCtxs _As (check b _B)
 
 ----------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ check a _A = do
 
 infer :: Exp -> TCM Exp
 infer (Var x) = do
-  ma <- lookupCtx x
+  ma <- lookupType x
   case ma of
     Just _A -> return _A
     Nothing -> do

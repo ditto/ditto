@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module Ditto.Monad where
 import Ditto.Syntax
 import Control.Monad.State
@@ -37,11 +38,12 @@ initialR = DittoR
   { ctx = []
   }
 
-extCtx :: Name -> Exp -> DittoR -> DittoR
-extCtx x _A r = extCtxs [(x, _A)] r
+extCtx :: Name -> Exp -> TCM a -> TCM a
+extCtx x _A = extCtxs [(x, _A)]
 
-extCtxs :: Tel -> DittoR -> DittoR
-extCtxs _As r = r { ctx = _As ++ ctx r }
+-- telescopes are in legible order, so reverse them
+extCtxs :: Tel -> TCM a -> TCM a
+extCtxs _As = local (\ r -> r { ctx = reverse _As ++ ctx r })
 
 gensymHint :: Name -> TCM Name
 gensymHint x = do
@@ -104,25 +106,7 @@ lookupRedClauses x = do
   DittoS {sig = sig} <- get
   return $ redClauses =<< find (isPNamed x) sig
 
-lookupDef :: Name -> TCM (Maybe Exp)
-lookupDef x = do
-  DittoS {sig = sig} <- get
-  return $ envDefBody =<< find (isNamed x) sig
-
-lookupDefs :: TCM [(Name, Exp, Exp)]
-lookupDefs = do
-  DittoS {sig = sig} <- get
-  return . catMaybes . map envDef . filter isDef $ sig
-
-lookupSigma :: Name -> TCM (Maybe Sigma)
-lookupSigma x = do
-  DittoS {sig = sig} <- get
-  return $ return =<< find (isNamed x) sig
-
-lookupType :: Name -> TCM (Maybe Exp)
-lookupType x = do
-  s <- lookupSigma x
-  return $ return . envType =<< s
+----------------------------------------------------------------------
 
 lookupPSigma :: PName -> TCM (Maybe Sigma)
 lookupPSigma x = do
@@ -134,9 +118,37 @@ lookupPType x = do
   s <- lookupPSigma x
   return $ return . envType =<< s
 
+----------------------------------------------------------------------
+
+lookupDefs :: TCM [(Name, Exp, Exp)]
+lookupDefs = do
+  DittoS {sig = sig} <- get
+  return . catMaybes . map envDef . filter isDef $ sig
+
+----------------------------------------------------------------------
+
+lookupDef :: Name -> TCM (Maybe Exp)
+lookupDef x = lookupCtx x >>= \case
+  Just _ -> return Nothing
+  Nothing -> do
+    s <- lookupSigma x
+    return $ envDefBody =<< s
+
+lookupType :: Name -> TCM (Maybe Exp)
+lookupType x = lookupCtx x >>= \case
+  Just _A -> return . Just $ _A
+  Nothing -> do
+    s <- lookupSigma x
+    return $ Just . envType =<< s
+
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
   DittoR {ctx = ctx} <- ask
-  maybe (return $ lookup x ctx) (return . Just) =<< lookupType x
+  return $ lookup x ctx
+
+lookupSigma :: Name -> TCM (Maybe Sigma)
+lookupSigma x = do
+  DittoS {sig = sig} <- get
+  return $ return =<< find (isNamed x) sig
 
 ----------------------------------------------------------------------

@@ -289,6 +289,15 @@ inferringCon = unlines
   , "end"
   ]
 
+captureDeltaWithLambda = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def capture (b : Bool) : Bool where"
+  , "(Bool : Bool) = Bool"
+  , "end"
+  ]
 
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
@@ -298,7 +307,6 @@ whnfTests = "Whnf tests" ~:
   , testWhnf (identity ++ " Type " ++ _PiWh) _PiWh
   , testWhnfFails (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
-
 
 convTests :: Test
 convTests = "Conv tests" ~:
@@ -333,6 +341,7 @@ checkTests = "Check tests" ~:
   , testChecksFails nonLinearPatterns
   , testChecks captureConArgs
   , testChecks inferringCon
+  , testChecks captureDeltaWithLambda
   ]
 
 parseTests :: Test
