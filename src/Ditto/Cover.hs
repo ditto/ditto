@@ -36,15 +36,20 @@ findSplit _As x = (_As1, snd (head _As2), tail _As2)
 
 ----------------------------------------------------------------------
 
+cover :: [Clause] -> Tel -> TCM [CheckedClause]
+cover cs _As = do
+  _As' <- freshenShadows _As
+  cover' cs _As' (pvarNames _As')
+
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
-cover :: [Clause] -> Tel -> [Pat] -> TCM [CheckedClause]
-cover cs _As qs = case matchClauses cs qs of
+cover' :: [Clause] -> Tel -> [Pat] -> TCM [CheckedClause]
+cover' cs _As qs = case matchClauses cs qs of
   CMatch rs rhs -> do
     rhs' <- psub rhs rs
     return [(_As, qs, rhs')]
   CSplit x -> do
     qss <- split _As x
-    concat <$> mapM (\(_As' , qs') -> cover cs _As' =<< psubPats qs qs') qss
+    concat <$> mapM (\(_As' , qs') -> cover' cs _As' =<< psubPats qs qs') qss
   CMiss -> throwError "Coverage error"
 
 ----------------------------------------------------------------------
