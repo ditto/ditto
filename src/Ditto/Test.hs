@@ -299,6 +299,59 @@ captureDeltaWithLambda = unlines
   , "end"
   ]
 
+captureType = unlines
+  [ "def Foo : Type where"
+  , "Type"
+  , "end"
+
+  , "def foo (Foo : Foo) : Type where"
+  , "(Foo : Foo) = Foo"
+  , "end"
+  ]
+
+captureDataType = unlines
+  [ "data Empty : Type where"
+  , "end"
+
+  , "def Empty2 : Type where"
+  , "Empty"
+  , "end"
+
+  , "def capture (e : Empty) (A : Type) : Empty2 where"
+  , "(e : Empty) (Empty : Type) = e"
+  , "end"
+  ]
+
+exFalsoCapture = unlines
+  [ "def exFalso (A : Type) (a : A) (B : Type) : B where"
+  , "(A : Type) (a : A) (A : Type) = a"
+  , "end"
+  ]
+
+captureDeltaWithCoveringWithoutBinding = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def capture (Bool : Bool) : Type where"
+  , "| b = Type"
+  , "end"
+  ]
+
+captureDeltaWithCoveringWithBinding = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Sing (b : Bool) : Type where"
+  , "| sing : (b : Bool) : Sing b"
+  , "end"
+
+  , "def capture (Bool : Bool) : Sing Bool where"
+  , "| b = sing b"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -342,6 +395,11 @@ checkTests = "Check tests" ~:
   , testChecks captureConArgs
   , testChecks inferringCon
   , testChecks captureDeltaWithLambda
+  , testChecks captureType
+  , testChecks captureDataType
+  , testChecksFails exFalsoCapture
+  , testChecks captureDeltaWithCoveringWithoutBinding
+  , testChecks captureDeltaWithCoveringWithBinding
   ]
 
 parseTests :: Test

@@ -1,9 +1,11 @@
 module Ditto.Sub where
 import Ditto.Syntax
 import Ditto.Monad
-import Data.List (delete)
+import Data.List
 import Control.Applicative
 import Control.Monad
+
+-- TODO may not need capture-avoiding sub into Tels if vars are unique
 
 ----------------------------------------------------------------------
 
@@ -13,38 +15,57 @@ fv Type = []
 fv (Form _ is) = concatMap fv is
 fv (Con _ as) = concatMap fv as
 fv (Red _ as) = concatMap fv as
-fv (Pi n _A _B) = fv _A ++ (n `delete` (fv _B))
-fv (Lam n _A a) = fv _A ++ (n `delete` (fv a))
+fv (Pi _A _B) = fv _A ++ fvBind _B
+fv (Lam _A b) = fv _A ++ fvBind b
 fv (a :@: b) = fv a ++ fv b
+
+fvBind :: Bind -> [Name]
+fvBind (Bind n b) = n `delete` nub (fv b)
 
 fvTel :: Tel -> [Name]
 fvTel [] = []
-fvTel ((_X, _A):_As) = fv _A ++ (_X `delete` fvTel _As)
+fvTel ((_X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
+
+----------------------------------------------------------------------
+
+freshen :: Name -> Exp -> TCM (Name, Exp)
+freshen x a = do
+  x' <- gensymHint x
+  a' <- sub1 (x, Var x') a
+  return (x', a')
+
+unbind :: Bind -> TCM (Name, Exp)
+unbind (Bind x a) = freshen x a
+
+freshen2 :: Name -> Exp -> Name -> Exp -> TCM (Name, Exp, Exp)
+freshen2 x a y b = do
+  z <- gensymHint x
+  a' <- sub1 (x, Var z) a
+  b' <- sub1 (y, Var z) b
+  return (z, a', b')
+
+unbind2 :: Bind -> Bind -> TCM (Name, Exp, Exp)
+unbind2 (Bind x a) (Bind y b) = freshen2 x a y b
 
 ----------------------------------------------------------------------
 
 sub1 :: (Name , Exp) -> Exp -> TCM Exp
-sub1 (x, a) (Form y is) = Form y <$> mapM (sub1 (x, a)) is
-sub1 (x, a) (Con y as) = Con y <$> mapM (sub1 (x, a)) as
-sub1 (x, a) (Red y as) = Red y <$> mapM (sub1 (x, a)) as
+sub1 xa (Form y is) = Form y <$> mapM (sub1 xa) is
+sub1 xa (Con y as) = Con y <$> mapM (sub1 xa) as
+sub1 xa (Red y as) = Red y <$> mapM (sub1 xa) as
 sub1 (x, a) (Var y) | x == y = return a
-sub1 (x, a) (Var y) = return $ Var y
-sub1 (x, a) Type = return Type
-sub1 (x, a) (Lam y _B b) | x == y = Lam y <$> sub1 (x, a) _B <*> pure b
-sub1 (x, a) (Lam y _B b) | y `notElem` (fv a) =
-  Lam y <$> sub1 (x, a) _B <*> sub1 (x, a) b
-sub1 (x, a) (Lam y _B b) = do
-  y' <- gensymHint y
-  b' <- sub1 (y, Var y') b
-  Lam y' <$> sub1 (x, a) _B <*> sub1 (x, a) b'
-sub1 (x, a) (Pi y _A _B) | x == y = Pi y <$> sub1 (x, a) _A <*> pure _B
-sub1 (x, a) (Pi y _A _B) | y `notElem` (fv a) =
-  Pi y <$> sub1 (x, a) _A <*> sub1 (x, a) _B
-sub1 (x, a) (Pi y _A _B) = do
-  y' <- gensymHint y
-  _B' <- sub1 (y, Var y') _B
-  Pi y' <$> sub1 (x, a) _A <*> sub1 (x, a) _B'
-sub1 (x, a) (f :@: b) = (:@:) <$> sub1 (x, a) f <*> sub1 (x, a) b
+sub1 xa (Var y) = return $ Var y
+sub1 xa Type = return Type
+sub1 xa (Lam _A b) = Lam <$> sub1 xa _A <*> sub1Bind xa b
+sub1 xa (Pi _A _B) = Pi <$> sub1 xa _A <*> sub1Bind xa _B
+sub1 xa (f :@: b) = (:@:) <$> sub1 xa f <*> sub1 xa b
+
+sub1Bind :: (Name , Exp) -> Bind -> TCM Bind
+sub1Bind (x, a) (Bind y b) | x == y = pure $ Bind y b
+sub1Bind (x, a) (Bind y b) | y `notElem` fv a = Bind y <$> sub1 (x, a) b
+sub1Bind (x, a) (Bind y b) = do
+  (y', b') <- freshen y b
+  Bind y' <$> sub1 (x, a) b'
 
 subTel1 :: (Name, Exp) -> Tel -> TCM Tel
 subTel1 (x, a) [] = return []

@@ -11,8 +11,8 @@ ppSig (DRed x cs _As _B) = ppPName x <+> text "Reduction"
 
 ppExp :: Exp -> Box
 ppExp Type = text "Type"
-ppExp (Pi x _A _B) = parens (ppName x <+> oft <+> ppExp _A) <+> oft <+> ppExp _B
-ppExp (Lam x _A a) = parens (ppName x <+> oft <+> ppExp _A) <+> arr <+> ppExp a
+ppExp (Pi _A (Bind x _B)) = parens (ppName x <+> oft <+> ppExp _A) <+> oft <+> ppExp _B
+ppExp (Lam _A (Bind x a)) = parens (ppName x <+> oft <+> ppExp _A) <+> arr <+> ppExp a
 ppExp (Form _X _Is) = ppPName _X
 ppExp (Con _X as) = ppPName _X
 ppExp (Red _X as) = ppPName _X

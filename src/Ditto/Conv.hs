@@ -32,10 +32,10 @@ alpha' dict (Var x) (Var y) =
   case lookup x dict of
     Nothing -> x == y
     Just x' -> x' == y
-alpha' dict (Lam x _A1 a1) (Lam y _A2 a2) =
+alpha' dict (Lam _A1 (Bind x a1)) (Lam _A2 (Bind y a2)) =
   alpha' dict' _A1 _A2 && alpha' dict' a1 a2
     where dict' = (x, y) : dict
-alpha' dict (Pi x _A1 _B1) (Pi y _A2 _B2) =
+alpha' dict (Pi _A1 (Bind x _B1)) (Pi _A2 (Bind y _B2)) =
   alpha' dict' _A1 _A2 && alpha' dict' _B1 _B2
     where dict' = (x, y) : dict
 alpha' dict (f1 :@: a1) (f2 :@: a2) =
@@ -63,14 +63,16 @@ conv' (Var x) (Var y) =
 conv' Type Type = return Type
 conv' (f1 :@: a1) (f2 :@: a2) =
   (:@:) <$> conv f1 f2 <*> conv a1 a2
-conv' (Lam x1 _A1 b1) (Lam x2 _A2 b2) = do
+conv' (Lam _A1 bnd_b1) (Lam _A2 bnd_b2) = do
   _A' <- conv _A1 _A2
-  b' <- extCtx x1 _A1 . conv b1 =<< sub1 (x2, Var x1) b2
-  return $ Lam x1 _A' b'
-conv' (Pi x1 _A1 _B1) (Pi x2 _A2 _B2) = do
+  (x, b1, b2) <- unbind2 bnd_b1 bnd_b2
+  b' <- extCtx x _A1 (conv b1 b2)
+  return $ Lam _A' (Bind x b')
+conv' (Pi _A1 bnd_B1) (Pi _A2 bnd_B2) = do
   _A' <- conv _A1 _A2
-  _B' <- extCtx x1 _A1 . conv _B1 =<< sub1 (x2, Var x1) _B2
-  return $ Pi x1 _A' _B'
+  (x, _B1, _B2) <- unbind2 bnd_B1 bnd_B2
+  _B' <- extCtx x _A1 (conv _B1 _B2)
+  return $ Pi _A' (Bind x _B')
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =

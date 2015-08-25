@@ -41,9 +41,12 @@ data Stmt =
   deriving (Show, Read, Eq)
 
 data Exp =
-    Type | Pi Name Exp Exp | Lam Name Exp Exp
+    Type | Pi Exp Bind | Lam Exp Bind
   | Form PName [Exp] | Con PName [Exp]
   | Var Name | Exp :@: Exp | Red PName [Exp]
+  deriving (Show, Read, Eq)
+
+data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
 type Tel = [(Name, Exp)]
@@ -77,10 +80,10 @@ types :: Tel -> [Exp]
 types = map snd
 
 pis :: Tel -> Exp -> Exp
-pis = flip $ foldr (\ (x , _A) _B -> Pi x _A _B)
+pis = flip $ foldr (\ (x , _A) _B -> Pi _A (Bind x _B))
 
 lams :: Tel -> Exp -> Exp
-lams = flip $ foldr (\ (x , _A) _B -> Lam x _A _B)
+lams = flip $ foldr (\ (x , _A) _B -> Lam _A (Bind x _B))
 
 apps :: Exp -> [Exp] -> Exp
 apps x xs = foldl (:@:) x xs

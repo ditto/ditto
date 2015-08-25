@@ -125,11 +125,13 @@ atomizePattern x@(Inacc _) = return x
 
 ----------------------------------------------------------------------
 
-inferExt :: (Name, Exp) -> Exp -> TCM Exp
-inferExt (x , _A) b = extCtx x _A (infer b)
+inferExtBind :: Exp -> Bind -> TCM Bind
+inferExtBind _A bnd_b = do
+  (x, b) <- unbind bnd_b
+  Bind x <$> extCtx x _A (infer b)
 
-checkExt :: (Name, Exp) -> Exp -> Exp -> TCM ()
-checkExt _A b _B = checkExts [_A] b _B
+checkExt :: Name -> Exp -> Exp -> Exp -> TCM ()
+checkExt x _A = checkExts [(x, _A)]
 
 checkExts :: Tel -> Exp -> Exp -> TCM ()
 checkExts _As b _B = extCtxs _As (check b _B)
@@ -156,13 +158,14 @@ infer (Var x) = do
         ++ "\nEnvironment:\n"
         ++ unlines (map show sig)
 infer Type = return Type
-infer (Pi x _A _B) = do
+infer (Pi _A bnd_B) = do
   check _A Type
-  checkExt (x , _A) _B Type
+  (x, _B) <- unbind bnd_B
+  checkExt x _A _B Type
   return Type
-infer (Lam x _A b) = do
-  _B <- inferExt (x, _A) b
-  return $ Pi x _A _B
+infer (Lam _A b) = do
+  check _A Type
+  Pi _A <$> inferExtBind _A b
 infer (Form x is) = do
   lookupPSigma x >>= \case
     Just (DForm _X _Is) -> do
@@ -186,8 +189,9 @@ infer (Red x as) = do
 infer (f :@: a) = do
   _AB <- infer f
   case _AB of
-    Pi x _A _B -> do
+    Pi _A bnd_B -> do
       check a _A
+      (x, _B) <- unbind bnd_B
       sub1 (x, a) _B
     otherwise -> throwError "Function does not have Pi type"
 

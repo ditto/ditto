@@ -19,7 +19,9 @@ whnf :: Exp -> TCM Exp
 whnf (f :@: a) = do
   a' <- whnf a
   whnf f >>= \case
-    Lam x _A b -> whnf =<< sub1 (x , a') b
+    Lam _A xb -> do
+      (x, b) <- unbind xb
+      whnf =<< sub1 (x , a') b
     f' -> return $ f' :@: a'
 whnf (Red x as) = do
   cs <- fromJust <$> lookupRedClauses x
@@ -55,7 +57,8 @@ matchExp' _ _ = return Nothing
 
 splitTel :: Exp -> TCM (Tel , Exp)
 splitTel _T = whnf _T >>= \case
-  Pi x _A _B -> do
+  Pi _A bnd_B -> do
+    (x, _B) <- unbind bnd_B
     (rest, end) <- extCtx x _A (splitTel _B)
     return ((x, _A) : rest, end)
   _A -> return ([], _A)
