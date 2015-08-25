@@ -39,8 +39,7 @@ addForm x _Is = do
   when (any (isPNamed x) sig) $ throwError
     $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x _Is)
-  _Is' <- freshenShadows _Is
-  addDef (pname2name x) (lams _Is' (Form x (varNames _Is'))) (formType _Is)
+  addDef (pname2name x) (lams _Is (Form x (varNames _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
 addCon (x, _As, _X, _Is) = do
@@ -48,8 +47,7 @@ addCon (x, _As, _X, _Is) = do
   when (any (isPNamed x) sig) $ throwError
     $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
-  _As' <- freshenShadows _As
-  addDef (pname2name x) (lams _As' (Con x (varNames _As'))) (pis _As $ Form _X _Is)
+  addDef (pname2name x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
 
 addRedType :: PName -> Tel -> Exp -> TCM ()
 addRedType x _As _B = do
@@ -57,8 +55,7 @@ addRedType x _As _B = do
   when (any (isPNamed x) sig) $ throwError
     $ "Reduction name already exists in the environment: " ++ show x
   addSig (DRed x [] _As _B)
-  _As' <- freshenShadows _As
-  addDef (pname2name x) (lams _As' (Red x (varNames _As'))) (pis _As _B)
+  addDef (pname2name x) (lams _As (Red x (varNames _As))) (pis _As _B)
 
 addRedClauses :: PName -> [CheckedClause] -> TCM ()
 addRedClauses x cs = do

@@ -1,11 +1,10 @@
+{-# LANGUAGE TupleSections #-}
 module Ditto.Sub where
 import Ditto.Syntax
 import Ditto.Monad
 import Data.List
 import Control.Applicative
 import Control.Monad
-
--- TODO may not need capture-avoiding sub into Tels if vars are unique
 
 ----------------------------------------------------------------------
 
@@ -68,18 +67,7 @@ sub1Bind (x, a) (Bind y b) = do
   Bind y' <$> sub1 (x, a) b'
 
 subTel1 :: (Name, Exp) -> Tel -> TCM Tel
-subTel1 (x, a) [] = return []
-subTel1 (x, a) ((y, _B):_Bs) | x == y = do
-  _B' <- sub1 (x, a) _B
-  return $ (y, _B'):_Bs
-subTel1 (x, a) ((y, _B):_Bs) | y `notElem` (fv _B) = do
-  _B' <- sub1 (x, a) _B
-  ((y, _B'):) <$> subTel1 (x, a) _Bs
-subTel1 (x, a) ((y, _B):_Bs) = do
-  y' <- gensymHint y
-  _Bs' <- subTel1 (y, Var y') _Bs
-  _B' <- sub1 (x, a) _B
-  ((y', _B'):) <$> subTel1 (x, a) _Bs'
+subTel1 xa = mapM (\(y, _A) -> (y,) <$> sub1 xa _A)
 
 ----------------------------------------------------------------------
 
@@ -89,17 +77,6 @@ freshTel ((x, _A):_As) = do
   x' <- gensymHint x
   (_As', xs) <- freshTel =<< subTel1 (x, Var x') _As
   return ((x', _A):_As', (x, Var x'):xs)
-
-freshenShadows :: Tel -> TCM Tel
-freshenShadows = freshenShadows' [] where
-  freshenShadows' :: [Name] -> Tel -> TCM Tel
-  freshenShadows' xs [] = return []
-  freshenShadows' xs ((x, _A):_As) | x `notElem` xs =
-    ((x, _A):) <$> freshenShadows' (x:xs) _As
-  freshenShadows' xs ((x, _A):_As) = do
-    x' <- gensymHint x
-    _As' <- subTel1 (x, Var x') _As
-    ((x', _A):) <$> freshenShadows' (x':xs) _As'
 
 ----------------------------------------------------------------------
 
@@ -126,9 +103,8 @@ embedPSub = map (\ (x, p) -> (x, embedPat p))
 ----------------------------------------------------------------------
 
 sub :: Exp -> Sub -> TCM Exp
-sub a xs = foldM (flip sub1) a (reverse xs)
+sub a xs = foldM (flip sub1) a xs
 
--- TODO probably reverse the subTel arguments in case of shadowing? (as in sub)
 subTel :: Tel -> Sub -> TCM Tel
 subTel _As qs = foldM (flip subTel1) _As qs
 
