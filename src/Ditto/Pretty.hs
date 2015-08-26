@@ -6,6 +6,14 @@ import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
+renderCtx :: Tel -> String
+renderCtx ctx = concat (map (render . ppCtxBind) (reverse ctx))
+
+renderSig :: [Sigma] -> String
+renderSig sig = unlines (map (render . ppSig) (reverse sig))
+
+----------------------------------------------------------------------
+
 ppExp :: Exp -> Box
 ppExp = ppwExp NoWrap
 
@@ -42,7 +50,10 @@ viewLams (Lam _A (Bind x b)) = ((x, _A):_As, b')
 viewLams a = ([], a)
 
 ppBind :: Name -> Exp -> Box
-ppBind x _A = parens $ ppName x <+> oft <+> ppExp _A
+ppBind x _A = parens $ curry ppCtxBind x _A
+
+ppCtxBind :: (Name, Exp) -> Box
+ppCtxBind (x, _A) = ppName x <+> oft <+> ppExp _A
 
 ----------------------------------------------------------------------
 
