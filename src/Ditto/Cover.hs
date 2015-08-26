@@ -5,6 +5,7 @@ import Ditto.Monad
 import Ditto.Match
 import Ditto.Whnf
 import Ditto.Sub
+import Ditto.Funify
 import Control.Monad.Except
 import Control.Applicative
 
@@ -17,17 +18,18 @@ split _As x = splitVar _As1 x _A _As2
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
-  Form _X [] -> do
+  Form _X js -> do
     _Bs <- lookupConsFresh _X
-    mapM (\_B' -> splitCon _As x _B' _Cs) _Bs
-  Form _X is -> error "Splitting on indexed datatype not yet implemented"
+    mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwError "Case splitting is only allowed on datatypes"
 
-splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> Tel -> TCM (Tel, PSub)
-splitCon _As x (y, _Bs, _) _Cs = do
-  let qs = [(x, PCon y (pvarNames _Bs))]
-  _Cs' <- psubTel _Cs qs
-  return (_As ++ _Bs ++ _Cs', qs)
+splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> [Exp] -> Tel -> TCM (Tel, PSub)
+splitCon _As x (y, _Bs, is) js _Cs = do
+  qs <- injectSub <$> funifies (names _As ++ names _Bs) js is
+  as <- psubPats (pvarNames _Bs) qs
+  let qs' = qs ++ [(x, PCon y as)]
+  _Cs' <- psubTel _Cs qs'
+  return (_As ++ _Bs ++ _Cs', qs')
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)

@@ -100,13 +100,16 @@ embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a 
 embedPSub :: PSub -> Sub
 embedPSub = map (\ (x, p) -> (x, embedPat p))
 
+injectSub :: Sub -> PSub
+injectSub = map (\(x, a) -> (x, Inacc (Just a)))
+
 ----------------------------------------------------------------------
 
 sub :: Exp -> Sub -> TCM Exp
 sub a xs = foldM (flip sub1) a xs
 
 subTel :: Tel -> Sub -> TCM Tel
-subTel _As qs = foldM (flip subTel1) _As qs
+subTel _As xs = foldM (flip subTel1) _As xs
 
 psub :: Exp -> PSub -> TCM Exp
 psub a xs = sub a (embedPSub xs)

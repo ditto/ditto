@@ -352,6 +352,69 @@ captureDeltaWithCoveringWithBinding = unlines
   , "end"
   ]
 
+simpleDependentPatterns = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| zero m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "def mult (n m : Nat) : Nat where"
+  , "| zero m = zero"
+  , "| (suc n) m = add n (mult n m)"
+  , "end"
+
+  , "data Bits (n : Nat) : Type where"
+  , "| nil : Bits zero"
+  , "| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)"
+  , "end"
+
+  , "def append (n m : Nat) (xs : Bits n) (ys : Bits m) : Bits (add n m) where"
+  , "| * m nil ys = ys"
+  , "| * m (cons n x xs) ys = cons (add n m) x (append n m xs ys)"
+  , "end"
+
+  , "def copyBits (n : Nat) (bs : Bits n) : Bits n where"
+  , "| * nil = nil"
+  , "| * (cons n b bs) = cons n b bs"
+  , "end"
+  ]
+
+dependentVectorPatterns = unlines
+  [ "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "def add (n m : Nat) : Nat where"
+  , "| zero m = m"
+  , "| (suc n) m = suc (add n m)"
+  , "end"
+
+  , "def mult (n m : Nat) : Nat where"
+  , "| zero m = zero"
+  , "| (suc n) m = add n (mult n m)"
+  , "end"
+
+  , "data Vec (A : Type) (n : Nat) : Type where"
+  , "| nil (A : Type) : Vec A zero"
+  , "| cons (A : Type) (n : Nat) (x : A) (xs : Vec A n) : Vec A (suc n)"
+  , "end"
+
+  , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
+  , "| A * m (nil *) ys = ys"
+  , "| A * m (cons * n x xs) ys = cons A (add n m) x (append A n m xs ys)"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -400,6 +463,8 @@ checkTests = "Check tests" ~:
   , testChecksFails exFalsoCapture
   , testChecks captureDeltaWithCoveringWithoutBinding
   , testChecks captureDeltaWithCoveringWithBinding
+  , testChecks simpleDependentPatterns
+  , testChecks dependentVectorPatterns
   ]
 
 parseTests :: Test
