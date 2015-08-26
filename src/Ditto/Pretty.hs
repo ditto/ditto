@@ -110,7 +110,7 @@ ppSig (Def x a _A) = ppDefType x _A // ppDefBod x a
 ppSig (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
 ppSig (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
 ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
-  /+/ vcatmap (ppRed x) cs
+  /+/ vcatmap (ppRed x) (reverse cs)
 
 ----------------------------------------------------------------------
 
@@ -119,8 +119,6 @@ ppRed x (_As, ps, rhs) = ppRedCtx x _As //
   (ppPName x <+> hcatmap ppPat ps <+> def <+> ppExp rhs)
 
 ppRedCtx :: PName -> Tel -> Box
-ppRedCtx x [] = ppPName x <+> text "[empty context]"
-ppRedCtx x [_A] = ppPName x <+> oft <+> uncurry ppBind _A
 ppRedCtx x _As = ppPName x <+> hcatmap (uncurry ppBind) _As
 
 ----------------------------------------------------------------------
