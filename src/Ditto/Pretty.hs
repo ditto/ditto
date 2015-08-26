@@ -2,7 +2,28 @@
 module Ditto.Pretty where
 
 import Ditto.Syntax
+import Ditto.Monad
+import Control.Monad.State
+import Control.Monad.Reader
+import Control.Monad.Error
 import Text.PrettyPrint.Boxes
+
+----------------------------------------------------------------------
+
+throwNotInScope :: Name -> TCM a
+throwNotInScope x = do
+  DittoR {ctx = ctx} <- ask
+  DittoS {sig = sig} <- get
+  throwError $ renderNotInScope x ++ renderCtx ctx ++ renderEnv sig
+
+throwNotConv :: Exp -> Exp -> TCM a
+throwNotConv a b = do
+  DittoR {ctx = ctx} <- ask
+  DittoS {sig = sig} <- get
+  throwError $
+       renderNotConv a b
+    ++ renderCtx ctx
+    ++ renderEnv sig
 
 ----------------------------------------------------------------------
 
@@ -11,6 +32,9 @@ renderCtx ctx = "\nContext:\n\n" ++ concat (map (render . ppCtxBind) (reverse ct
 
 renderEnv :: [Sigma] -> String
 renderEnv sig = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse sig))
+
+renderNotInScope :: Name -> String
+renderNotInScope x = render $ text "Variable not in scope:" <+> ppName x
 
 renderNotConv :: Exp -> Exp -> String
 renderNotConv x y = render $ text "Terms not convertible:" <+> ppExp x <+> text "!=" <+> ppExp y
@@ -75,9 +99,9 @@ lefty Wrap = parens
 
 ppSig :: Sigma -> Box
 ppSig (Def x a _A) = ppDefType x _A // ppDefBod x a
-ppSig (DForm _X _Is) = ppPName _X <+> text "Data"
+ppSig (DForm _X _Is) = ppPName _X <+> text "type former"
 ppSig (DCon _Y _As _X _Is) = ppPName _Y <+> text "constructor of" <+> ppPName _X
-ppSig (DRed x cs _As _B) = ppPName x <+> text "Reduction"
+ppSig (DRed x cs _As _B) = ppPName x <+> text "reduction rule"
 
 ----------------------------------------------------------------------
 

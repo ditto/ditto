@@ -85,15 +85,6 @@ conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwError "Reduction names not equal"
-conv' a b = do
-  DittoR {ctx = ctx} <- ask
-  DittoS {sig = sig} <- get
-  throwError $
-    "Terms not convertible\n"
-    ++ show a ++ " != " ++ show b
-    ++ "\nContext:\n"
-    ++ unlines (map show ctx)
-    ++ "\nEnvironment:\n"
-    ++ unlines (map show sig)
+conv' a b = throwNotConv a b
 
 ----------------------------------------------------------------------

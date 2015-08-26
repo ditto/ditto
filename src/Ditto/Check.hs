@@ -10,6 +10,7 @@ import Ditto.Sub
 import Ditto.Env
 import Ditto.Match
 import Ditto.Cover
+import Ditto.Pretty
 import Data.Maybe
 import Data.List
 import Control.Monad.Except
@@ -149,14 +150,7 @@ infer (Var x) = do
   ma <- lookupType x
   case ma of
     Just _A -> return _A
-    Nothing -> do
-      DittoR {ctx = ctx} <- ask
-      DittoS {sig = sig} <- get
-      throwError $ "Variable not in scope: " ++ show x
-        ++ "\nContext:\n"
-        ++ unlines (map show ctx)
-        ++ "\nEnvironment:\n"
-        ++ unlines (map show sig)
+    Nothing -> throwNotInScope x
 infer Type = return Type
 infer (Pi _A bnd_B) = do
   check _A Type
