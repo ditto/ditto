@@ -56,15 +56,15 @@ ppwExp w (f :@: a) = lefty w $ ppwExp NoWrapL f <+> ppwExp Wrap a
 
 ppPrim :: Wrap -> PName -> [Exp] -> Box
 ppPrim w x [] = ppPName x
-ppPrim w x as = lefty w $ ppPName x <+> hsep1 (map (ppwExp Wrap) as)
+ppPrim w x as = lefty w $ ppPName x <+> hcatmap (ppwExp Wrap) as
 
 ----------------------------------------------------------------------
 
 ppPis :: Wrap -> Exp -> Box
-ppPis w (viewPis -> (_As, _B)) = righty w $ hsep1 (map (uncurry ppBind) _As) <+> oft <+> ppExp _B
+ppPis w (viewPis -> (_As, _B)) = righty w $ hcatmap (uncurry ppBind) _As <+> oft <+> ppExp _B
 
 ppLams :: Wrap -> Exp -> Box
-ppLams w (viewLams -> (as, b)) = righty w $ hsep1 (map (uncurry ppBind) as) <+> arr <+> ppExp b
+ppLams w (viewLams -> (as, b)) = righty w $ hcatmap (uncurry ppBind) as <+> arr <+> ppExp b
 
 viewPis :: Exp -> ([(Name, Exp)], Exp)
 viewPis (Pi _A (Bind x _B)) = ((x, _A):_As, _B')
@@ -84,6 +84,15 @@ ppCtxBind (x, _A) = ppName x <+> oft <+> ppExp _A
 
 ----------------------------------------------------------------------
 
+ppPat :: Pat -> Box
+ppPat (PVar x) = ppName x
+ppPat (Inacc Nothing) = text "*"
+ppPat (Inacc (Just a)) = text "." <> ppwExp Wrap a
+ppPat (PCon x []) = ppPName x
+ppPat (PCon x ps) = parens $ ppPName x <+> hcatmap ppPat ps
+
+----------------------------------------------------------------------
+
 data Wrap = Wrap | NoWrapL | NoWrap
 
 righty :: Wrap -> Box -> Box
@@ -91,17 +100,28 @@ righty NoWrap = id
 righty _ = parens
 
 lefty :: Wrap -> Box -> Box
-lefty NoWrap = id
-lefty NoWrapL = id
 lefty Wrap = parens
+lefty _ = id
 
 ----------------------------------------------------------------------
 
 ppSig :: Sigma -> Box
 ppSig (Def x a _A) = ppDefType x _A // ppDefBod x a
-ppSig (DForm _X _Is) = ppPName _X <+> text "type former"
-ppSig (DCon _Y _As _X _Is) = ppPName _Y <+> text "constructor of" <+> ppPName _X
-ppSig (DRed x cs _As _B) = ppPName x <+> text "reduction rule"
+ppSig (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
+ppSig (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
+ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
+  /+/ vcatmap (ppRed x) cs
+
+----------------------------------------------------------------------
+
+ppRed :: PName -> CheckedClause -> Box
+ppRed x (_As, ps, rhs) = ppRedCtx x _As //
+  (ppPName x <+> hcatmap ppPat ps <+> def <+> ppExp rhs)
+
+ppRedCtx :: PName -> Tel -> Box
+ppRedCtx x [] = ppPName x <+> text "[empty context]"
+ppRedCtx x [_A] = ppPName x <+> oft <+> uncurry ppBind _A
+ppRedCtx x _As = ppPName x <+> hcatmap (uncurry ppBind) _As
 
 ----------------------------------------------------------------------
 
@@ -126,6 +146,9 @@ ppPName = text . show
 parens :: Box -> Box
 parens d = char '(' <> d <> char ')'
 
+brackets :: Box -> Box
+brackets d = char '[' <> d <> char ']'
+
 oft :: Box
 oft = char ':'
 
@@ -135,7 +158,10 @@ arr = text "="
 def :: Box
 def = text "="
 
-hsep1 :: [Box] -> Box
-hsep1 = hsep 1 top
+vcatmap :: (a -> Box) -> [a] -> Box
+vcatmap f xs = vsep 1 left (map f xs)
+
+hcatmap :: (a -> Box) -> [a] -> Box
+hcatmap f xs = hsep 1 top (map f xs)
 
 ----------------------------------------------------------------------
