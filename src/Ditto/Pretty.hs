@@ -7,10 +7,13 @@ import Text.PrettyPrint.Boxes
 ----------------------------------------------------------------------
 
 renderCtx :: Tel -> String
-renderCtx ctx = concat (map (render . ppCtxBind) (reverse ctx))
+renderCtx ctx = "\nContext:\n\n" ++ concat (map (render . ppCtxBind) (reverse ctx))
 
-renderSig :: [Sigma] -> String
-renderSig sig = unlines (map (render . ppSig) (reverse sig))
+renderEnv :: [Sigma] -> String
+renderEnv sig = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse sig))
+
+renderNotConv :: Exp -> Exp -> String
+renderNotConv x y = render $ text "Terms not convertible:" <+> ppExp x <+> text "!=" <+> ppExp y
 
 ----------------------------------------------------------------------
 
