@@ -16,10 +16,14 @@ ppwExp w Type = text "Type"
 ppwExp w (Var x) = ppName x
 ppwExp w (Pi _A (Bind x _B)) = righty w $ ppBind x _A <+> oft <+> ppExp _B
 ppwExp w (Lam _A (Bind x a)) = righty w $ ppBind x _A <+> arr <+> ppExp a
-ppwExp w (Form _X _Is) = ppPName _X
-ppwExp w (Con _X as) = ppPName _X
-ppwExp w (Red _X as) = ppPName _X
+ppwExp w (Form _X _Is) = ppPrim w _X _Is
+ppwExp w (Con x as) = ppPrim w x as
+ppwExp w (Red x as) = ppPrim w x as
 ppwExp w (f :@: a) = lefty w $ ppwExp NoWrapL f <+> ppwExp Wrap a
+
+ppPrim :: Wrap -> PName -> [Exp] -> Box
+ppPrim w x [] = ppPName x
+ppPrim w x as = lefty w $ ppPName x <+> hsep 1 top (map (ppwExp Wrap) as)
 
 ----------------------------------------------------------------------
 
