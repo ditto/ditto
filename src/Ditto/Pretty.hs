@@ -4,7 +4,7 @@ import Ditto.Syntax
 import Text.PrettyPrint.Boxes
 
 ppSig :: Sigma -> Box
-ppSig (Def x a _A) = ppName x <+> oft <+> ppExp _A <+> def <+> ppExp a
+ppSig (Def x a _A) = (ppName x <+> oft <+> ppExp _A) // (ppName x <+> def <+> ppExp a)
 ppSig (DForm _X _Is) = ppPName _X <+> text "Data"
 ppSig (DCon _Y _As _X _Is) = ppPName _Y <+> text "constructor of" <+> ppPName _X
 ppSig (DRed x cs _As _B) = ppPName x <+> text "Reduction"
@@ -17,7 +17,12 @@ ppExp (Form _X _Is) = ppPName _X
 ppExp (Con _X as) = ppPName _X
 ppExp (Red _X as) = ppPName _X
 ppExp (Var x) = ppName x
-ppExp (f :@: a) = (parens $ ppExp f) <+> (parens $ ppExp a)
+ppExp (f :@: a) = ppExpParens f <+> ppExpParens a
+
+ppExpParens :: Exp -> Box
+ppExpParens x@Type = ppExp x
+ppExpParens x@(Var _) = ppExp x
+ppExpParens x = parens (ppExp x)
 
 ppName :: Name -> Box
 ppName = text . show
@@ -37,5 +42,5 @@ arr :: Box
 arr = text "->"
 
 def :: Box
-def = text ":="
+def = text "="
 
