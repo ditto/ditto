@@ -157,7 +157,7 @@ parseIdent = try $ do
   lexeme ((:) <$> firstChar <*> many nextChar)
   where
   firstChar = letter
-  nextChar = alphaNum
+  nextChar = choice [alphaNum, char '\'']
 
 ----------------------------------------------------------------------
 

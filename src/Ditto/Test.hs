@@ -424,6 +424,42 @@ dependentVectorPatterns = unlines
   , "end"
   ]
 
+intrinsicEvaluator = unlines
+  [ "data Tp : Type where"
+  , "| Bool' : Tp"
+  , "| Arr' (A B : Tp) : Tp"
+  , "end"
+
+  , "data Ctx : Type where"
+  , "| emp : Ctx"
+  , "| ext (As : Ctx) (A : Tp) : Ctx"
+  , "end"
+
+  , "data In : (A : Tp) (As : Ctx) : Type where"
+  , "| here : (A : Tp) (As : Ctx) : In A (ext As A)"
+  , "| there : (A B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)"
+  , "end"
+
+  , "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def El (A : Tp) : Type where"
+  , "| Bool' = Bool"
+  , "| (Arr' A B) = (a : El A) : El B"
+  , "end"
+
+  , "data Env (As : Ctx) : Type where"
+  , "| nil : Env emp"
+  , "| cons (As : Ctx) (as : Env As) (A : Tp) (a : El A) : Env (ext As A)"
+  , "end"
+
+  , "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
+  , "| A * (here * As) (cons * as * a) = a"
+  , "| A * (there * B As i) (cons * as * a) = lookup A As i as"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -474,6 +510,7 @@ checkTests = "Check tests" ~:
   , testChecks captureDeltaWithCoveringWithBinding
   , testChecks simpleDependentPatterns
   , testChecks dependentVectorPatterns
+  , testChecks intrinsicEvaluator
   ]
 
 parseTests :: Test
