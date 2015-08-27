@@ -76,7 +76,8 @@ conv' (Pi _A1 bnd_B1) (Pi _A2 bnd_B2) = do
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> mapM (uncurry conv) (zip _Is1 _Is2)
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =
-  throwError "Type former names not equal"
+  throwError $ "Type former names not equal"
+   ++ show x1 ++ " != "  ++ show x2
 conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =

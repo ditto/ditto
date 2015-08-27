@@ -444,6 +444,11 @@ intrinsicEvaluator = unlines
   , "| true/false : Bool"
   , "end"
 
+  , "def if (C : Type) (b : Bool) (ct cf : C) : C where"
+  , "| C true ct cf = ct"
+  , "| C false ct cf = cf"
+  , "end"
+
   , "def El (A : Tp) : Type where"
   , "| Bool' = Bool"
   , "| (Arr' A B) = (a : El A) : El B"
@@ -457,6 +462,23 @@ intrinsicEvaluator = unlines
   , "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
   , "| A * (here * As) (cons * as * a) = a"
   , "| A * (there * B As i) (cons * as * a) = lookup A As i as"
+  , "end"
+
+  , "data Exp : (As : Ctx) (A : Tp) : Type where"
+  , "| var' : (As : Ctx) (A : Tp) (i : In A As) : Exp As A"
+  , "| true'/false' : (As : Ctx) : Exp As Bool'"
+  , "| if' : (As : Ctx) (C : Tp) (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
+  , "| lam' : (As : Ctx) (A B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' : (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "end"
+
+  , "def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where"
+  , "| As A (var' * * i) as = lookup A As i as"
+  , "| As * (true' *) as = true"
+  , "| As * (false' *) as = false"
+  , "| As C (if' * * b ct cf) as = if (El C) (eval As Bool' b as) (eval As C ct as) (eval As C cf as)"
+  , "| As * (lam' * A B b) as = (a : El A) = eval (ext As A) B b (cons As as A a)"
+  , "| As * (app' * A B f a) as = (eval As (Arr' A B) f as) (eval As A a as)"
   , "end"
   ]
 

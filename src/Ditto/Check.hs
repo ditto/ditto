@@ -181,7 +181,7 @@ infer (Red x as) = do
       sub _B (zip (names _As) as)
     otherwise -> throwError $ "Not a reduction name: " ++ show x
 infer (f :@: a) = do
-  _AB <- infer f
+  _AB <- whnf =<< infer f
   case _AB of
     Pi _A bnd_B -> do
       check a _A
