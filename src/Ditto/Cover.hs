@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, ViewPatterns #-}
 module Ditto.Cover where
 import Ditto.Syntax
 import Ditto.Monad
@@ -6,6 +6,7 @@ import Ditto.Match
 import Ditto.Whnf
 import Ditto.Sub
 import Ditto.Funify
+import Data.Maybe
 import Control.Monad.Except
 import Control.Applicative
 
@@ -20,17 +21,18 @@ splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X js -> do
     _Bs <- lookupConsFresh _X
-    mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
+    catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwError "Case splitting is only allowed on datatypes"
 
-splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> [Exp] -> Tel -> TCM (Tel, PSub)
-splitCon _As x (y, _Bs, is) js _Cs = do
-  qs <- injectSub <$> funifies (names _As ++ names _Bs) js is
-  _ABs' <- refineTel (_As ++ _Bs) qs
-  as <- psubPats (pvarNames _Bs) qs
-  let qs' = qs ++ [(x, PCon y as)]
-  _Cs' <- psubTel _Cs qs'
-  return (_ABs' ++ _Cs', qs')
+splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> [Exp] -> Tel -> TCM (Maybe (Tel, PSub))
+splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>= \case
+  Nothing -> return Nothing
+  Just (injectSub -> qs) -> do
+    _ABs' <- refineTel (_As ++ _Bs) qs
+    as <- psubPats (pvarNames _Bs) qs
+    let qs' = qs ++ [(x, PCon y as)]
+    _Cs' <- psubTel _Cs qs'
+    return . Just $ (_ABs' ++ _Cs', qs')
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)

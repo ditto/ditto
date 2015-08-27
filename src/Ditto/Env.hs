@@ -3,7 +3,6 @@ import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
 import Data.List
-import Data.Maybe
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Identity

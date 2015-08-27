@@ -409,6 +409,10 @@ dependentVectorPatterns = unlines
   , "| cons (A : Type) (n : Nat) (x : A) (xs : Vec A n) : Vec A (suc n)"
   , "end"
 
+  , "def tail (A : Type) (n : Nat) (xs : Vec A (suc n)) : Vec A n where"
+  , "| A n (cons * * x xs) = xs"
+  , "end"
+
   , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
   , "| A * m (nil *) ys = ys"
   , "| A * m (cons * n x xs) ys = cons A (add n m) x (append A n m xs ys)"
