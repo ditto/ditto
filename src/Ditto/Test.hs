@@ -401,7 +401,7 @@ dependentVectorPatterns = unlines
 
   , "def mult (n m : Nat) : Nat where"
   , "| zero m = zero"
-  , "| (suc n) m = add n (mult n m)"
+  , "| (suc n) m = add m (mult n m)"
   , "end"
 
   , "data Vec (A : Type) (n : Nat) : Type where"
@@ -412,6 +412,11 @@ dependentVectorPatterns = unlines
   , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
   , "| A * m (nil *) ys = ys"
   , "| A * m (cons * n x xs) ys = cons A (add n m) x (append A n m xs ys)"
+  , "end"
+
+  , "def concat (A : Type) (n m : Nat) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
+  , "| A * m (nil *) = nil A"
+  , "| A * m (cons * n xs xss) = append A m (mult n m) xs (concat A n m xss)"
   , "end"
   ]
 

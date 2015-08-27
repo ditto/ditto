@@ -114,8 +114,21 @@ subTel _As xs = foldM (flip subTel1) _As xs
 psub :: Exp -> PSub -> TCM Exp
 psub a xs = sub a (embedPSub xs)
 
+psubTel1 :: (Name, Pat) -> Tel -> TCM Tel
+psubTel1 (x, p) _As = subTel1 (x, embedPat p) _As
+
 psubTel :: Tel -> PSub -> TCM Tel
 psubTel _As qs = subTel _As (embedPSub qs)
+
+----------------------------------------------------------------------
+
+refineTel :: Tel -> PSub -> TCM Tel
+refineTel [] xs = return []
+refineTel ((x, _A):_As) xs = case lookup x xs of
+  Nothing -> ((x, _A):) <$> refineTel _As xs
+  Just a -> flip refineTel ((x, a) `delete` xs) =<< psubTel1 (x, a) _As
+
+----------------------------------------------------------------------
 
 psubPat :: Pat -> PSub -> TCM Pat
 psubPat (PVar x) xs = return $ maybe (PVar x) id (lookup x xs)

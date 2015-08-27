@@ -26,10 +26,11 @@ splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
 splitCon :: Tel -> Name -> (PName, Tel, [Exp]) -> [Exp] -> Tel -> TCM (Tel, PSub)
 splitCon _As x (y, _Bs, is) js _Cs = do
   qs <- injectSub <$> funifies (names _As ++ names _Bs) js is
+  _ABs' <- refineTel (_As ++ _Bs) qs
   as <- psubPats (pvarNames _Bs) qs
   let qs' = qs ++ [(x, PCon y as)]
   _Cs' <- psubTel _Cs qs'
-  return (_As ++ _Bs ++ _Cs', qs')
+  return (_ABs' ++ _Cs', qs')
 
 findSplit :: Tel -> Name -> (Tel, Exp, Tel)
 findSplit _As x = (_As1, snd (head _As2), tail _As2)
