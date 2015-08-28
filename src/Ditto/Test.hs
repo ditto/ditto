@@ -436,8 +436,8 @@ intrinsicEvaluator = unlines
   , "end"
 
   , "data In : (A : Tp) (As : Ctx) : Type where"
-  , "| here : (A : Tp) (As : Ctx) : In A (ext As A)"
-  , "| there : (A B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)"
+  , "| here (A : Tp) (As : Ctx) : In A (ext As A)"
+  , "| there (A B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)"
   , "end"
 
   , "data Bool : Type where"
@@ -465,11 +465,11 @@ intrinsicEvaluator = unlines
   , "end"
 
   , "data Exp : (As : Ctx) (A : Tp) : Type where"
-  , "| var' : (As : Ctx) (A : Tp) (i : In A As) : Exp As A"
-  , "| true'/false' : (As : Ctx) : Exp As Bool'"
-  , "| if' : (As : Ctx) (C : Tp) (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
-  , "| lam' : (As : Ctx) (A B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
-  , "| app' : (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "| var' (As : Ctx) (A : Tp) (i : In A As) : Exp As A"
+  , "| true'/false' (As : Ctx) : Exp As Bool'"
+  , "| if' (As : Ctx) (C : Tp) (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
+  , "| lam' (As : Ctx) (A B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
   , "end"
 
   , "def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where"
