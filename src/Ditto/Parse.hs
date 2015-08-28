@@ -28,6 +28,7 @@ symAscribe = symbol ":"
 symChoice = symbol "|"
 symInacc = symbol "*"
 symEq = symbol "="
+symNeq = symbol "!="
 symArr = symbol "->"
 symSlash = symbol "/"
 
@@ -71,9 +72,14 @@ parseClause :: Parser Clause
 parseClause = try $ do
   symChoice
   ps <- many parsePattern
-  symEq
-  a <- parseExp
+  a <- parseRHS
   return (ps , a)
+
+parseRHS :: Parser RHS
+parseRHS = choice
+  [ try $ Prog <$> (symEq >> parseExp)
+  , try $ Caseless <$> (symNeq >> parseName)
+  ]
 
 ----------------------------------------------------------------------
 

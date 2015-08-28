@@ -116,7 +116,11 @@ ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
 
 ppRed :: PName -> CheckedClause -> Box
 ppRed x (_As, ps, rhs) = ppRedCtx x _As //
-  (ppPName x <+> hcatmap ppPat ps <+> def <+> ppExp rhs)
+  (ppPName x <+> hcatmap ppPat ps <+> ppRHS rhs)
+
+ppRHS :: RHS -> Box
+ppRHS (Prog a) = def <+> ppExp a
+ppRHS (Caseless x) = ndef <+> ppName x
 
 ppRedCtx :: PName -> Tel -> Box
 ppRedCtx x _As = ppPName x <+> hcatmap (uncurry ppBind) _As
@@ -155,6 +159,9 @@ arr = text "->"
 
 def :: Box
 def = char '='
+
+ndef :: Box
+ndef = text "!="
 
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)

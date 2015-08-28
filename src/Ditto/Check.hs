@@ -76,9 +76,12 @@ checkStmt (SDefn x _A cs) = do
 
 ----------------------------------------------------------------------
 
-checkRHS :: Tel -> [Pat] -> Exp -> Tel -> Exp -> TCM ()
-checkRHS _Delta lhs rhs _As _B
-  = checkExts _Delta rhs =<< subClauseType _B _As lhs
+checkRHS :: Tel -> [Pat] -> RHS -> Tel -> Exp -> TCM ()
+checkRHS _Delta lhs (Prog a) _As _B
+  = checkExts _Delta a =<< subClauseType _B _As lhs
+checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
+    [] -> return ()
+    otherwise -> throwError $ "Variable is not caseless: " ++ show x
 
 ----------------------------------------------------------------------
 

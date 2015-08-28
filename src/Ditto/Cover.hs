@@ -48,9 +48,12 @@ cover cs _As = do
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: [Clause] -> Tel -> [Pat] -> TCM [CheckedClause]
 cover' cs _As qs = case matchClauses cs qs of
-  CMatch rs rhs -> do
-    rhs' <- psub rhs rs
-    return [(_As, qs, rhs')]
+  CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
+    Var x' -> return [(_As, qs, Caseless x')]
+    otherwise -> throwError "Non-renaming in caseless clause"
+  CMatch rs (Prog a) -> do
+    a' <- psub a rs
+    return [(_As, qs, Prog a')]
   CSplit x -> do
     qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' cs _As' =<< psubPats qs qs') qss

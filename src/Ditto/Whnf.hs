@@ -36,7 +36,9 @@ whnf x = return x
 betaRed :: PName -> [Clause] -> [Exp] -> TCM Exp
 betaRed x [] as = return $ Red x as
 betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
-  Just xs -> whnf =<< sub rhs xs
+  Just xs -> case rhs of
+    Prog a -> whnf =<< sub a xs
+    Caseless y -> throwError "Reducing a caseless RHS"
   Nothing -> betaRed x cs as
 
 matchExps :: [Pat] -> [Exp] -> TCM (Maybe Sub)

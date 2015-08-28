@@ -482,6 +482,41 @@ intrinsicEvaluator = unlines
   , "end"
   ]
 
+caselessNonDependent = unlines
+  [ "data Bot : Type where"
+  , "end"
+
+  , "data Bot' : Type where"
+  , "| bot (b : Bot) : Bot'"
+  , "end"
+
+  , "def exFalso' (A : Type) (b : Bot') : A where"
+  , "| A (bot b) != b"
+  , "end"
+  ]
+
+caselessDependent = unlines
+  [ "data Nat : Type where"
+  , "| zero : Nat"
+  , "| suc (n : Nat) : Nat"
+  , "end"
+
+  , "data Leq (n m : Nat) : Type where"
+  , "| leqZero (n : Nat) : Leq zero n"
+  , "| leqSuc (n m : Nat) (p : Leq n m) : Leq (suc n) (suc m)"
+  , "end"
+
+  , "def leqSucR (n m : Nat) (p : Leq n m) : Leq n (suc m) where"
+  , "| * m (leqZero *) = leqZero (suc m)"
+  , "| * * (leqSuc n m p) = leqSuc n (suc m) (leqSucR n m p)"
+  , "end"
+
+  , "def leqPredL (n m : Nat) (p : Leq (suc n) m) : Leq n m where"
+  , "| n zero p != p"
+  , "| n (suc m) (leqSuc * * p) = leqSucR n m p"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -533,6 +568,8 @@ checkTests = "Check tests" ~:
   , testChecks simpleDependentPatterns
   , testChecks dependentVectorPatterns
   , testChecks intrinsicEvaluator
+  , testChecks caselessNonDependent
+  , testChecks caselessDependent
   ]
 
 parseTests :: Test

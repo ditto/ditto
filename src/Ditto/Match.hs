@@ -8,7 +8,7 @@ import Control.Applicative
 ----------------------------------------------------------------------
 
 data Match = MSolve PSub | MStuck [Name] | MClash PName PName
-data Cover = CMatch PSub Exp | CSplit Name | CMiss
+data Cover = CMatch PSub RHS | CSplit Name | CMiss
 
 ----------------------------------------------------------------------
 

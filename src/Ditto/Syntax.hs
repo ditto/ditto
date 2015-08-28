@@ -52,8 +52,11 @@ data Bind = Bind Name Exp
 type Tel = [(Name, Exp)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
-type Clause = ([Pat], Exp)
-type CheckedClause = (Tel, [Pat], Exp)
+type Clause = ([Pat], RHS)
+type CheckedClause = (Tel, [Pat], RHS)
+
+data RHS = Prog Exp | Caseless Name
+  deriving (Show, Read, Eq)
 
 data Sigma =
     Def Name Exp Exp
