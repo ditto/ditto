@@ -50,6 +50,6 @@ def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where
 | As * (true' *) as = true
 | As * (false' *) as = false
 | As C (if' * * b ct cf) as = if (El C) (eval As Bool' b as) (eval As C ct as) (eval As C cf as)
-| As * (lam' * A B b) as = (a : El A) = eval (ext As A) B b (cons As as A a)
+| As * (lam' * A B b) as = (a : El A) -> eval (ext As A) B b (cons As as A a)
 | As * (app' * A B f a) as = (eval As (Arr' A B) f as) (eval As A a as)
 end

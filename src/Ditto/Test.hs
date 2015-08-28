@@ -9,12 +9,12 @@ import Test.HUnit
 ----------------------------------------------------------------------
 
 _Identity = "((A : Type) (a : A) : A)"
-identity = "((A : Type) (a : A) = a)"
+identity = "((A : Type) (a : A) -> a)"
 _PiWh = "((A : Type) : " ++ identity ++ " Type Type)"
 
 idProg = unlines
   [ "def id (A : Type) (a : A) : A where"
-  , "(A : Type) (a : A) = a"
+  , "(A : Type) (a : A) -> a"
   , "end"
 
   , "def KType : id Type Type where"
@@ -295,7 +295,7 @@ captureDeltaWithLambda = unlines
   , "end"
 
   , "def capture (b : Bool) : Bool where"
-  , "(Bool : Bool) = Bool"
+  , "(Bool : Bool) -> Bool"
   , "end"
   ]
 
@@ -305,7 +305,7 @@ captureType = unlines
   , "end"
 
   , "def foo (Foo : Foo) : Type where"
-  , "(Foo : Foo) = Foo"
+  , "(Foo : Foo) -> Foo"
   , "end"
   ]
 
@@ -318,13 +318,13 @@ captureDataType = unlines
   , "end"
 
   , "def capture (e : Empty) (A : Type) : Empty2 where"
-  , "(e : Empty) (Empty : Type) = e"
+  , "(e : Empty) (Empty : Type) -> e"
   , "end"
   ]
 
 exFalsoCapture = unlines
   [ "def exFalso (A : Type) (a : A) (B : Type) : B where"
-  , "(A : Type) (a : A) (A : Type) = a"
+  , "(A : Type) (a : A) (A : Type) -> a"
   , "end"
   ]
 
@@ -477,7 +477,7 @@ intrinsicEvaluator = unlines
   , "| As * (true' *) as = true"
   , "| As * (false' *) as = false"
   , "| As C (if' * * b ct cf) as = if (El C) (eval As Bool' b as) (eval As C ct as) (eval As C cf as)"
-  , "| As * (lam' * A B b) as = (a : El A) = eval (ext As A) B b (cons As as A a)"
+  , "| As * (lam' * A B b) as = (a : El A) -> eval (ext As A) B b (cons As as A a)"
   , "| As * (app' * A B f a) as = (eval As (Arr' A B) f as) (eval As A a as)"
   , "end"
   ]
@@ -485,8 +485,8 @@ intrinsicEvaluator = unlines
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
-  , testWhnf "((A : Type) (a : A) = a) Type Type" "Type"
-  , testWhnf ("((A : Type) (a : A) = a) Type " ++ _Identity) _Identity
+  , testWhnf "((A : Type) (a : A) -> a) Type Type" "Type"
+  , testWhnf ("((A : Type) (a : A) -> a) Type " ++ _Identity) _Identity
   , testWhnf (identity ++ " Type " ++ _PiWh) _PiWh
   , testWhnfFails (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
@@ -495,7 +495,7 @@ convTests :: Test
 convTests = "Conv tests" ~:
   [ testConv "Type" "Type"
   , testConv (identity ++ "Type Type") "Type"
-  , testConv "(A : Type) (a : A) = a" "(B : Type) (b : B) = b"
+  , testConv "(A : Type) (a : A) -> a" "(B : Type) (b : B) -> b"
   , testConv (identity ++ " Type " ++ _PiWh) "(B : Type) : Type"
   ]
 
@@ -506,9 +506,9 @@ checkTests = "Check tests" ~:
   , testCheck "(x : Type) : Type" "Type"
   , testCheck _Identity "Type"
   , testCheck identity _Identity
-  , testCheck "(B : Type) (b : B) = b" _Identity
+  , testCheck "(B : Type) (b : B) -> b" _Identity
   , testCheckFails identity "Type"
-  , testCheck ("(A : Type) (a : A) = (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
+  , testCheck ("(A : Type) (a : A) -> (" ++ identity ++ " A) (" ++ identity ++ " A a)") _Identity
   , testChecks idProg
   , testChecks dataProg
   , testChecksFails duplicateDef
@@ -544,8 +544,8 @@ parseTests = "Parse tests" ~:
   , testParseFails "(Type : A) (y : B) : Type"
   , testParse "(x : A) (y : B) : Type" Nothing
   , testParse "(x : A) (y : B x) : C x y" Nothing
-  , testParse "(x : A) (y : B) = c" Nothing
-  , testParse "(x : A) (y : B x) : C (((z : A) = z) x) (g x y)" Nothing
+  , testParse "(x : A) (y : B) -> c" Nothing
+  , testParse "(x : A) (y : B x) : C (((z : A) -> z) x) (g x y)" Nothing
   , testParses idProg
   , testParses enumerationPatterns
   , testParses nonDependentPatterns

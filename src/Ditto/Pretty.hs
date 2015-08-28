@@ -151,10 +151,10 @@ oft :: Box
 oft = char ':'
 
 arr :: Box
-arr = text "="
+arr = text "->"
 
 def :: Box
-def = text "="
+def = char '='
 
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)

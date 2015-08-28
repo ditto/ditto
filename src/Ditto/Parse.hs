@@ -28,6 +28,7 @@ symAscribe = symbol ":"
 symChoice = symbol "|"
 symInacc = symbol "*"
 symEq = symbol "="
+symArr = symbol "->"
 symSlash = symbol "/"
 
 symLParen = symbol "("
@@ -171,7 +172,7 @@ parsePi = try $ do
 parseLam :: Parser Exp
 parseLam = try $ do
   _As <- parseTel
-  symEq
+  symArr
   b <- parseExp
   return $ lams _As b
 
