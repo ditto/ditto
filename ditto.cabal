@@ -9,7 +9,7 @@ Bug-reports:    https://github.com/ditto-lang/ditto/issues
 
 Stability:      Alpha
 Category:       Dependent Types
-Synopsis:       Functional Programming Language with Dependent Types
+Synopsis:       A Super Kawaii Programming Language with Dependent Types
 Description:    Please see README.md
 Cabal-Version:  >= 1.10
 
