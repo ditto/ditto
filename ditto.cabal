@@ -5,6 +5,7 @@ License-file:   LICENSE
 Author:         Larry Diehl, Francisco Ferreira
 Maintainer:     larrytheliquid@gmail.com
 Homepage:       https://github.com/ditto-lang/ditto
+Bug-reports:    https://github.com/ditto-lang/ditto/issues
 
 Stability:      Alpha
 Category:       Dependent Types
