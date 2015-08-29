@@ -4,6 +4,7 @@ import Ditto.Parse
 import Ditto.Check
 import Ditto.Conv
 import Ditto.Whnf
+import Ditto.Monad
 import Test.HUnit
 
 ----------------------------------------------------------------------
@@ -613,14 +614,14 @@ asExp s = case parseE s of
 ----------------------------------------------------------------------
 
 testWhnf :: String -> String -> Test
-testWhnf a b = TestCase $ case runWhnf (asExp a) of
+testWhnf a b = TestCase $ case trunWhnf (asExp a) of
   Left error -> assertFailure ("Whnf error:\n" ++ error)
   Right a' -> let
     error = "Whnf error:\n" ++ show a' ++ " != " ++ show (asExp b)
     in assertBool error (alpha a' (asExp b))
 
 testWhnfFails :: String -> String -> Test
-testWhnfFails a b = TestCase $ case runWhnf (asExp a) of
+testWhnfFails a b = TestCase $ case trunWhnf (asExp a) of
   Left error -> assertFailure ("Unexpected whnf error:\n" ++ error)
   Right a' -> let
     error = "Whnf reduced too much error:\n" ++ show a'
@@ -629,36 +630,29 @@ testWhnfFails a b = TestCase $ case runWhnf (asExp a) of
 ----------------------------------------------------------------------
 
 testConv :: String -> String -> Test
-testConv a b = TestCase $ case runConv (asExp a) (asExp b) of
+testConv a b = TestCase $ case trunConv (asExp a) (asExp b) of
   Left error -> assertFailure ("Conv error:\n" ++ error)
   Right _ -> return ()
 
 ----------------------------------------------------------------------
 
-testChecksDelta :: String -> Test
-testChecksDelta ds = TestCase $ case runCheckProgDelta (asProg ds) of
-  Left error -> assertFailure ("Check error:\n" ++ error)
-  Right () -> return ()
-
-----------------------------------------------------------------------
-
 testChecks :: String -> Test
-testChecks ds = TestCase $ case runCheckProgDelta (asProg ds) of
+testChecks ds = TestCase $ case trunCheckProg (asProg ds) of
   Left error -> assertFailure ("Check error:\n" ++ error)
   Right () -> return ()
 
 testCheck :: String -> String -> Test
-testCheck a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
+testCheck a _A = TestCase $ case trunCheck (asExp a) (asExp _A) of
   Left error -> assertFailure ("Check error:\n" ++ error)
   Right () -> return ()
 
 testChecksFails :: String -> Test
-testChecksFails ds = TestCase $ case runCheckProg (asProg ds) of
+testChecksFails ds = TestCase $ case trunCheckProg (asProg ds) of
   Right () -> assertFailure ("Expected check error in program:\n" ++ ds)
   Left error -> return ()
 
 testCheckFails :: String -> String -> Test
-testCheckFails a _A = TestCase $ case runCheck (asExp a) (asExp _A) of
+testCheckFails a _A = TestCase $ case trunCheck (asExp a) (asExp _A) of
   Right () -> assertFailure ("Expected check error:\n" ++ (a ++ " : " ++ _A))
   Left error -> return ()
 
@@ -678,5 +672,19 @@ testParseFails :: String -> Test
 testParseFails s = TestCase $ case parseE s of
   Left error -> return ()
   Right a -> assertFailure ("Expected parse error:\n" ++ show a)
+
+----------------------------------------------------------------------
+
+trunCheckProg :: [Stmt] -> Either String ()
+trunCheckProg xs = runTCMVerbose (checkProg xs >> checkProgDelta)
+
+trunCheck :: Exp -> Exp -> Either String ()
+trunCheck a _A = runTCMVerbose (check a _A)
+
+trunConv :: Exp -> Exp -> Either String Exp
+trunConv a b = runTCMVerbose (conv a b)
+
+trunWhnf :: Exp -> Either String Exp
+trunWhnf a = runTCMVerbose (whnf a)
 
 ----------------------------------------------------------------------

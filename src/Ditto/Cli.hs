@@ -39,7 +39,7 @@ runCli = do
   code <- readFile (optFilename opts)
   case parseP code of
     Left e -> putStrLn (show e)
-    Right ds -> case runCheckProgDelta ds of
+    Right ds -> case runCheckProg (optVerbosity opts) ds of
       Left e -> putStrLn e
       Right () -> return ()
 

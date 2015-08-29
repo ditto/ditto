@@ -12,6 +12,7 @@ import Data.Maybe
 data DittoS = DittoS
   { env :: Env
   , nameId :: Integer
+  , verbosity :: Verbosity
   }
 
 data DittoR = DittoR
@@ -20,16 +21,20 @@ data DittoR = DittoR
 
 type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
 
-runTCM :: TCM a -> Either String a
-runTCM = runIdentity
+runTCM :: Verbosity -> TCM a -> Either String a
+runTCM v = runIdentity
   . runExceptT
   . flip runReaderT initialR
-  . flip evalStateT initialS
+  . flip evalStateT initialS {verbosity = v}
+
+runTCMVerbose :: TCM a -> Either String a
+runTCMVerbose = runTCM Verbose
 
 initialS :: DittoS
 initialS = DittoS
   { env = []
   , nameId = 0
+  , verbosity = Normal
   }
 
 initialR :: DittoR

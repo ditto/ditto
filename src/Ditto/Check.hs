@@ -18,14 +18,8 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-runCheck :: Exp -> Exp -> Either String ()
-runCheck a _A = runTCM (check a _A)
-
-runCheckProg :: [Stmt] -> Either String ()
-runCheckProg = runTCM . checkProg
-
-runCheckProgDelta :: [Stmt] -> Either String ()
-runCheckProgDelta xs = runTCM (checkProg xs >> checkProgDelta)
+runCheckProg :: Verbosity -> [Stmt] -> Either String ()
+runCheckProg v = runTCM v . checkProg
 
 ----------------------------------------------------------------------
 

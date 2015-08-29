@@ -9,11 +9,6 @@ import Control.Monad.Except
 
 ----------------------------------------------------------------------
 
-runWhnf :: Exp -> Either String Exp
-runWhnf a = runTCM (whnf a)
-
-----------------------------------------------------------------------
-
 whnf :: Exp -> TCM Exp
 whnf (f :@: a) = do
   a' <- whnf a

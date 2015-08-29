@@ -12,11 +12,6 @@ import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
-runConv :: Exp -> Exp -> Either String Exp
-runConv a b = runTCM (conv a b)
-
-----------------------------------------------------------------------
-
 alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 

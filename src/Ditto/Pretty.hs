@@ -2,27 +2,32 @@ module Ditto.Pretty where
 
 import Ditto.Syntax
 import Ditto.Monad
+import Ditto.Env
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Except
+import Control.Applicative
 import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
 throwNotInScope :: Name -> TCM a
 throwNotInScope x = do
-  DittoR {ctx = ctx} <- ask
-  DittoS {env = env} <- get
-  throwError $ renderNotInScope x ++ renderCtx ctx ++ renderEnv env
+  ctx <- renderCtxEnv
+  throwError $ renderNotInScope x ++ ctx
 
 throwNotConv :: Exp -> Exp -> TCM a
 throwNotConv a b = do
-  DittoR {ctx = ctx} <- ask
-  DittoS {env = env} <- get
-  throwError $
-       renderNotConv a b
-    ++ renderCtx ctx
-    ++ renderEnv env
+  ctx <- renderCtxEnv
+  throwError $ renderNotConv a b ++ ctx
+
+renderCtxEnv :: TCM String
+renderCtxEnv = do
+  ctx <- getCtx
+  env <- getEnv
+  getVerbosity >>= \case
+    Normal -> return $ renderCtx ctx
+    Verbose -> return $ renderCtx ctx ++ renderEnv env
 
 ----------------------------------------------------------------------
 
