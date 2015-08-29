@@ -14,7 +14,7 @@
   '("#") ;; comments
   '("data" "def" "where" "end" "|") ;; keywords
   '()
-  '("\\.ditto$") ;; file extension
+  '("\\.dtt$") ;; file extension
   () ;; other functions to call
   "A mode for Ditto programs." ;; doc string
   )

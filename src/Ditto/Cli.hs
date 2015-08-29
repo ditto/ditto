@@ -30,7 +30,7 @@ menu :: ParserInfo Options
 menu = info (helper <*> parseOptions)
   ( fullDesc
   <> progDesc "Type check FILENAME"
-  <> header "ditto - a dependently typed language"
+  <> header "Ditto - your warm and fuzzy dependent type checker!"
   )
 
 runCli :: IO ()

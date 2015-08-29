@@ -53,7 +53,7 @@ Library
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   default-language: Haskell2010
 
-Executable ditto
+Executable dtt
   Main-is:        Main.hs
   hs-source-dirs: src/main
 
