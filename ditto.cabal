@@ -57,12 +57,8 @@ Executable ditto
   Main-is:        Main.hs
   hs-source-dirs: src/main
 
-  Build-depends:  ditto
-                , base >=4 && <5
-                , parsec
-                , mtl
-                , boxes
-                , optparse-applicative
+  Build-depends:  base >=4 && <5
+                , ditto
 
   ghc-prof-options: -fprof-auto
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
