@@ -1,4 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
 module Ditto.Pretty where
 
 import Ditto.Syntax

@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 module Ditto.Delta where
 import Ditto.Syntax
 import Ditto.Monad

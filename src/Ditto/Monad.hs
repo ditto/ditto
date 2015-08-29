@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 module Ditto.Monad where
 import Ditto.Syntax
 import Control.Monad.State

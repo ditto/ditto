@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 module Ditto.Funify where
 import Ditto.Syntax
 import Ditto.Whnf

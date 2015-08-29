@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections, LambdaCase #-}
-
 module Ditto.Check where
 import Ditto.Syntax
 import Ditto.Whnf

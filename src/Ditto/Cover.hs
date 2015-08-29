@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase, ViewPatterns #-}
 module Ditto.Cover where
 import Ditto.Syntax
 import Ditto.Monad

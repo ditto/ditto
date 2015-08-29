@@ -1,4 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
 module Ditto.Whnf where
 import Ditto.Syntax
 import Ditto.Monad

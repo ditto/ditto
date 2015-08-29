@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 module Ditto.Sub where
 import Ditto.Syntax
 import Ditto.Monad

@@ -44,7 +44,7 @@ Library
                 , boxes
                 , optparse-applicative
                 , HUnit
-  other-extensions:
+  extensions:
                   LambdaCase
                 , TupleSections
                 , ViewPatterns
