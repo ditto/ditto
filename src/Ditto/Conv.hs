@@ -45,7 +45,7 @@ alpha' dict _ _ = False
 ----------------------------------------------------------------------
 
 conv :: Exp -> Exp -> TCM Exp
-conv a b = do
+conv a b =
   if alpha a b
   then return a
   else do

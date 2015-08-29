@@ -1,0 +1,69 @@
+Name:           ditto
+Version:        0.1.0.0
+License:        GPL-3
+License-file:   LICENSE
+Author:         Larry Diehl, Francisco Ferreira
+Maintainer:     larrytheliquid@gmail.com
+Homepage:       https://github.com/ditto-lang/ditto
+
+Stability:      Alpha
+Category:       Dependent Types
+Synopsis:       Functional Programming Language with Dependent Types
+Description:    Please see README.md
+Cabal-Version:  >= 1.10
+
+Build-type:     Simple
+
+source-repository head
+  type:     git
+  location: git@github.com:ditto-lang/ditto.git
+
+Library
+  hs-source-dirs: src
+  Exposed-modules:
+                  Ditto.Check
+                , Ditto.Cli
+                , Ditto.Conv
+                , Ditto.Cover
+                , Ditto.Delta
+                , Ditto.Env
+                , Ditto.Funify
+                , Ditto.Match
+                , Ditto.Monad
+                , Ditto.Parse
+                , Ditto.Pretty
+                , Ditto.Sub
+                , Ditto.Syntax
+                , Ditto.Whnf
+
+  Build-depends:  base >=4 && <5
+                , parsec
+                , mtl
+                , mtl-compat
+                , boxes
+                , optparse-applicative
+  other-extensions:
+                  LambdaCase
+                , TupleSections
+                , ViewPatterns
+
+  ghc-prof-options: -fprof-auto
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  default-language: Haskell2010
+
+Executable ditto
+  Main-is:        Main.hs
+  hs-source-dirs: src
+
+  Build-depends:  ditto
+                , base >=4 && <5
+                , parsec
+                , mtl
+                , mtl-compat
+                , boxes
+                , optparse-applicative
+
+  ghc-prof-options: -fprof-auto
+  ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+  default-language: Haskell2010
+
