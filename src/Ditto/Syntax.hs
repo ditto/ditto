@@ -2,6 +2,11 @@ module Ditto.Syntax where
 
 ----------------------------------------------------------------------
 
+data Verbosity = Normal | Verbose
+  deriving (Show, Read, Eq)
+
+----------------------------------------------------------------------
+
 data Name = Name String (Maybe Integer)
   deriving (Read, Eq)
 
