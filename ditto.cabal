@@ -36,13 +36,14 @@ Library
                 , Ditto.Sub
                 , Ditto.Syntax
                 , Ditto.Whnf
+                , Ditto.Test
 
   Build-depends:  base >=4 && <5
                 , parsec
                 , mtl
-                , mtl-compat
                 , boxes
                 , optparse-applicative
+                , HUnit
   other-extensions:
                   LambdaCase
                 , TupleSections
@@ -54,13 +55,12 @@ Library
 
 Executable ditto
   Main-is:        Main.hs
-  hs-source-dirs: src
+  hs-source-dirs: src/main
 
   Build-depends:  ditto
                 , base >=4 && <5
                 , parsec
                 , mtl
-                , mtl-compat
                 , boxes
                 , optparse-applicative
 

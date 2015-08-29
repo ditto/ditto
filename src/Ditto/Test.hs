@@ -1,4 +1,4 @@
-module Main where
+module Ditto.Test where
 import Ditto.Syntax
 import Ditto.Parse
 import Ditto.Check

@@ -5,7 +5,7 @@ import Ditto.Syntax
 import Ditto.Monad
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad.Error
+import Control.Monad.Except
 import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
