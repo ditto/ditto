@@ -54,6 +54,7 @@ data Exp =
 data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
+type Env = [Sigma]
 type Tel = [(Name, Exp)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]

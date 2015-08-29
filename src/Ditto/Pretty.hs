@@ -12,25 +12,25 @@ import Text.PrettyPrint.Boxes
 throwNotInScope :: Name -> TCM a
 throwNotInScope x = do
   DittoR {ctx = ctx} <- ask
-  DittoS {sig = sig} <- get
-  throwError $ renderNotInScope x ++ renderCtx ctx ++ renderEnv sig
+  DittoS {env = env} <- get
+  throwError $ renderNotInScope x ++ renderCtx ctx ++ renderEnv env
 
 throwNotConv :: Exp -> Exp -> TCM a
 throwNotConv a b = do
   DittoR {ctx = ctx} <- ask
-  DittoS {sig = sig} <- get
+  DittoS {env = env} <- get
   throwError $
        renderNotConv a b
     ++ renderCtx ctx
-    ++ renderEnv sig
+    ++ renderEnv env
 
 ----------------------------------------------------------------------
 
 renderCtx :: Tel -> String
 renderCtx ctx = "\nContext:\n\n" ++ concat (map (render . ppCtxBind) (reverse ctx))
 
-renderEnv :: [Sigma] -> String
-renderEnv sig = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse sig))
+renderEnv :: Env -> String
+renderEnv env = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse env))
 
 renderNotInScope :: Name -> String
 renderNotInScope x = render $ text "Variable not in scope:" <+> ppName x

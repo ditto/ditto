@@ -10,7 +10,7 @@ import Data.Maybe
 ----------------------------------------------------------------------
 
 data DittoS = DittoS
-  { sig :: [Sigma]
+  { env :: Env
   , nameId :: Integer
   }
 
@@ -28,7 +28,7 @@ runTCM = runIdentity
 
 initialS :: DittoS
 initialS = DittoS
-  { sig = []
+  { env = []
   , nameId = 0
   }
 
@@ -97,20 +97,20 @@ envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
 
 lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
 lookupCons x = do
-  DittoS {sig = sig} <- get
-  return . catMaybes . map conSig . filter (isConOf x) $ sig
+  DittoS {env = env} <- get
+  return . catMaybes . map conSig . filter (isConOf x) $ env
 
 lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do
-  DittoS {sig = sig} <- get
-  return $ redClauses =<< find (isPNamed x) sig
+  DittoS {env = env} <- get
+  return $ redClauses =<< find (isPNamed x) env
 
 ----------------------------------------------------------------------
 
 lookupPSigma :: PName -> TCM (Maybe Sigma)
 lookupPSigma x = do
-  DittoS {sig = sig} <- get
-  return $ return =<< find (isPNamed x) sig
+  DittoS {env = env} <- get
+  return $ return =<< find (isPNamed x) env
 
 lookupPType :: PName -> TCM (Maybe Exp)
 lookupPType x = do
@@ -121,8 +121,8 @@ lookupPType x = do
 
 lookupDefs :: TCM [(Name, Exp, Exp)]
 lookupDefs = do
-  DittoS {sig = sig} <- get
-  return . catMaybes . map envDef . filter isDef $ sig
+  DittoS {env = env} <- get
+  return . catMaybes . map envDef . filter isDef $ env
 
 ----------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ lookupCtx x = do
 
 lookupSigma :: Name -> TCM (Maybe Sigma)
 lookupSigma x = do
-  DittoS {sig = sig} <- get
-  return $ return =<< find (isNamed x) sig
+  DittoS {env = env} <- get
+  return $ return =<< find (isNamed x) env
 
 ----------------------------------------------------------------------
