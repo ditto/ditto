@@ -1,7 +1,6 @@
 module Ditto.Check where
 import Ditto.Syntax
 import Ditto.Whnf
-import Ditto.Delta
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
@@ -23,37 +22,27 @@ runCheckProg v = runTCM v . checkProg
 
 ----------------------------------------------------------------------
 
-checkDelta :: (Name, Exp, Exp) -> TCM ()
-checkDelta (x, a, _A) = do
-  _A' <- whnf =<< deltaExpand _A
-  a' <- whnf =<< deltaExpand a
-  check a' _A'
-
-checkProgDelta :: TCM ()
-checkProgDelta = mapM_ checkDelta =<< lookupDefs
-
-----------------------------------------------------------------------
-
 checkProg :: [Stmt] -> TCM ()
 checkProg = mapM_ checkStmt
 
 checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = do
-  check a _A
+  _A <- check _A Type
+  a  <- check a _A
   addDef x a _A
 checkStmt (SData x _A cs) = do
-  check _A Type
+  _A <- check _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
       addForm x tel
-      mapM_ (\ (_, _A') -> check _A' Type) cs
+      cs <- mapM (\ (x, _A') -> (x,) <$> check _A' Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
-  check _A Type
+  _A <- check _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
   cs' <- cover cs _As
@@ -63,16 +52,15 @@ checkStmt (SDefn x _A cs) = do
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))
-  mapM_ (\(_Delta, lhs, rhs) -> checkRHS _Delta lhs rhs _As _B) cs'
-  addRedClauses x cs'
+  addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
 
 ----------------------------------------------------------------------
 
-checkRHS :: Tel -> [Pat] -> RHS -> Tel -> Exp -> TCM ()
+checkRHS :: Tel -> [Pat] -> RHS -> Tel -> Exp -> TCM RHS
 checkRHS _Delta lhs (Prog a) _As _B
-  = checkExts _Delta a =<< subClauseType _B _As lhs
+  = Prog <$> (checkExts _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
-    [] -> return ()
+    [] -> return (Caseless x)
     otherwise -> throwError $ "Variable is not caseless: " ++ show x
 
 ----------------------------------------------------------------------
@@ -121,73 +109,49 @@ atomizePattern x@(Inacc _) = return x
 
 ----------------------------------------------------------------------
 
-inferExtBind :: Exp -> Bind -> TCM Bind
+inferExtBind :: Exp -> Bind -> TCM (Bind, Bind)
 inferExtBind _A bnd_b = do
   (x, b) <- unbind bnd_b
-  Bind x <$> extCtx x _A (infer b)
+  (b, _B) <- extCtx x _A (infer b)
+  return (Bind x b, Bind x _B)
 
-checkExt :: Name -> Exp -> Exp -> Exp -> TCM ()
+checkExt :: Name -> Exp -> Exp -> Exp -> TCM Exp
 checkExt x _A = checkExts [(x, _A)]
 
-checkExts :: Tel -> Exp -> Exp -> TCM ()
+checkExts :: Tel -> Exp -> Exp -> TCM Exp
 checkExts _As b _B = extCtxs _As (check b _B)
 
 ----------------------------------------------------------------------
 
-check :: Exp -> Exp -> TCM ()
+check :: Exp -> Exp -> TCM Exp
 check a _A = do
-  _A' <- infer a
+  (a , _A') <- infer a
   conv _A _A'
-  return ()
+  return a
 
-infer :: Exp -> TCM Exp
+infer :: Exp -> TCM (Exp, Exp)
 infer (Var x) = lookupType x >>= \case
-    Just _A -> return _A
+    Just _A -> return (Var x, _A)
     Nothing -> throwNotInScope x
-infer Type = return Type
-infer Infer = throwError "Core language does not infer expressions"
+infer Type = return (Type, Type)
+infer Infer = genMeta
 infer (Pi _A bnd_B) = do
-  check _A Type
+  _A <- check _A Type
   (x, _B) <- unbind bnd_B
-  checkExt x _A _B Type
-  return Type
+  _B <- checkExt x _A _B Type
+  return (Pi _A (Bind x _B), Type)
 infer (Lam _A b) = do
-  check _A Type
-  Pi _A <$> inferExtBind _A b
-infer (Form x is) = lookupPSigma x >>= \case
-  Just (DForm _X _Is) -> do
-    foldM_ checkAndAdd [] (zip is _Is)
-    return Type
-  otherwise -> throwError $ "Not a type former name: " ++ show x
-infer (Con x as) = lookupPSigma x >>= \case
-  Just (DCon x _As _X _Is) -> do
-    foldM_ checkAndAdd [] (zip as _As)
-    let s = zip (names _As) as
-    _Is' <- mapM (flip sub s) _Is
-    return $ Form _X _Is'
-  otherwise -> throwError $ "Not a constructor name: " ++ show x
-infer (Red x as) = lookupPSigma x >>= \case
-  Just (DRed y cs _As _B) -> do
-    foldM_ checkAndAdd [] (zip as _As)
-    sub _B (zip (names _As) as)
-  otherwise -> throwError $ "Not a reduction name: " ++ show x
-infer (Meta x as) = lookupMetaType x >>= \case
-  Just (_As, _B) -> do
-    foldM_ checkAndAdd [] (zip as _As)
-    sub _B (zip (names _As) as)
-  Nothing -> throwError $ "Not a metavariable name: " ++ show x
-infer (f :@: a) = infer f >>= whnf >>= \case
-  Pi _A bnd_B -> do
-    check a _A
-    (x, _B) <- unbind bnd_B
-    sub1 (x, a) _B
-  otherwise -> throwError "Function does not have Pi type"
-
-checkAndAdd :: Sub -> (Exp, (Name, Exp)) -> TCM Sub
-checkAndAdd s (a , (x, _A))= do
-  a' <- sub a s
-  _A' <- sub _A s
-  check a' _A'
-  return $ (x, a'):s
+  _A <- check _A Type
+  (b , _B) <- inferExtBind _A b
+  return (Lam _A b, Pi _A _B)
+infer (f :@: a) = do
+  (f, _F) <- infer f
+  whnf _F >>= \case
+    Pi _A bnd_B -> do
+      a <- check a _A
+      (x, _B) <- unbind bnd_B
+      (f :@: a,) <$> sub1 (x, a) _B
+    otherwise -> throwError "Function does not have Pi type"
+infer _ = throwError "Inferring a term not in the surface language"
 
 ----------------------------------------------------------------------

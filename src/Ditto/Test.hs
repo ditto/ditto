@@ -2,6 +2,7 @@ module Ditto.Test where
 import Ditto.Syntax
 import Ditto.Parse
 import Ditto.Check
+import Ditto.Recheck
 import Ditto.Conv
 import Ditto.Whnf
 import Ditto.Monad
@@ -676,10 +677,10 @@ testParseFails s = TestCase $ case parseE s of
 ----------------------------------------------------------------------
 
 trunCheckProg :: [Stmt] -> Either String ()
-trunCheckProg xs = runTCMVerbose (checkProg xs >> checkProgDelta)
+trunCheckProg xs = runTCMVerbose (checkProg xs >> recheckProg)
 
 trunCheck :: Exp -> Exp -> Either String ()
-trunCheck a _A = runTCMVerbose (check a _A)
+trunCheck a _A = runTCMVerbose (check a _A) >> return ()
 
 trunConv :: Exp -> Exp -> Either String Exp
 trunConv a b = runTCMVerbose (conv a b)

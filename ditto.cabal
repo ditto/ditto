@@ -23,6 +23,7 @@ Library
   hs-source-dirs: src
   Exposed-modules:
                   Ditto.Check
+                , Ditto.Recheck
                 , Ditto.Cli
                 , Ditto.Conv
                 , Ditto.Cover

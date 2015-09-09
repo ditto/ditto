@@ -49,12 +49,22 @@ extCtx x _A = extCtxs [(x, _A)]
 extCtxs :: Tel -> TCM a -> TCM a
 extCtxs _As = local (\ r -> r { ctx = reverse _As ++ ctx r })
 
-gensymHint :: Name -> TCM Name
-gensymHint x = do
+----------------------------------------------------------------------
+
+gensym :: TCM Integer
+gensym = do
   state@DittoS {nameId = nameId} <- get
   let nameId' = succ nameId
   put state { nameId = nameId' }
-  return $ uniqName x nameId'
+  return nameId'
+
+gensymHint :: Name -> TCM Name
+gensymHint x = uniqName x <$> gensym
+
+gensymMeta :: TCM MName
+gensymMeta = MName <$> gensym
+
+----------------------------------------------------------------------
 
 isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
