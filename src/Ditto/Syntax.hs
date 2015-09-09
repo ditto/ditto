@@ -37,6 +37,14 @@ name2pname _ = Nothing
 
 ----------------------------------------------------------------------
 
+newtype MName = MName Integer
+  deriving (Read, Eq)
+
+instance Show MName where
+  show (MName n) = "?" ++ show n
+
+----------------------------------------------------------------------
+
 type Cons = [(PName, Exp)]
 
 data Stmt =
@@ -48,7 +56,8 @@ data Stmt =
 data Exp =
     Type | Pi Exp Bind | Lam Exp Bind
   | Form PName [Exp] | Con PName [Exp]
-  | Var Name | Exp :@: Exp | Red PName [Exp]
+  | Red PName [Exp] | Meta MName [Exp]
+  | Var Name | Exp :@: Exp | Infer
   deriving (Show, Read, Eq)
 
 data Bind = Bind Name Exp
@@ -69,6 +78,7 @@ data Sigma =
   | DForm PName Tel
   | DCon PName Tel PName [Exp]
   | DRed PName [CheckedClause] Tel Exp
+  | DMeta MName (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName [Pat]
@@ -104,5 +114,8 @@ formType _Is = pis _Is Type
 
 conType :: Tel -> PName -> [Exp] -> Exp
 conType _As _X _Is = pis _As (Form _X _Is)
+
+metaType :: Tel -> Exp -> Exp
+metaType _As _B = pis _As _B
 
 ----------------------------------------------------------------------

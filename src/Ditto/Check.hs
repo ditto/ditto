@@ -141,12 +141,11 @@ check a _A = do
   return ()
 
 infer :: Exp -> TCM Exp
-infer (Var x) = do
-  ma <- lookupType x
-  case ma of
+infer (Var x) = lookupType x >>= \case
     Just _A -> return _A
     Nothing -> throwNotInScope x
 infer Type = return Type
+infer Infer = throwError "Core language does not infer expressions"
 infer (Pi _A bnd_B) = do
   check _A Type
   (x, _B) <- unbind bnd_B
@@ -155,34 +154,34 @@ infer (Pi _A bnd_B) = do
 infer (Lam _A b) = do
   check _A Type
   Pi _A <$> inferExtBind _A b
-infer (Form x is) = do
-  lookupPSigma x >>= \case
-    Just (DForm _X _Is) -> do
-      foldM_ checkAndAdd [] (zip is _Is)
-      return Type
-    otherwise -> throwError $ "Not a type former name: " ++ show x
-infer (Con x as) = do
-  lookupPSigma x >>= \case
-   Just (DCon x _As _X _Is) -> do
-     foldM_ checkAndAdd [] (zip as _As)
-     let s = zip (names _As) as
-     _Is' <- mapM (flip sub s) _Is
-     return $ Form _X _Is'
-   otherwise -> throwError $ "Not a constructor name: " ++ show x
-infer (Red x as) = do
-  lookupPSigma x >>= \case
-    Just (DRed y cs _As _B) -> do
-      foldM_ checkAndAdd [] (zip as _As)
-      sub _B (zip (names _As) as)
-    otherwise -> throwError $ "Not a reduction name: " ++ show x
-infer (f :@: a) = do
-  _AB <- whnf =<< infer f
-  case _AB of
-    Pi _A bnd_B -> do
-      check a _A
-      (x, _B) <- unbind bnd_B
-      sub1 (x, a) _B
-    otherwise -> throwError "Function does not have Pi type"
+infer (Form x is) = lookupPSigma x >>= \case
+  Just (DForm _X _Is) -> do
+    foldM_ checkAndAdd [] (zip is _Is)
+    return Type
+  otherwise -> throwError $ "Not a type former name: " ++ show x
+infer (Con x as) = lookupPSigma x >>= \case
+  Just (DCon x _As _X _Is) -> do
+    foldM_ checkAndAdd [] (zip as _As)
+    let s = zip (names _As) as
+    _Is' <- mapM (flip sub s) _Is
+    return $ Form _X _Is'
+  otherwise -> throwError $ "Not a constructor name: " ++ show x
+infer (Red x as) = lookupPSigma x >>= \case
+  Just (DRed y cs _As _B) -> do
+    foldM_ checkAndAdd [] (zip as _As)
+    sub _B (zip (names _As) as)
+  otherwise -> throwError $ "Not a reduction name: " ++ show x
+infer (Meta x as) = lookupMetaType x >>= \case
+  Just (_As, _B) -> do
+    foldM_ checkAndAdd [] (zip as _As)
+    sub _B (zip (names _As) as)
+  Nothing -> throwError $ "Not a metavariable name: " ++ show x
+infer (f :@: a) = infer f >>= whnf >>= \case
+  Pi _A bnd_B -> do
+    check a _A
+    (x, _B) <- unbind bnd_B
+    sub1 (x, a) _B
+  otherwise -> throwError "Function does not have Pi type"
 
 checkAndAdd :: Sub -> (Exp, (Name, Exp)) -> TCM Sub
 checkAndAdd s (a , (x, _A))= do

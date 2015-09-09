@@ -50,17 +50,23 @@ ppExp = ppwExp NoWrap
 
 ppwExp :: Wrap -> Exp -> Box
 ppwExp w Type = text "Type"
+ppwExp w Infer = forced
 ppwExp w (Var x) = ppName x
 ppwExp w x@(Pi _ _) = ppPis w x
 ppwExp w x@(Lam _ _) = ppLams w x
 ppwExp w (Form _X _Is) = ppPrim w _X _Is
 ppwExp w (Con x as) = ppPrim w x as
 ppwExp w (Red x as) = ppPrim w x as
+ppwExp w (Meta x as) = ppMeta w x as
 ppwExp w (f :@: a) = lefty w $ ppwExp NoWrapL f <+> ppwExp Wrap a
 
 ppPrim :: Wrap -> PName -> [Exp] -> Box
 ppPrim w x [] = ppPName x
 ppPrim w x as = lefty w $ ppPName x <+> hcatmap (ppwExp Wrap) as
+
+ppMeta :: Wrap -> MName -> [Exp] -> Box
+ppMeta w x [] = ppMName x
+ppMeta w x as = lefty w $ ppMName x <+> hcatmap (ppwExp Wrap) as
 
 ----------------------------------------------------------------------
 
@@ -90,7 +96,7 @@ ppCtxBind (x, _A) = ppName x <+> oft <+> ppExp _A
 
 ppPat :: Pat -> Box
 ppPat (PVar x) = ppName x
-ppPat (Inacc Nothing) = text "*"
+ppPat (Inacc Nothing) = forced
 ppPat (Inacc (Just a)) = text "." <> ppwExp Wrap a
 ppPat (PCon x []) = ppPName x
 ppPat (PCon x ps) = parens $ ppPName x <+> hcatmap ppPat ps
@@ -115,6 +121,7 @@ ppSig (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
 ppSig (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
 ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
   /+/ vcatmap (ppRed x) (reverse cs)
+ppSig (DMeta x b _As _B) = ppDMeta x b _As _B
 
 ----------------------------------------------------------------------
 
@@ -129,6 +136,20 @@ ppRHS (Caseless x) = ndef <+> ppName x
 ppRedCtx :: PName -> Tel -> Box
 ppRedCtx x _As = ppPName x <+> hcatmap (uncurry ppBind) _As
 
+--------------------------------------------------------------------------------
+
+ppDMeta :: MName -> Maybe Exp -> Tel -> Exp -> Box
+ppDMeta x b _As _B = case b of
+  Nothing -> ppMetaType x _As _B
+  Just b -> ppMetaType x _As _B // ppMetaBod x b
+
+ppMetaType :: MName -> Tel -> Exp -> Box
+ppMetaType x _As@(_:_) _B = ppMName x <+> ppExp (metaType _As _B)
+ppMetaType x [] _B = ppMName x <+> oft <+> ppExp _B
+
+ppMetaBod :: MName -> Exp -> Box
+ppMetaBod x a = ppMName x <+> def <+> ppExp a
+
 ----------------------------------------------------------------------
 
 ppDefType :: Name -> Exp -> Box
@@ -136,7 +157,6 @@ ppDefType x _A@(Pi _ _) = ppName x <+> ppExp _A
 ppDefType x _A = ppName x <+> oft <+> ppExp _A
 
 ppDefBod :: Name -> Exp -> Box
-ppDefBod x a@(Lam _ _) = ppName x <+> ppExp a
 ppDefBod x a = ppName x <+> def <+> ppExp a
 
 ----------------------------------------------------------------------
@@ -146,6 +166,9 @@ ppName = text . show
 
 ppPName :: PName -> Box
 ppPName = text . show
+
+ppMName :: MName -> Box
+ppMName = text . show
 
 ----------------------------------------------------------------------
 
@@ -166,6 +189,9 @@ def = char '='
 
 ndef :: Box
 ndef = text "!="
+
+forced :: Box
+forced = char '*'
 
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)

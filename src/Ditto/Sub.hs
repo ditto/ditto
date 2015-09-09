@@ -10,9 +10,11 @@ import Control.Monad
 fv :: Exp -> [Name]
 fv (Var x) = [x]
 fv Type = []
+fv Infer = []
 fv (Form _ is) = concatMap fv is
 fv (Con _ as) = concatMap fv as
 fv (Red _ as) = concatMap fv as
+fv (Meta _ as) = concatMap fv as
 fv (Pi _A _B) = fv _A ++ fvBind _B
 fv (Lam _A b) = fv _A ++ fvBind b
 fv (a :@: b) = fv a ++ fv b
@@ -51,9 +53,11 @@ sub1 :: (Name , Exp) -> Exp -> TCM Exp
 sub1 xa (Form y is) = Form y <$> mapM (sub1 xa) is
 sub1 xa (Con y as) = Con y <$> mapM (sub1 xa) as
 sub1 xa (Red y as) = Red y <$> mapM (sub1 xa) as
+sub1 xa (Meta y as) = Meta y <$> mapM (sub1 xa) as
 sub1 (x, a) (Var y) | x == y = return a
 sub1 xa (Var y) = return $ Var y
 sub1 xa Type = return Type
+sub1 xa Infer = return Infer
 sub1 xa (Lam _A b) = Lam <$> sub1 xa _A <*> sub1Bind xa b
 sub1 xa (Pi _A _B) = Pi <$> sub1 xa _A <*> sub1Bind xa _B
 sub1 xa (f :@: b) = (:@:) <$> sub1 xa f <*> sub1 xa b

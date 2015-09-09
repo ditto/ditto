@@ -10,12 +10,16 @@ import Control.Monad.Except
 
 deltaExpand :: Exp -> TCM Exp
 deltaExpand Type = return Type
+deltaExpand Infer = return Infer
 deltaExpand (Pi _A _B) = Pi <$> deltaExpand _A <*> deltaExpandExtBind _A _B
 deltaExpand (Lam _A b) = Lam <$> deltaExpand _A <*> deltaExpandExtBind _A b
 deltaExpand (f :@: a) = (:@:) <$> deltaExpand f <*> deltaExpand a
 deltaExpand (Form x as) = Form x <$> mapM deltaExpand as
 deltaExpand (Con x as) = Con x <$> mapM deltaExpand as
 deltaExpand (Red x as) = Red x <$> mapM deltaExpand as
+deltaExpand (Meta x as) = lookupMeta x >>= \case
+  Just a -> deltaExpand (apps a as)
+  Nothing -> Meta x <$> mapM deltaExpand as
 deltaExpand (Var x) = lookupDef x >>= \case
   Just a -> deltaExpand a
   Nothing -> return $ Var x

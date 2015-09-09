@@ -17,11 +17,14 @@ alpha a b = alpha' [] a b
 
 alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
 alpha' dict Type Type = True
+alpha' dict Infer Infer = False
 alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Con x1 as1) (Con x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Red x1 as1) (Red x2 as2) =
+  x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
+alpha' dict (Meta x1 as1) (Meta x2 as2) =
   x1 == x2 && all (uncurry (alpha' dict)) (zip as1 as2)
 alpha' dict (Var x) (Var y) =
   case lookup x dict of
@@ -56,6 +59,7 @@ conv' (Var x) (Var y) =
     "Variables not convertible\n"
     ++ show x ++ " != " ++ show y
 conv' Type Type = return Type
+conv' Infer Infer = throwError "Unelaborated metavariables are unique"
 conv' (f1 :@: a1) (f2 :@: a2) =
   (:@:) <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam _A1 bnd_b1) (Lam _A2 bnd_b2) = do
@@ -81,6 +85,10 @@ conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwError "Reduction names not equal"
+conv' (Meta x1 as1) (Meta x2 as2) | x1 == x2 =
+  Meta x1 <$> mapM (uncurry conv) (zip as1 as2)
+conv' (Meta x1 as1) (Meta x2 as2) | x1 /= x2 =
+  throwError "Metavariable names not equal"
 conv' a b = throwNotConv a b
 
 ----------------------------------------------------------------------

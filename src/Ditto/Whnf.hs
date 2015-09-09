@@ -23,6 +23,9 @@ whnf (Red x as) = do
 whnf (Var x) = lookupDef x >>= \case
   Just a -> whnf a
   Nothing -> return $ Var x
+whnf (Meta x as) = lookupMeta x >>= \case
+  Just a -> whnf (apps a as)
+  Nothing -> return $ Meta x as
 whnf x = return x
 
 ----------------------------------------------------------------------

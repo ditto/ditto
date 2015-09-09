@@ -58,15 +58,17 @@ gensymHint x = do
 
 isNamed :: Name -> Sigma -> Bool
 isNamed x (Def y _ _) = x == y
-isNamed x (DForm y _) = False
-isNamed x (DCon y _ _ _) = False
-isNamed x (DRed y _ _ _) = False
+isNamed x _ = False
 
 isPNamed :: PName -> Sigma -> Bool
-isPNamed x (Def y _ _) = False
 isPNamed x (DForm y _) = x == y
 isPNamed x (DCon y _ _ _) = x == y
 isPNamed x (DRed y _ _ _) = x == y
+isPNamed x _ = False
+
+isMNamed :: MName -> Sigma -> Bool
+isMNamed x (DMeta y _ _ _) = x == y
+isMNamed x _ = False
 
 isConOf :: PName -> Sigma -> Bool
 isConOf x (DCon _ _ y _) = x == y
@@ -84,6 +86,14 @@ envDefBody :: Sigma -> Maybe Exp
 envDefBody (Def _ a _) = Just a
 envDefBody _ = Nothing
 
+envMeta :: Sigma -> Maybe Exp
+envMeta (DMeta x (Just a) _ _) = Just a
+envMeta _ = Nothing
+
+envMetaType :: Sigma -> Maybe (Tel, Exp)
+envMetaType (DMeta x _ _As _B) = Just (_As, _B)
+envMetaType _ = Nothing
+
 conSig :: Sigma -> Maybe (PName, Tel, [Exp])
 conSig (DCon x _As _ is) = Just (x, _As, is)
 conSig _ = Nothing
@@ -97,6 +107,7 @@ envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
 envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
+envType (DMeta _ _ _As _B) = metaType _As _B
 
 ----------------------------------------------------------------------
 
@@ -109,6 +120,18 @@ lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do
   DittoS {env = env} <- get
   return $ redClauses =<< find (isPNamed x) env
+
+----------------------------------------------------------------------
+
+lookupMeta :: MName -> TCM (Maybe Exp)
+lookupMeta x = do
+  DittoS {env = env} <- get
+  return $ envMeta =<< find (isMNamed x) env
+
+lookupMetaType :: MName -> TCM (Maybe (Tel, Exp))
+lookupMetaType x = do
+  DittoS {env = env} <- get
+  return $ envMetaType =<< find (isMNamed x) env
 
 ----------------------------------------------------------------------
 
