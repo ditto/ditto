@@ -413,16 +413,16 @@ vectorData =
   ]
 
 dependentVectorPatternsUnif = unlines $ vectorData ++
-  [ "def tail (A : Type) (n : Nat) (xs : Vec A (suc n)) : Vec A n where"
+  [ "def tail (A : *) (n : *) (xs : Vec A (suc n)) : Vec A n where"
   , "| A n (cons * * x xs) = xs"
   , "end"
 
-  , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
+  , "def append (A : *) (n m : *) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
   , "| A * m (nil *) ys = ys"
   , "| A * m (cons * n x xs) ys = cons * * x (append * * * xs ys)"
   , "end"
 
-  , "def concat (A : Type) (n m : Nat) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
+  , "def concat (A : *) (n m : *) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
   , "| A * m (nil *) = nil *"
   , "| A * m (cons * n xs xss) = append * * * xs (concat * * * xss)"
   , "end"
@@ -505,12 +505,12 @@ intrinsicEvaluator = unlines $ evalData ++
   ]
 
 intrinsicEvaluatorUnif = unlines $ evalData ++
-  [ "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
+  [ "def lookup (A : *) (As : *) (i : In A As) (as : Env As) : El A where"
   , "| A * (here * As) (cons * as * a) = a"
   , "| A * (there * B As i) (cons * as * a) = lookup * * i as"
   , "end"
 
-  , "def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where"
+  , "def eval (As : *) (A : *) (a : Exp As A) (as : Env As) : El A where"
   , "| As A (var' * * i) as = lookup * * i as"
   , "| As * (true' *) as = true"
   , "| As * (false' *) as = false"
