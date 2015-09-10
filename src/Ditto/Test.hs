@@ -519,6 +519,20 @@ caselessDependent = unlines
   , "end"
   ]
 
+simpleUnif = unlines
+  [ "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "data Id (A : Type) (x y : A) : Type where"
+  , "| refl (A : Type) (x : A) : Id A x x"
+  , "end"
+
+  , "def testUnif : Id * true true where"
+  , "refl * *"
+  , "end"
+  ]
+
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
   [ testWhnf "Type" "Type"
@@ -572,6 +586,7 @@ checkTests = "Check tests" ~:
   , testChecks intrinsicEvaluator
   , testChecks caselessNonDependent
   , testChecks caselessDependent
+  , testChecks simpleUnif
   ]
 
 parseTests :: Test

@@ -3,11 +3,13 @@ import Ditto.Syntax
 import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Env
 import Ditto.Pretty
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Except
 import Control.Applicative
+import Data.List
 import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
@@ -85,10 +87,30 @@ conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> mapM (uncurry conv) (zip as1 as2)
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwError "Reduction names not equal"
-conv' (Meta x1 as1) (Meta x2 as2) | x1 == x2 =
-  Meta x1 <$> mapM (uncurry conv) (zip as1 as2)
-conv' (Meta x1 as1) (Meta x2 as2) | x1 /= x2 =
-  throwError "Metavariable names not equal"
+conv' a1@(Meta x1 as1) a2 = millerPattern as1 >>= \case
+  Just _As -> do
+    solveMeta x1 (lams _As a2)
+    return a2
+  Nothing -> case a2 of
+    Meta x2 as2 | x1 == x2 ->
+      Meta x1 <$> mapM (uncurry conv) (zip as1 as2)
+    Meta x2 as2 | x1 /= x2 ->
+      throwError "Metavariable names not equal"
+    otherwise -> throwNotConv a1 a2
+conv' a1 a2@(Meta _ _) = conv' a2 a1
 conv' a b = throwNotConv a b
+
+----------------------------------------------------------------------
+
+millerPattern :: [Exp] -> TCM (Maybe Tel)
+millerPattern as = (sequence <$> mapM varName as) >>= \case
+  Just xs | length (names xs) == length (nub (names xs)) -> return (Just xs)
+  otherwise -> return Nothing
+
+varName :: Exp -> TCM (Maybe (Name, Exp))
+varName (Var x) = lookupCtx x >>= \case
+  Just _A -> return $ Just (x, _A)
+  Nothing -> return Nothing
+varName _ = return Nothing
 
 ----------------------------------------------------------------------
