@@ -520,6 +520,22 @@ intrinsicEvaluatorUnif = unlines $ evalData ++
   , "end"
   ]
 
+intrinsicUnifUnsolved = unlines $
+  [ "data Tp : Type where"
+  , "| Bool' : Tp"
+  , "| Arr' (A B : *) : Tp"
+  , "end"
+
+  , "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def El (A : Tp) : Type where"
+  , "| Bool' = Bool"
+  , "| (Arr' A B) = (a : El A) : El B"
+  , "end"
+  ]
+
 caselessNonDependent = unlines
   [ "data Bot : Type where"
   , "end"
@@ -627,6 +643,7 @@ checkTests = "Check tests" ~:
   , testChecks simpleUnif
   , testChecks dependentVectorPatternsUnif
   , testChecks intrinsicEvaluatorUnif
+  , testChecksFails intrinsicUnifUnsolved
   ]
 
 parseTests :: Test

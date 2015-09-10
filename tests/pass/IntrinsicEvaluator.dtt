@@ -9,8 +9,8 @@ data Ctx : Type where
 end
 
 data In : (A : Tp) (As : Ctx) : Type where
-| here (A : Tp) (As : Ctx) : In A (ext As A)
-| there (A B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)
+| here (A : *) (As : *) : In A (ext As A)
+| there (A B : *) (As : *) (i : In A As) : In A (ext As B)
 end
 
 data Bool : Type where
@@ -29,7 +29,7 @@ end
 
 data Env (As : Ctx) : Type where
 | nil : Env emp
-| cons (As : Ctx) (as : Env As) (A : Tp) (a : El A) : Env (ext As A)
+| cons (As : *) (as : Env As) (A : *) (a : El A) : Env (ext As A)
 end
 
 def lookup (A : *) (As : *) (i : In A As) (as : Env As) : El A where

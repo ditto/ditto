@@ -23,31 +23,26 @@ runCheckProg v = runTCM v . checkProg
 ----------------------------------------------------------------------
 
 checkProg :: [Stmt] -> TCM ()
-checkProg ds = mapM_ checkStmt ds >> checkMetas
-
-checkMetas :: TCM ()
-checkMetas = do
-  xs <- lookupUndefMetas
-  unless (null xs) (throwUnsolvedMetas xs)
+checkProg ds = mapM_ checkStmt ds
 
 checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = do
-  _A <- check _A Type
-  a  <- check a _A
+  _A <- checkSolved _A Type
+  a  <- checkSolved a _A
   addDef x a _A
 checkStmt (SData x _A cs) = do
-  _A <- check _A Type
+  _A <- checkSolved _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
       addForm x tel
-      cs <- mapM (\ (x, _A') -> (x,) <$> check _A' Type) cs
+      cs <- mapM (\ (x, _A') -> (x,) <$> checkSolved _A' Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwError "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
-  _A <- check _A Type
+  _A <- checkSolved _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
   cs' <- cover cs _As
@@ -63,7 +58,7 @@ checkStmt (SDefn x _A cs) = do
 
 checkRHS :: Tel -> [Pat] -> RHS -> Tel -> Exp -> TCM RHS
 checkRHS _Delta lhs (Prog a) _As _B
-  = Prog <$> (checkExts _Delta a =<< subClauseType _B _As lhs)
+  = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
     [] -> return (Caseless x)
     otherwise -> throwError $ "Variable is not caseless: " ++ show x
@@ -114,17 +109,36 @@ atomizePattern x@(Inacc _) = return x
 
 ----------------------------------------------------------------------
 
-inferExtBind :: Exp -> Bind -> TCM (Bind, Bind)
-inferExtBind _A bnd_b = do
-  (x, b) <- unbind bnd_b
-  (b, _B) <- extCtx x _A (infer b)
-  return (Bind x b, Bind x _B)
+checkSolved :: Exp -> Exp -> TCM Exp
+checkSolved a _A = do
+  a <- check a _A
+  checkMetas
+  return a
+
+checkExtsSolved :: Tel -> Exp -> Exp -> TCM Exp
+checkExtsSolved _As b _B = do
+  b <- checkExts _As b _B
+  checkMetas
+  return b
+
+checkMetas :: TCM ()
+checkMetas = do
+  xs <- lookupUndefMetas
+  unless (null xs) (throwUnsolvedMetas xs)
+
+----------------------------------------------------------------------
 
 checkExt :: Name -> Exp -> Exp -> Exp -> TCM Exp
 checkExt x _A = checkExts [(x, _A)]
 
 checkExts :: Tel -> Exp -> Exp -> TCM Exp
 checkExts _As b _B = extCtxs _As (check b _B)
+
+inferExtBind :: Exp -> Bind -> TCM (Bind, Bind)
+inferExtBind _A bnd_b = do
+  (x, b) <- unbind bnd_b
+  (b, _B) <- extCtx x _A (infer b)
+  return (Bind x b, Bind x _B)
 
 ----------------------------------------------------------------------
 
