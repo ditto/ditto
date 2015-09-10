@@ -21,6 +21,9 @@ throwNotConv a b = do
   ctx <- renderCtxEnv
   throwError $ renderNotConv a b ++ ctx
 
+throwUnsolvedMetas :: [(MName, Tel, Exp)] -> TCM a
+throwUnsolvedMetas = throwError . renderUnsolvedMetas
+
 renderCtxEnv :: TCM String
 renderCtxEnv = do
   ctx <- getCtx
@@ -42,6 +45,10 @@ renderNotInScope x = render $ text "Variable not in scope:" <+> ppName x
 
 renderNotConv :: Exp -> Exp -> String
 renderNotConv x y = render $ text "Terms not convertible:" <+> ppExp x <+> text "!=" <+> ppExp y
+
+renderUnsolvedMetas :: [(MName, Tel, Exp)] -> String
+renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
+  vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
 
 ----------------------------------------------------------------------
 

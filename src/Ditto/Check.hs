@@ -23,7 +23,12 @@ runCheckProg v = runTCM v . checkProg
 ----------------------------------------------------------------------
 
 checkProg :: [Stmt] -> TCM ()
-checkProg = mapM_ checkStmt
+checkProg ds = mapM_ checkStmt ds >> checkMetas
+
+checkMetas :: TCM ()
+checkMetas = do
+  xs <- lookupUndefMetas
+  unless (null xs) (throwUnsolvedMetas xs)
 
 checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = do
@@ -47,8 +52,8 @@ checkStmt (SDefn x _A cs) = do
   addRedType x _As _B
   cs' <- cover cs _As
   let unreached = unreachableClauses cs cs'
-  unless (null unreached) $ do
-    throwError $ "Unreachable user clauses:\n"
+  unless (null unreached) $ throwError
+      $ "Unreachable user clauses:\n"
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
       ++ (unlines (map show cs'))

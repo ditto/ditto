@@ -98,25 +98,3 @@ addRedClauses x cs = do
       "Reduction does not exist in the environment: " ++ show x
 
 ----------------------------------------------------------------------
-
-getCtx :: TCM Tel
-getCtx = do
-  DittoR {ctx = ctx} <- ask
-  return ctx
-
-getEnv :: TCM Env
-getEnv = do
-  DittoS {env = env} <- get
-  return env
-
-getVerbosity :: TCM Verbosity
-getVerbosity = do
-  DittoS {verbosity = verbosity} <- get
-  return verbosity
-
-setVerbosity :: Verbosity -> TCM ()
-setVerbosity v = do
-  state@DittoS{} <- get
-  put state { verbosity = v }
-
-----------------------------------------------------------------------

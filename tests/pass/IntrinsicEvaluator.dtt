@@ -34,7 +34,7 @@ end
 
 def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where
 | A * (here * As) (cons * as * a) = a
-| A * (there * B As i) (cons * as * a) = lookup A As i as
+| A * (there * B As i) (cons * as * a) = lookup * * i as
 end
 
 data Exp : (As : Ctx) (A : Tp) : Type where
@@ -46,10 +46,10 @@ data Exp : (As : Ctx) (A : Tp) : Type where
 end
 
 def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where
-| As A (var' * * i) as = lookup A As i as
+| As A (var' * * i) as = lookup * * i as
 | As * (true' *) as = true
 | As * (false' *) as = false
-| As C (if' * * b ct cf) as = if (El C) (eval As Bool' b as) (eval As C ct as) (eval As C cf as)
-| As * (lam' * A B b) as = (a : El A) -> eval (ext As A) B b (cons As as A a)
-| As * (app' * A B f a) as = (eval As (Arr' A B) f as) (eval As A a as)
+| As C (if' * * b ct cf) as = if * (eval * * b as) (eval * * ct as) (eval * * cf as)
+| As * (lam' * A B b) as = (a : *) -> eval * * b (cons * as * a)
+| As * (app' * A B f a) as = (eval * * f as) (eval * * a as)
 end

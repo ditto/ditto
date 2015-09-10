@@ -390,7 +390,7 @@ simpleDependentPatterns = unlines
   , "end"
   ]
 
-dependentVectorPatterns = unlines
+vectorData = 
   [ "data Nat : Type where"
   , "| zero : Nat"
   , "| suc (n : Nat) : Nat"
@@ -410,8 +410,26 @@ dependentVectorPatterns = unlines
   , "| nil (A : Type) : Vec A zero"
   , "| cons (A : Type) (n : Nat) (x : A) (xs : Vec A n) : Vec A (suc n)"
   , "end"
+  ]
 
-  , "def tail (A : Type) (n : Nat) (xs : Vec A (suc n)) : Vec A n where"
+dependentVectorPatternsUnif = unlines $ vectorData ++
+  [ "def tail (A : Type) (n : Nat) (xs : Vec A (suc n)) : Vec A n where"
+  , "| A n (cons * * x xs) = xs"
+  , "end"
+
+  , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
+  , "| A * m (nil *) ys = ys"
+  , "| A * m (cons * n x xs) ys = cons * * x (append * * * xs ys)"
+  , "end"
+
+  , "def concat (A : Type) (n m : Nat) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
+  , "| A * m (nil *) = nil *"
+  , "| A * m (cons * n xs xss) = append * * * xs (concat * * * xss)"
+  , "end"
+  ]
+
+dependentVectorPatterns = unlines $ vectorData ++
+  [ "def tail (A : Type) (n : Nat) (xs : Vec A (suc n)) : Vec A n where"
   , "| A n (cons * * x xs) = xs"
   , "end"
 
@@ -426,7 +444,7 @@ dependentVectorPatterns = unlines
   , "end"
   ]
 
-intrinsicEvaluator = unlines
+evalData =
   [ "data Tp : Type where"
   , "| Bool' : Tp"
   , "| Arr' (A B : Tp) : Tp"
@@ -461,17 +479,19 @@ intrinsicEvaluator = unlines
   , "| cons (As : Ctx) (as : Env As) (A : Tp) (a : El A) : Env (ext As A)"
   , "end"
 
-  , "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
-  , "| A * (here * As) (cons * as * a) = a"
-  , "| A * (there * B As i) (cons * as * a) = lookup A As i as"
-  , "end"
-
   , "data Exp : (As : Ctx) (A : Tp) : Type where"
   , "| var' (As : Ctx) (A : Tp) (i : In A As) : Exp As A"
   , "| true'/false' (As : Ctx) : Exp As Bool'"
   , "| if' (As : Ctx) (C : Tp) (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
   , "| lam' (As : Ctx) (A B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
   , "| app' (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "end"
+  ]
+
+intrinsicEvaluator = unlines $ evalData ++
+  [ "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
+  , "| A * (here * As) (cons * as * a) = a"
+  , "| A * (there * B As i) (cons * as * a) = lookup A As i as"
   , "end"
 
   , "def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where"
@@ -481,6 +501,22 @@ intrinsicEvaluator = unlines
   , "| As C (if' * * b ct cf) as = if (El C) (eval As Bool' b as) (eval As C ct as) (eval As C cf as)"
   , "| As * (lam' * A B b) as = (a : El A) -> eval (ext As A) B b (cons As as A a)"
   , "| As * (app' * A B f a) as = (eval As (Arr' A B) f as) (eval As A a as)"
+  , "end"
+  ]
+
+intrinsicEvaluatorUnif = unlines $ evalData ++
+  [ "def lookup (A : Tp) (As : Ctx) (i : In A As) (as : Env As) : El A where"
+  , "| A * (here * As) (cons * as * a) = a"
+  , "| A * (there * B As i) (cons * as * a) = lookup * * i as"
+  , "end"
+
+  , "def eval (As : Ctx) (A : Tp) (a : Exp As A) (as : Env As) : El A where"
+  , "| As A (var' * * i) as = lookup * * i as"
+  , "| As * (true' *) as = true"
+  , "| As * (false' *) as = false"
+  , "| As C (if' * * b ct cf) as = if * (eval * * b as) (eval * * ct as) (eval * * cf as)"
+  , "| As * (lam' * A B b) as = (a : *) -> eval * * b (cons * as * a)"
+  , "| As * (app' * A B f a) as = (eval * * f as) (eval * * a as)"
   , "end"
   ]
 
@@ -532,6 +568,8 @@ simpleUnif = unlines
   , "refl * *"
   , "end"
   ]
+
+printCtx = "def Fail : Type where undefined end"
 
 whnfTests :: Test
 whnfTests = "Whnf tests" ~:
@@ -587,6 +625,8 @@ checkTests = "Check tests" ~:
   , testChecks caselessNonDependent
   , testChecks caselessDependent
   , testChecks simpleUnif
+  , testChecks dependentVectorPatternsUnif
+  , testChecks intrinsicEvaluatorUnif
   ]
 
 parseTests :: Test

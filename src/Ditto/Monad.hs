@@ -88,6 +88,10 @@ isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
 isDef _ = False
 
+isMeta :: Sigma -> Bool
+isMeta (DMeta _ _ _ _) = True
+isMeta _ = False
+
 envDef :: Sigma -> Maybe (Name, Exp, Exp)
 envDef (Def x a _A) = Just (x, a, _A)
 envDef _ = Nothing
@@ -96,9 +100,13 @@ envDefBody :: Sigma -> Maybe Exp
 envDefBody (Def _ a _) = Just a
 envDefBody _ = Nothing
 
-envMeta :: Sigma -> Maybe Exp
-envMeta (DMeta x (Just a) _ _) = Just a
-envMeta _ = Nothing
+envUndefMeta :: Sigma -> Maybe (MName, Tel, Exp)
+envUndefMeta (DMeta x Nothing _As _B) = Just (x, _As, _B)
+envUndefMeta _ = Nothing
+
+envMetaBody :: Sigma -> Maybe Exp
+envMetaBody (DMeta x (Just a) _ _) = Just a
+envMetaBody _ = Nothing
 
 envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta x _ _As _B) = Just (_As, _B)
@@ -123,31 +131,31 @@ envType (DMeta _ _ _As _B) = metaType _As _B
 
 lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
 lookupCons x = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return . catMaybes . map conSig . filter (isConOf x) $ env
 
 lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return $ redClauses =<< find (isPNamed x) env
 
 ----------------------------------------------------------------------
 
 lookupMeta :: MName -> TCM (Maybe Exp)
 lookupMeta x = do
-  DittoS {env = env} <- get
-  return $ envMeta =<< find (isMNamed x) env
+  env <- getEnv
+  return $ envMetaBody =<< find (isMNamed x) env
 
 lookupMetaType :: MName -> TCM (Maybe (Tel, Exp))
 lookupMetaType x = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return $ envMetaType =<< find (isMNamed x) env
 
 ----------------------------------------------------------------------
 
 lookupPSigma :: PName -> TCM (Maybe Sigma)
 lookupPSigma x = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return $ return =<< find (isPNamed x) env
 
 lookupPType :: PName -> TCM (Maybe Exp)
@@ -159,8 +167,13 @@ lookupPType x = do
 
 lookupDefs :: TCM [(Name, Exp, Exp)]
 lookupDefs = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return . catMaybes . map envDef . filter isDef $ env
+
+lookupUndefMetas :: TCM [(MName, Tel, Exp)]
+lookupUndefMetas = do
+  env <- getEnv
+  return . catMaybes . map envUndefMeta . filter isMeta $ env
 
 ----------------------------------------------------------------------
 
@@ -180,12 +193,34 @@ lookupType x = lookupCtx x >>= \case
 
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
-  DittoR {ctx = ctx} <- ask
+  ctx <- getCtx
   return $ lookup x ctx
 
 lookupSigma :: Name -> TCM (Maybe Sigma)
 lookupSigma x = do
-  DittoS {env = env} <- get
+  env <- getEnv
   return $ return =<< find (isNamed x) env
+
+----------------------------------------------------------------------
+
+getCtx :: TCM Tel
+getCtx = do
+  DittoR {ctx = ctx} <- ask
+  return ctx
+
+getEnv :: TCM Env
+getEnv = do
+  DittoS {env = env} <- get
+  return env
+
+getVerbosity :: TCM Verbosity
+getVerbosity = do
+  DittoS {verbosity = verbosity} <- get
+  return verbosity
+
+setVerbosity :: Verbosity -> TCM ()
+setVerbosity v = do
+  state@DittoS{} <- get
+  put state { verbosity = v }
 
 ----------------------------------------------------------------------
