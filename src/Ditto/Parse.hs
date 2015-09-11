@@ -4,7 +4,7 @@ import Text.Parsec (parse, try)
 import Text.Parsec.String
 import Text.Parsec.Char
 import Text.Parsec.Combinator
-import Control.Applicative ((<*), many, (<$>), (<*>))
+import Control.Applicative ((<*), many, (<$>), (<*>), (<|>))
 import Control.Monad
 
 ----------------------------------------------------------------------
@@ -35,6 +35,8 @@ symSlash = symbol "/"
 
 symLParen = symbol "("
 symRParen = symbol ")"
+symLBrace = symbol "{"
+symRBrace = symbol "}"
 
 ----------------------------------------------------------------------
 
@@ -84,15 +86,24 @@ parseRHS = choice
 
 ----------------------------------------------------------------------
 
-parsePattern :: Parser Pat
+parsePattern :: Parser (Icit, Pat)
 parsePattern = choice
-  [ parsePVar
-  , parsePInacc
-  , parsePCon
+  [ parseImplPat parsePVar
+  , parseExplPat parsePVar
+  , parseImplPat parsePInacc
+  , parseExplPat parsePInacc
+  , parseImplPat parsePCon
+  , parseExplPat (parens parsePCon)
   ]
 
+parseImplPat :: Parser Pat -> Parser (Icit, Pat)
+parseImplPat p = (Impl,) <$> try (braces p)
+
+parseExplPat :: Parser Pat -> Parser (Icit, Pat)
+parseExplPat p = (Expl,) <$> try p
+
 parsePCon :: Parser Pat
-parsePCon = try $ parens $ do
+parsePCon = try $ do
   x <- parsePName
   xs <- many parsePattern
   return $ PCon x xs
@@ -136,7 +147,16 @@ parseExp = choice [
   ]
 
 parseApps :: Parser Exp
-parseApps = apps <$> parseAtom <*> many parseAtom
+parseApps = apps <$> parseAtom <*> many parseApp
+
+parseApp :: Parser (Icit, Exp)
+parseApp = parseImplApp <|> parseExplApp
+
+parseImplApp :: Parser (Icit, Exp)
+parseImplApp = (Impl,) <$> try (braces parseExp)
+
+parseExplApp :: Parser (Icit, Exp)
+parseExplApp = (Expl,) <$> parseAtom
 
 parseAtom :: Parser Exp
 parseAtom = choice [
@@ -190,14 +210,21 @@ parseLam = try $ do
 ----------------------------------------------------------------------
 
 parseTel :: Parser Tel
-parseTel = concat <$> many1 (parens parseAnnot)
+parseTel = concat <$> many1 (parseImplAnnot <|> parseExplAnnot)
 
-parseAnnot :: Parser Tel
-parseAnnot = do
+parseImplAnnot :: Parser Tel
+parseImplAnnot = try $ braces $ do
   xs <- many1 parseName
   symAscribe
   a <- parseExp
-  return $ map (\ x -> (x , a)) xs
+  return $ map (\ x -> (Impl, x , a)) xs
+
+parseExplAnnot :: Parser Tel
+parseExplAnnot = try $ parens $ do
+  xs <- many1 parseName
+  symAscribe
+  a <- parseExp
+  return $ map (\ x -> (Expl, x , a)) xs
 
 ----------------------------------------------------------------------
 
@@ -206,6 +233,9 @@ slashSep p = p `sepBy1` symSlash
 
 parens :: Parser a -> Parser a
 parens = between symLParen symRParen
+
+braces :: Parser a -> Parser a
+braces = between symLBrace symRBrace
 
 symbol :: String -> Parser String
 symbol s = lexeme $ string s

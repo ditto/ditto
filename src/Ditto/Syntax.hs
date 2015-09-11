@@ -5,6 +5,9 @@ module Ditto.Syntax where
 data Verbosity = Normal | Verbose
   deriving (Show, Read, Eq)
 
+data Icit = Expl | Impl
+  deriving (Show, Read, Eq)
+
 ----------------------------------------------------------------------
 
 data Name = Name String (Maybe Integer)
@@ -54,21 +57,25 @@ data Stmt =
   deriving (Show, Read, Eq)
 
 data Exp =
-    Type | Pi Exp Bind | Lam Exp Bind
-  | Form PName [Exp] | Con PName [Exp]
-  | Red PName [Exp] | Meta MName [Exp]
-  | Var Name | Exp :@: Exp | Infer
+    Type | Pi Icit Exp Bind | Lam Icit Exp Bind
+  | Form PName Args | Con PName Args
+  | Red PName Args | Meta MName Args
+  | Var Name | App Icit Exp Exp | Infer
   deriving (Show, Read, Eq)
 
 data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
+type Arg = (Icit, Exp)
+type Args = [Arg]
 type Env = [Sigma]
-type Tel = [(Name, Exp)]
+type Ctx = [(Name, Exp)]
+type Tel = [(Icit, Name, Exp)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
-type Clause = ([Pat], RHS)
-type CheckedClause = (Tel, [Pat], RHS)
+type Clause = (Pats, RHS)
+type CheckedClause = (Ctx, Pats, RHS)
+type Pats = [(Icit, Pat)]
 
 data RHS = Prog Exp | Caseless Name
   deriving (Show, Read, Eq)
@@ -76,43 +83,48 @@ data RHS = Prog Exp | Caseless Name
 data Sigma =
     Def Name Exp Exp
   | DForm PName Tel
-  | DCon PName Tel PName [Exp]
+  | DCon PName Tel PName Args
   | DRed PName [CheckedClause] Tel Exp
   | DMeta MName (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
 
-data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName [Pat]
+data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName Pats
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------
 
+-- contexts are in semantic order, so reverse them
+toTel :: Ctx -> Tel
+toTel = reverse . map (\(x, _A) -> (Expl, x, _A))
+
+-- telescopes are in legible order, so reverse them
+fromTel :: Tel -> Ctx
+fromTel = reverse. map (\(_, x, _A) -> (x, _A))
+
 names :: Tel -> [Name]
-names = map fst
+names = map $ \(_,x,_) -> x
 
-varNames :: Tel -> [Exp]
-varNames = map (Var . fst)
+varArgs :: Tel -> Args
+varArgs = map $ \(i,x,_) -> (i, Var x)
 
-pvarNames :: Tel -> [Pat]
-pvarNames = map (PVar . fst)
-
-types :: Tel -> [Exp]
-types = map snd
+pvarPats :: Tel -> Pats
+pvarPats = map (\(i, x, _) -> (i, PVar x))
 
 pis :: Tel -> Exp -> Exp
-pis = flip $ foldr (\ (x , _A) _B -> Pi _A (Bind x _B))
+pis = flip $ foldr $ \ (i, x, _A) _B -> Pi i _A (Bind x _B)
 
 lams :: Tel -> Exp -> Exp
-lams = flip $ foldr (\ (x , _A) _B -> Lam _A (Bind x _B))
+lams = flip $ foldr $ \ (i, x , _A) _B -> Lam i _A (Bind x _B)
 
-apps :: Exp -> [Exp] -> Exp
-apps x xs = foldl (:@:) x xs
+apps :: Exp -> Args -> Exp
+apps = foldl $ \ f (i, a) -> App i f a
 
 ----------------------------------------------------------------------
 
 formType :: Tel -> Exp
 formType _Is = pis _Is Type
 
-conType :: Tel -> PName -> [Exp] -> Exp
+conType :: Tel -> PName -> Args -> Exp
 conType _As _X _Is = pis _As (Form _X _Is)
 
 metaType :: Tel -> Exp -> Exp

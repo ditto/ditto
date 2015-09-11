@@ -36,11 +36,11 @@ addDef x a _A = do
 
 genMeta :: TCM (Exp, Exp)
 genMeta = do
-  _As <- reverse <$> getCtx
+  _As <- toTel <$> getCtx
   _X <- addMeta _As Type
-  let _B = Meta _X (varNames _As)
+  let _B = Meta _X (varArgs _As)
   x <- addMeta _As _B
-  let b = Meta x (varNames _As)
+  let b = Meta x (varArgs _As)
   return (b, _B)
 
 addMeta :: Tel -> Exp -> TCM MName
@@ -68,15 +68,15 @@ addForm x _Is = do
   when (any (isPNamed x) env) $ throwError
     $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x _Is)
-  addDef (pname2name x) (lams _Is (Form x (varNames _Is))) (formType _Is)
+  addDef (pname2name x) (lams _Is (Form x (varArgs _Is))) (formType _Is)
 
-addCon :: (PName, Tel, PName, [Exp]) -> TCM ()
+addCon :: (PName, Tel, PName, Args) -> TCM ()
 addCon (x, _As, _X, _Is) = do
   env <- getEnv
   when (any (isPNamed x) env) $ throwError
     $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
-  addDef (pname2name x) (lams _As (Con x (varNames _As))) (pis _As $ Form _X _Is)
+  addDef (pname2name x) (lams _As (Con x (varArgs _As))) (pis _As $ Form _X _Is)
 
 addRedType :: PName -> Tel -> Exp -> TCM ()
 addRedType x _As _B = do
@@ -84,7 +84,7 @@ addRedType x _As _B = do
   when (any (isPNamed x) env) $ throwError
     $ "Reduction name already exists in the environment: " ++ show x
   addSig (DRed x [] _As _B)
-  addDef (pname2name x) (lams _As (Red x (varNames _As))) (pis _As _B)
+  addDef (pname2name x) (lams _As (Red x (varArgs _As))) (pis _As _B)
 
 addRedClauses :: PName -> [CheckedClause] -> TCM ()
 addRedClauses x cs = do

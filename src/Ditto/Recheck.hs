@@ -6,8 +6,6 @@ import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
-import Ditto.Match
-import Ditto.Cover
 import Ditto.Pretty
 import Data.Maybe
 import Data.List
@@ -35,10 +33,7 @@ reinferExtBind _A bnd_b = do
   Bind x <$> extCtx x _A (reinfer b)
 
 recheckExt :: Name -> Exp -> Exp -> Exp -> TCM ()
-recheckExt x _A = recheckExts [(x, _A)]
-
-recheckExts :: Tel -> Exp -> Exp -> TCM ()
-recheckExts _As b _B = extCtxs _As (recheck b _B)
+recheckExt x _A b _B = extCtx x _A (recheck b _B)
 
 ----------------------------------------------------------------------
 
@@ -54,14 +49,14 @@ reinfer (Var x) = lookupType x >>= \case
     Nothing -> throwNotInScope x
 reinfer Type = return Type
 reinfer Infer = throwError "Core language does not reinfer expressions"
-reinfer (Pi _A bnd_B) = do
+reinfer (Pi _ _A bnd_B) = do
   recheck _A Type
   (x, _B) <- unbind bnd_B
   recheckExt x _A _B Type
   return Type
-reinfer (Lam _A b) = do
+reinfer (Lam i _A b) = do
   recheck _A Type
-  Pi _A <$> reinferExtBind _A b
+  Pi i _A <$> reinferExtBind _A b
 reinfer (Form x is) = lookupPSigma x >>= \case
   Just (DForm _X _Is) -> do
     foldM_ recheckAndAdd [] (zip is _Is)
@@ -70,32 +65,34 @@ reinfer (Form x is) = lookupPSigma x >>= \case
 reinfer (Con x as) = lookupPSigma x >>= \case
   Just (DCon x _As _X _Is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
-    let s = zip (names _As) as
-    _Is' <- mapM (flip sub s) _Is
+    let s = mkSub _As as
+    _Is' <- subs _Is s
     return $ Form _X _Is'
   otherwise -> throwError $ "Not a constructor name: " ++ show x
 reinfer (Red x as) = lookupPSigma x >>= \case
   Just (DRed y cs _As _B) -> do
     foldM_ recheckAndAdd [] (zip as _As)
-    sub _B (zip (names _As) as)
+    sub _B (mkSub _As as)
   otherwise -> throwError $ "Not a reduction name: " ++ show x
 reinfer (Meta x as) = lookupMetaType x >>= \case
   Just (_As, _B) -> do
     foldM_ recheckAndAdd [] (zip as _As)
-    sub _B (zip (names _As) as)
+    sub _B (mkSub _As as)
   Nothing -> throwError $ "Not a metavariable name: " ++ show x
-reinfer (f :@: a) = reinfer f >>= whnf >>= \case
-  Pi _A bnd_B -> do
+reinfer (App i1 f a) = reinfer f >>= whnf >>= \case
+  Pi i2 _A bnd_B | i1 == i2 -> do
     recheck a _A
     (x, _B) <- unbind bnd_B
     sub1 (x, a) _B
   otherwise -> throwError "Function does not have Pi type"
 
-recheckAndAdd :: Sub -> (Exp, (Name, Exp)) -> TCM Sub
-recheckAndAdd s (a , (x, _A))= do
+recheckAndAdd :: Sub -> ((Icit, Exp), (Icit, Name, Exp)) -> TCM Sub
+recheckAndAdd s ((i1, a) , (i2, x, _A)) | i1 == i2 = do
   a' <- sub a s
   _A' <- sub _A s
   recheck a' _A'
   return $ (x, a'):s
+recheckAndAdd s ((i1, a) , (i2, x, _A)) = do
+  throwError "Implicit and explicit application mismatch"
 
 ----------------------------------------------------------------------

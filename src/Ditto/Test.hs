@@ -505,13 +505,13 @@ intrinsicEvaluator = unlines $ evalData ++
   ]
 
 intrinsicEvaluatorUnif = unlines $ evalData ++
-  [ "def lookup (A : *) (As : *) (i : In A As) (as : Env As) : El A where"
-  , "| A * (here * As) (cons * as * a) = a"
-  , "| A * (there * B As i) (cons * as * a) = lookup * * i as"
+  [ "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
+  , "| {A} {*} (here * As) (cons * as * a) = a"
+  , "| {A} {*} (there * B As i) (cons * as * a) = lookup {*} {*} i as"
   , "end"
 
   , "def eval (As : *) (A : *) (a : Exp As A) (as : Env As) : El A where"
-  , "| As A (var' * * i) as = lookup * * i as"
+  , "| As A (var' * * i) as = lookup {*} {*} i as"
   , "| As * (true' *) as = true"
   , "| As * (false' *) as = false"
   , "| As C (if' * * b ct cf) as = if * (eval * * b as) (eval * * ct as) (eval * * cf as)"
@@ -557,17 +557,17 @@ caselessDependent = unlines
 
   , "data Leq (n m : Nat) : Type where"
   , "| leqZero (n : Nat) : Leq zero n"
-  , "| leqSuc (n m : Nat) (p : Leq n m) : Leq (suc n) (suc m)"
+  , "| leqSuc {n m : Nat} (p : Leq n m) : Leq (suc n) (suc m)"
   , "end"
 
   , "def leqSucR (n m : Nat) (p : Leq n m) : Leq n (suc m) where"
   , "| * m (leqZero *) = leqZero (suc m)"
-  , "| * * (leqSuc n m p) = leqSuc n (suc m) (leqSucR n m p)"
+  , "| * * (leqSuc {n} {m} p) = leqSuc {n} {suc m} (leqSucR n m p)"
   , "end"
 
-  , "def leqPredL (n m : Nat) (p : Leq (suc n) m) : Leq n m where"
-  , "| n zero p != p"
-  , "| n (suc m) (leqSuc * * p) = leqSucR n m p"
+  , "def leqPredL {n m : Nat} (p : Leq (suc n) m) : Leq n m where"
+  , "| {n} {zero} p != p"
+  , "| {n} {suc m} (leqSuc {*} {*} p) = leqSucR n m p"
   , "end"
   ]
 
@@ -577,11 +577,11 @@ simpleUnif = unlines
   , "end"
 
   , "data Id (A : Type) (x y : A) : Type where"
-  , "| refl (A : Type) (x : A) : Id A x x"
+  , "| refl {A : Type} {x : A} : Id A x x"
   , "end"
 
   , "def testUnif : Id * true true where"
-  , "refl * *"
+  , "refl {*} {*}"
   , "end"
   ]
 

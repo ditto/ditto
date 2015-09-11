@@ -56,10 +56,10 @@ checkStmt (SDefn x _A cs) = do
 
 ----------------------------------------------------------------------
 
-checkRHS :: Tel -> [Pat] -> RHS -> Tel -> Exp -> TCM RHS
+checkRHS :: Ctx -> Pats -> RHS -> Tel -> Exp -> TCM RHS
 checkRHS _Delta lhs (Prog a) _As _B
   = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
-checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
+checkRHS _Delta lhs (Caseless x) _As _B = split (toTel _Delta) x >>= \case
     [] -> return (Caseless x)
     otherwise -> throwError $ "Variable is not caseless: " ++ show x
 
@@ -78,12 +78,12 @@ checkLinearClause x (ps, rhs) =
     ]
   where xs = nonLinearVars ps
 
-nonLinearVars :: [Pat] -> [Name]
+nonLinearVars :: Pats -> [Name]
 nonLinearVars ps = xs \\ nub xs
   where xs = patternsVars ps
 
-patternsVars :: [Pat] -> [Name]
-patternsVars = concat . map patternVars
+patternsVars :: Pats -> [Name]
+patternsVars = concat . map (patternVars . snd)
 
 patternVars :: Pat -> [Name]
 patternVars (PVar x) = [x]
@@ -95,8 +95,8 @@ patternVars (PCon _ ps) = patternsVars ps
 atomizeClauses :: [Clause] -> TCM [Clause]
 atomizeClauses = mapM (\(ps, rhs) -> (,rhs) <$> atomizePatterns ps)
 
-atomizePatterns :: [Pat] -> TCM [Pat]
-atomizePatterns = mapM atomizePattern
+atomizePatterns :: Pats -> TCM Pats
+atomizePatterns = mapM (\(i, p) -> (i,) <$> atomizePattern p)
 
 atomizePattern :: Pat -> TCM Pat
 atomizePattern (PVar x) = case name2pname x of
@@ -115,7 +115,7 @@ checkSolved a _A = do
   checkMetas
   return a
 
-checkExtsSolved :: Tel -> Exp -> Exp -> TCM Exp
+checkExtsSolved :: Ctx -> Exp -> Exp -> TCM Exp
 checkExtsSolved _As b _B = do
   b <- checkExts _As b _B
   checkMetas
@@ -131,7 +131,7 @@ checkMetas = do
 checkExt :: Name -> Exp -> Exp -> Exp -> TCM Exp
 checkExt x _A = checkExts [(x, _A)]
 
-checkExts :: Tel -> Exp -> Exp -> TCM Exp
+checkExts :: Ctx -> Exp -> Exp -> TCM Exp
 checkExts _As b _B = extCtxs _As (check b _B)
 
 inferExtBind :: Exp -> Bind -> TCM (Bind, Bind)
@@ -154,23 +154,23 @@ infer (Var x) = lookupType x >>= \case
     Nothing -> throwNotInScope x
 infer Type = return (Type, Type)
 infer Infer = genMeta
-infer (Pi _A bnd_B) = do
+infer (Pi i _A bnd_B) = do
   _A <- check _A Type
   (x, _B) <- unbind bnd_B
   _B <- checkExt x _A _B Type
-  return (Pi _A (Bind x _B), Type)
-infer (Lam _A b) = do
+  return (Pi i _A (Bind x _B), Type)
+infer (Lam i _A b) = do
   _A <- check _A Type
   (b , _B) <- inferExtBind _A b
-  return (Lam _A b, Pi _A _B)
-infer (f :@: a) = do
+  return (Lam i _A b, Pi i _A _B)
+infer (App i1 f a) = do
   (f, _F) <- infer f
   whnf _F >>= \case
-    Pi _A bnd_B -> do
+    Pi i2 _A bnd_B | i1 == i2 -> do
       a <- check a _A
       (x, _B) <- unbind bnd_B
-      (f :@: a,) <$> sub1 (x, a) _B
-    otherwise -> throwError "Function does not have Pi type"
+      (App i1 f a,) <$> sub1 (x, a) _B
+    otherwise -> throwError "Function does not have correct Pi type"
 infer _ = throwError "Inferring a term not in the surface language"
 
 ----------------------------------------------------------------------

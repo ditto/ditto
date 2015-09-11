@@ -16,7 +16,7 @@ data DittoS = DittoS
   }
 
 data DittoR = DittoR
-  { ctx :: Tel
+  { ctx :: Ctx
   }
 
 type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
@@ -45,9 +45,11 @@ initialR = DittoR
 extCtx :: Name -> Exp -> TCM a -> TCM a
 extCtx x _A = extCtxs [(x, _A)]
 
--- telescopes are in legible order, so reverse them
-extCtxs :: Tel -> TCM a -> TCM a
-extCtxs _As = local (\ r -> r { ctx = reverse _As ++ ctx r })
+extCtxs :: Ctx -> TCM a -> TCM a
+extCtxs _As = local (\ r -> r { ctx = _As ++ ctx r })
+
+extCtxsTel :: Tel -> TCM a -> TCM a
+extCtxsTel _As = extCtxs (fromTel _As)
 
 ----------------------------------------------------------------------
 
@@ -112,7 +114,7 @@ envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta x _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
-conSig :: Sigma -> Maybe (PName, Tel, [Exp])
+conSig :: Sigma -> Maybe (PName, Tel, Args)
 conSig (DCon x _As _ is) = Just (x, _As, is)
 conSig _ = Nothing
 
@@ -129,7 +131,7 @@ envType (DMeta _ _ _As _B) = metaType _As _B
 
 ----------------------------------------------------------------------
 
-lookupCons :: PName -> TCM [(PName, Tel, [Exp])]
+lookupCons :: PName -> TCM [(PName, Tel, Args)]
 lookupCons x = do
   env <- getEnv
   return . catMaybes . map conSig . filter (isConOf x) $ env
@@ -203,7 +205,7 @@ lookupSigma x = do
 
 ----------------------------------------------------------------------
 
-getCtx :: TCM Tel
+getCtx :: TCM Ctx
 getCtx = do
   DittoR {ctx = ctx} <- ask
   return ctx

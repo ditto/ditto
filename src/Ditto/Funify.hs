@@ -11,25 +11,25 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-funifies :: [Name] -> [Exp] -> [Exp] -> TCM (Maybe Sub)
+funifies :: [Name] -> Args -> Args -> TCM (Maybe Sub)
 funifies xs [] [] = return . Just $ []
 funifies xs (a1:as1) (a2:as2) = funify xs a1 a2 >>= \case
   Nothing -> return Nothing
   Just s -> do
-    as1' <- subs s as1
-    as2' <- subs s as2
+    as1' <- subs as1 s
+    as2' <- subs as2 s
     funifies xs as1' as2' >>= \case
       Nothing -> return Nothing
       -- TODO this may need to be substitution composition
       Just s' -> return . Just $ s ++ s'
-  where subs s = mapM (flip sub s)
 funifies _ _ _ = throwError "Unifiying equations of differing lengths"
 
-funify :: [Name] -> Exp -> Exp -> TCM (Maybe Sub)
-funify xs a1 a2 = do
+funify :: [Name] -> Arg -> Arg -> TCM (Maybe Sub)
+funify xs (i1, a1) (i2, a2) | i1 == i2 = do
   a1' <- whnf a1
   a2' <- whnf a2
   funify' xs a1' a2'
+funify xs (i1, a1) (i2, a2) = return Nothing
 
 funify' :: [Name] -> Exp -> Exp -> TCM (Maybe Sub)
 funify' xs (Var x) a | x `elem` fv a = return Nothing
