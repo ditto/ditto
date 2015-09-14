@@ -67,7 +67,7 @@ reachable :: [Clause] -> [Clause] -> Pats -> [Clause]
 reachable prev [] qs = []
 reachable prev (c:cs) qs = if prevUnreached && currReached then c:rec else rec
   where
-  rec = reachable (prev ++ [c]) cs qs
+  rec = reachable (snoc prev c) cs qs
   prevUnreached = not . isCovered . matchClauses prev $ qs
   currReached = isCovered (matchClause c qs)
 

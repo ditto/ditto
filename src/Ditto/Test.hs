@@ -520,6 +520,22 @@ intrinsicEvaluatorUnif = unlines $ evalData ++
   , "end"
   ]
 
+intrinsicEvaluatorImpl = unlines $ evalData ++
+  [ "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
+  , "| {A} {*} (here * As) (cons * as * a) = a"
+  , "| {A} {*} (there * B As i) (cons * as * a) = lookup i as"
+  , "end"
+
+  , "def eval {As : *} {A : *} (a : Exp As A) (as : Env As) : El A where"
+  , "| {As} {A} (var' * * i) as = lookup i as"
+  , "| {As} {*} (true' *) as = true"
+  , "| {As} {*} (false' *) as = false"
+  , "| {As} {C} (if' * * b ct cf) as = if * (eval b as) (eval ct as) (eval cf as)"
+  , "| {As} {*} (lam' * A B b) as = (a : *) -> eval b (cons * as * a)"
+  , "| {As} {*} (app' * A B f a) as = (eval f as) (eval a as)"
+  , "end"
+  ]
+
 intrinsicUnifUnsolved = unlines $
   [ "data Tp : Type where"
   , "| Bool' : Tp"
@@ -571,19 +587,32 @@ caselessDependent = unlines
   , "end"
   ]
 
-simpleUnif = unlines
+boolData =
   [ "data Bool : Type where"
   , "| true/false : Bool"
   , "end"
+  ]
 
-  , "data Id (A : Type) (x y : A) : Type where"
-  , "| refl {A : Type} {x : A} : Id A x x"
+simpleUnif = unlines $ boolData ++
+  [ "data Id {A : Type} (x y : A) : Type where"
+  , "| refl {A : Type} {x : A} : Id {A} x x"
   , "end"
 
-  , "def testUnif : Id * true true where"
+  , "def testUnif : Id {*} true true where"
   , "refl {*} {*}"
   , "end"
   ]
+
+simpleImpl = unlines $ boolData ++
+  [ "data Id {A : Type} (x y : A) : Type where"
+  , "| refl {A : Type} {x : A} : Id x x"
+  , "end"
+
+  , "def testUnif : Id true true where"
+  , "refl"
+  , "end"
+  ]
+
 
 printCtx = "def Fail : Type where undefined end"
 
@@ -641,9 +670,11 @@ checkTests = "Check tests" ~:
   , testChecks caselessNonDependent
   , testChecks caselessDependent
   , testChecks simpleUnif
+  , testChecks simpleImpl
   , testChecks dependentVectorPatternsUnif
   , testChecks intrinsicEvaluatorUnif
   , testChecksFails intrinsicUnifUnsolved
+  , testChecks intrinsicEvaluatorImpl
   ]
 
 parseTests :: Test

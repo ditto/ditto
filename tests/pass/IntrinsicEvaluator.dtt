@@ -17,9 +17,9 @@ data Bool : Type where
 | true/false : Bool
 end
 
-def if (C : Type) (b : Bool) (ct cf : C) : C where
-| C true ct cf = ct
-| C false ct cf = cf
+def if {C : Type} (b : Bool) (ct cf : C) : C where
+| {C} true ct cf = ct
+| {C} false ct cf = cf
 end
 
 def El (A : Tp) : Type where
@@ -29,12 +29,12 @@ end
 
 data Env (As : Ctx) : Type where
 | nil : Env emp
-| cons (As : *) (as : Env As) (A : *) (a : El A) : Env (ext As A)
+| cons {As : *} (as : Env As) {A : *} (a : El A) : Env (ext As A)
 end
 
-def lookup (A : *) (As : *) (i : In A As) (as : Env As) : El A where
-| A * (here * As) (cons * as * a) = a
-| A * (there * B As i) (cons * as * a) = lookup * * i as
+def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where
+| {A} {*} (here * As) (cons {*} as {*} a) = a
+| {A} {*} (there * B As i) (cons {*} as {*} a) = lookup i as
 end
 
 data Exp : (As : Ctx) (A : Tp) : Type where
@@ -45,11 +45,11 @@ data Exp : (As : Ctx) (A : Tp) : Type where
 | app' (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B
 end
 
-def eval (As : *) (A : *) (a : Exp As A) (as : Env As) : El A where
-| As A (var' * * i) as = lookup * * i as
-| As * (true' *) as = true
-| As * (false' *) as = false
-| As C (if' * * b ct cf) as = if * (eval * * b as) (eval * * ct as) (eval * * cf as)
-| As * (lam' * A B b) as = (a : *) -> eval * * b (cons * as * a)
-| As * (app' * A B f a) as = (eval * * f as) (eval * * a as)
+def eval {As : *} {A : *} (a : Exp As A) (as : Env As) : El A where
+| {As} {A} (var' * * i) as = lookup i as
+| {As} {*} (true' *) as = true
+| {As} {*} (false' *) as = false
+| {As} {C} (if' * * b ct cf) as = if (eval b as) (eval ct as) (eval cf as)
+| {As} {*} (lam' * A B b) as = (a : *) -> eval b (cons as a)
+| {As} {*} (app' * A B f a) as = (eval f as) (eval a as)
 end

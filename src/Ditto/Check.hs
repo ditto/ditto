@@ -149,28 +149,40 @@ check a _A = do
   return a
 
 infer :: Exp -> TCM (Exp, Exp)
-infer (Var x) = lookupType x >>= \case
+infer (viewSpine -> (f, as)) = do
+  (f, _AB) <- inferAtom f
+  (as, _B) <- checkArgs as =<< whnf _AB
+  return (apps f as, _B)
+
+checkArgs :: Args -> Exp -> TCM (Args, Exp)
+checkArgs as@((Expl, _):_) _AB@(Pi Impl _ _) =
+  checkArgs ((Impl, Infer):as) _AB
+checkArgs [] _AB@(Pi Impl _ _) =
+  checkArgs [(Impl, Infer)] _AB
+checkArgs ((i1, a):as) (Pi i2 _A bnd_B) | i1 == i2 = do
+  a <- check a _A
+  (x, _B) <- unbind bnd_B
+  (as, _B) <- checkArgs as =<< whnf =<< sub1 (x, a) _B
+  return ((i1, a):as, _B)
+checkArgs ((i1, a):as) _B =
+  throwError "Function does not have correct Pi type"
+checkArgs [] _B = return ([], _B)
+
+inferAtom :: Exp -> TCM (Exp, Exp)
+inferAtom (Var x) = lookupType x >>= \case
     Just _A -> return (Var x, _A)
     Nothing -> throwNotInScope x
-infer Type = return (Type, Type)
-infer Infer = genMeta
-infer (Pi i _A bnd_B) = do
+inferAtom Type = return (Type, Type)
+inferAtom Infer = genMeta
+inferAtom (Pi i _A bnd_B) = do
   _A <- check _A Type
   (x, _B) <- unbind bnd_B
   _B <- checkExt x _A _B Type
   return (Pi i _A (Bind x _B), Type)
-infer (Lam i _A b) = do
+inferAtom (Lam i _A b) = do
   _A <- check _A Type
   (b , _B) <- inferExtBind _A b
   return (Lam i _A b, Pi i _A _B)
-infer (App i1 f a) = do
-  (f, _F) <- infer f
-  whnf _F >>= \case
-    Pi i2 _A bnd_B | i1 == i2 -> do
-      a <- check a _A
-      (x, _B) <- unbind bnd_B
-      (App i1 f a,) <$> sub1 (x, a) _B
-    otherwise -> throwError "Function does not have correct Pi type"
-infer _ = throwError "Inferring a term not in the surface language"
+inferAtom _ = throwError "Inferring a non-atomic term language"
 
 ----------------------------------------------------------------------

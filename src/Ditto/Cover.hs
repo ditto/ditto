@@ -29,7 +29,7 @@ splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>=
   Just (injectSub -> qs) -> do
     _ABs' <- refineTel (_As ++ _Bs) qs
     as <- psubPats (pvarPats _Bs) qs
-    let qs' = qs ++ [(x, PCon y as)]
+    let qs' = snoc qs (x, PCon y as)
     _Cs' <- psubTel _Cs qs'
     return . Just $ (_ABs' ++ _Cs', qs')
 

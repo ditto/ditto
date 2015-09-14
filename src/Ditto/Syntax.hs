@@ -1,5 +1,8 @@
 module Ditto.Syntax where
 
+snoc :: [a] -> a -> [a]
+snoc xs x = xs ++ [x]
+
 ----------------------------------------------------------------------
 
 data Verbosity = Normal | Verbose
@@ -129,5 +132,12 @@ conType _As _X _Is = pis _As (Form _X _Is)
 
 metaType :: Tel -> Exp -> Exp
 metaType _As _B = pis _As _B
+
+----------------------------------------------------------------------
+
+viewSpine :: Exp -> (Exp, Args)
+viewSpine (App i f a) = (g, snoc as (i, a))
+  where (g, as) = viewSpine f
+viewSpine x = (x, [])
 
 ----------------------------------------------------------------------
