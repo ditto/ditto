@@ -520,19 +520,61 @@ intrinsicEvaluatorUnif = unlines $ evalData ++
   , "end"
   ]
 
-intrinsicEvaluatorImpl = unlines $ evalData ++
-  [ "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
-  , "| {A} {*} (here * As) (cons * as * a) = a"
-  , "| {A} {*} (there * B As i) (cons * as * a) = lookup i as"
+intrinsicEvaluatorImpl = unlines
+  [ "data Tp : Type where"
+  , "| Bool' : Tp"
+  , "| Arr' (A B : Tp) : Tp"
+  , "end"
+
+  , "data Ctx : Type where"
+  , "| emp : Ctx"
+  , "| ext (As : Ctx) (A : Tp) : Ctx"
+  , "end"
+
+  , "data In : (A : Tp) (As : Ctx) : Type where"
+  , "| here {A : Tp} {As : Ctx} : In A (ext As A)"
+  , "| there {A B : Tp} {As : Ctx} (i : In A As) : In A (ext As B)"
+  , "end"
+
+  , "data Bool : Type where"
+  , "| true/false : Bool"
+  , "end"
+
+  , "def if {C : Type} (b : Bool) (ct cf : C) : C where"
+  , "| true ct cf = ct"
+  , "| false ct cf = cf"
+  , "end"
+
+  , "def El (A : Tp) : Type where"
+  , "| Bool' = Bool"
+  , "| (Arr' A B) = (a : El A) : El B"
+  , "end"
+
+  , "data Env (As : Ctx) : Type where"
+  , "| nil : Env emp"
+  , "| cons {As : Ctx} (as : Env As) {A : Tp} (a : El A) : Env (ext As A)"
+  , "end"
+
+  , "data Exp : (As : Ctx) (A : Tp) : Type where"
+  , "| var' {As : Ctx} {A : Tp} (i : In A As) : Exp As A"
+  , "| true'/false' {As : Ctx} : Exp As Bool'"
+  , "| if' {As : Ctx} {C : Tp} (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
+  , "| lam' {As : Ctx} {A B : Tp} (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' {As : Ctx} {A B : Tp} (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "end"
+
+  , "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
+  , "| here (cons as a) = a"
+  , "| (there i) (cons as a) = lookup i as"
   , "end"
 
   , "def eval {As : *} {A : *} (a : Exp As A) (as : Env As) : El A where"
-  , "| {As} {A} (var' * * i) as = lookup i as"
-  , "| {As} {*} (true' *) as = true"
-  , "| {As} {*} (false' *) as = false"
-  , "| {As} {C} (if' * * b ct cf) as = if * (eval b as) (eval ct as) (eval cf as)"
-  , "| {As} {*} (lam' * A B b) as = (a : *) -> eval b (cons * as * a)"
-  , "| {As} {*} (app' * A B f a) as = (eval f as) (eval a as)"
+  , "| (var' i) as = lookup i as"
+  , "| true' as = true"
+  , "| false' as = false"
+  , "| (if' b ct cf) as = if (eval b as) (eval ct as) (eval cf as)"
+  , "| (lam' b) as = (a : *) -> eval b (cons as a)"
+  , "| (app' f a) as = (eval f as) (eval a as)"
   , "end"
   ]
 

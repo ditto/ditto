@@ -101,7 +101,7 @@ atomizePatterns = mapM (\(i, p) -> (i,) <$> atomizePattern p)
 atomizePattern :: Pat -> TCM Pat
 atomizePattern (PVar x) = case name2pname x of
   Just x' -> lookupPSigma x' >>= \case
-    Just (DCon _ [] _ _) -> return $ PCon x' []
+    Just (DCon _ _ _ _) -> return $ PCon x' []
     otherwise -> return $ PVar x
   Nothing -> return $ PVar x
 atomizePattern (PCon x ps) = PCon x <$> atomizePatterns ps

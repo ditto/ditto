@@ -22,21 +22,20 @@ munion _ (MStuck ys) = MStuck ys
 
 ----------------------------------------------------------------------
 
-match1 :: (Icit, Pat) -> (Icit, Pat) -> Match
-match1 (i1, p1) (i2, p2) | i1 == i2 = match1' p1 p2
-match1 (i1, p1) (i2, p2) = MClash
-
-match1' :: Pat -> Pat -> Match
-match1' (PVar x) p = MSolve [(x, p)]
-match1' (Inacc _) _ = MSolve []
-match1' (PCon x ps) (PCon y qs) | x == y = match ps qs
-match1' (PCon x _) (PCon y _) = MClash
-match1' (PCon x ps) (PVar y) = MStuck [y]
-match1' (PCon x ps) (Inacc _) = MStuck []
+match1 :: Pat -> Pat -> Match
+match1 (PVar x) p = MSolve [(x, p)]
+match1 (Inacc _) _ = MSolve []
+match1 (PCon x ps) (PCon y qs) | x == y = match ps qs
+match1 (PCon x _) (PCon y _) = MClash
+match1 (PCon x ps) (PVar y) = MStuck [y]
+match1 (PCon x ps) (Inacc _) = MStuck []
 
 match :: Pats -> Pats -> Match
 match [] [] = MSolve []
-match (p:ps) (q:qs) = match1 p q `munion` match ps qs
+match ((i1, p):ps) ((i2, q):qs) | i1 == i2 = match1 p q `munion` match ps qs
+match ps@((Expl, _):_) ((Impl, _):qs) = match ps qs
+match []               ((Impl, _):qs) = match [] qs
+match ((i1, p):ps) ((i2, q):qs) | i1 /= i2 = error "Implicit and explicit patterns mismatch"
 match _ _ = error "matching pattern clauses of different lengths"
 
 ----------------------------------------------------------------------
