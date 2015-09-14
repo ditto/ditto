@@ -25,6 +25,7 @@ keywords = choice
   [keyType, keyData, keyDef, keyWhere, keyEnd]
 
 symAscribe = symbol ":"
+symKind = symbol "::"
 symChoice = symbol "|"
 symInfer = symbol "*"
 symInacc = symbol "*"
@@ -122,12 +123,18 @@ parseData :: Parser Stmt
 parseData = try $ do
   keyData
   x <- parsePName
-  optional $ symAscribe
-  _A <- parseExp
+  _As <- parseParams <|> (optional symAscribe >> return [])
+  _B <- pis _As <$> parseExp
   keyWhere
-  cons <- many parseCon
+  cons <- paramCons _As . concat <$> many parseCon
   keyEnd
-  return $ SData x _A (concat cons)
+  return $ SData x _B cons
+
+parseParams :: Parser Tel
+parseParams = try $ do
+  _As <- parseTel
+  symKind
+  return _As
 
 parseCon :: Parser Cons
 parseCon = try $ do

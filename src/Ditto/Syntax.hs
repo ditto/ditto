@@ -116,6 +116,12 @@ pvarPats = map (\(i, x, _) -> (i, PVar x))
 pis :: Tel -> Exp -> Exp
 pis = flip $ foldr $ \ (i, x, _A) _B -> Pi i _A (Bind x _B)
 
+ipis :: Tel -> Exp -> Exp
+ipis as = pis (map (\(_,x,a) -> (Impl,x,a)) as)
+
+paramCons :: Tel -> Cons -> Cons
+paramCons _As = map (\(x, _A) -> (x, ipis _As _A))
+
 lams :: Tel -> Exp -> Exp
 lams = flip $ foldr $ \ (i, x , _A) _B -> Lam i _A (Bind x _B)
 

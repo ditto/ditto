@@ -531,9 +531,9 @@ intrinsicEvaluatorImpl = unlines
   , "| ext (As : Ctx) (A : Tp) : Ctx"
   , "end"
 
-  , "data In : (A : Tp) (As : Ctx) : Type where"
-  , "| here {A : Tp} {As : Ctx} : In A (ext As A)"
-  , "| there {A B : Tp} {As : Ctx} (i : In A As) : In A (ext As B)"
+  , "data In (A : Tp) :: (As : Ctx) : Type where"
+  , "| here {As : Ctx} : In A (ext As A)"
+  , "| there {B : Tp} {As : Ctx} (i : In A As) : In A (ext As B)"
   , "end"
 
   , "data Bool : Type where"
@@ -555,12 +555,12 @@ intrinsicEvaluatorImpl = unlines
   , "| cons {As : Ctx} (as : Env As) {A : Tp} (a : El A) : Env (ext As A)"
   , "end"
 
-  , "data Exp : (As : Ctx) (A : Tp) : Type where"
-  , "| var' {As : Ctx} {A : Tp} (i : In A As) : Exp As A"
-  , "| true'/false' {As : Ctx} : Exp As Bool'"
-  , "| if' {As : Ctx} {C : Tp} (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
-  , "| lam' {As : Ctx} {A B : Tp} (b : Exp (ext As A) B) : Exp As (Arr' A B)"
-  , "| app' {As : Ctx} {A B : Tp} (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "data Exp (As : Ctx) :: (A : Tp) : Type where"
+  , "| var' {A : Tp} (i : In A As) : Exp As A"
+  , "| true'/false' : Exp As Bool'"
+  , "| if' {C : Tp} (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
+  , "| lam' {A B : Tp} (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' {A B : Tp} (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
   , "end"
 
   , "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
