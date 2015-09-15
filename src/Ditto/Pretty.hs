@@ -162,7 +162,7 @@ ppRHS (Prog a) = def <+> ppExp a
 ppRHS (Caseless x) = ndef <+> ppName x
 
 ppRedCtx :: PName -> Ctx -> Box
-ppRedCtx x _As = ppPName x <+> hcatmap ppCtxBind _As
+ppRedCtx x _As = ppPName x <+> hcatmap (parens . ppCtxBind) _As
 
 --------------------------------------------------------------------------------
 
