@@ -51,6 +51,7 @@ renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
 
 renderHoles :: Holes -> String
+renderHoles [] = ""
 renderHoles xs = render $ text "Holes:" //
   vcatmap (\(x, a, _As, _B) -> ppDMeta x a _As _B) xs
 

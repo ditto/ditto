@@ -43,7 +43,7 @@ runCli = do
     Left e -> putStrLn (show e)
     Right ds -> case runCheckProg (optVerbosity opts) ds of
       Left e -> putStrLn e
-      Right xs -> unless (null xs) (putStrLn (renderHoles xs))
+      Right xs -> putStr (renderHoles xs)
 
 ----------------------------------------------------------------------
 
