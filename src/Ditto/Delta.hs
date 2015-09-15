@@ -10,7 +10,7 @@ import Control.Monad.Except
 
 deltaExpand :: Exp -> TCM Exp
 deltaExpand Type = return Type
-deltaExpand Infer = return Infer
+deltaExpand (Infer m) = return (Infer m)
 deltaExpand (Pi i _A _B) = Pi i <$> deltaExpand _A <*> deltaExpandExtBind _A _B
 deltaExpand (Lam i _A b) = Lam i <$> deltaExpand _A <*> deltaExpandExtBind _A b
 deltaExpand (App i f a) = App i <$> deltaExpand f <*> deltaExpand a

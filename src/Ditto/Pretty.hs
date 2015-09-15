@@ -50,6 +50,10 @@ renderUnsolvedMetas :: [(MName, Tel, Exp)] -> String
 renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
 
+renderHoles :: Holes -> String
+renderHoles xs = render $ text "Holes:" //
+  vcatmap (\(x, a, _As, _B) -> ppDMeta x a _As _B) xs
+
 ----------------------------------------------------------------------
 
 ppExp :: Exp -> Box
@@ -61,7 +65,7 @@ ppArg (Impl, a) = braces (ppExp a)
 
 ppwExp :: Wrap -> Exp -> Box
 ppwExp w Type = text "Type"
-ppwExp w Infer = forced
+ppwExp w (Infer m) = ppInfer m
 ppwExp w (Var x) = ppName x
 ppwExp w x@(Pi _ _ _) = ppPis w x
 ppwExp w x@(Lam _ _ _) = ppLams w x
@@ -70,6 +74,10 @@ ppwExp w (Con x as) = ppPrim w x as
 ppwExp w (Red x as) = ppPrim w x as
 ppwExp w (Meta x as) = ppMeta w x as
 ppwExp w (App i f a) = lefty w $ ppwExp NoWrapL f <+> ppArg (i, a)
+
+ppInfer :: MKind -> Box
+ppInfer MInfer = forced
+ppInfer MHole = hole
 
 ppPrim :: Wrap -> PName -> Args -> Box
 ppPrim w x [] = ppPName x
@@ -140,7 +148,7 @@ ppSig (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
 ppSig (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
 ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
   /+/ vcatmap (ppRed x) (reverse cs)
-ppSig (DMeta x b _As _B) = ppDMeta x b _As _B
+ppSig (DMeta x _ b _As _B) = ppDMeta x b _As _B
 
 ----------------------------------------------------------------------
 
@@ -214,6 +222,9 @@ ndef = text "!="
 
 forced :: Box
 forced = char '*'
+
+hole :: Box
+hole = char '?'
 
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)

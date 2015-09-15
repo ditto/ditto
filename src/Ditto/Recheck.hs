@@ -48,7 +48,7 @@ reinfer (Var x) = lookupType x >>= \case
     Just _A -> return _A
     Nothing -> throwNotInScope x
 reinfer Type = return Type
-reinfer Infer = throwError "Core language does not reinfer expressions"
+reinfer (Infer _) = throwError "Core language does not reinfer expressions"
 reinfer (Pi _ _A bnd_B) = do
   recheck _A Type
   (x, _B) <- unbind bnd_B

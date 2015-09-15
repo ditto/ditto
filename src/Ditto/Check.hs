@@ -17,8 +17,8 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-runCheckProg :: Verbosity -> [Stmt] -> Either String ()
-runCheckProg v = runTCM v . checkProg
+runCheckProg :: Verbosity -> [Stmt] -> Either String Holes
+runCheckProg v xs = runTCM v (checkProg xs >> lookupHoles >>= whnfHoles)
 
 ----------------------------------------------------------------------
 
@@ -156,9 +156,9 @@ infer (viewSpine -> (f, as)) = do
 
 checkArgs :: Args -> Exp -> TCM (Args, Exp)
 checkArgs as@((Expl, _):_) _AB@(Pi Impl _ _) =
-  checkArgs ((Impl, Infer):as) _AB
+  checkArgs ((Impl, Infer MInfer):as) _AB
 checkArgs [] _AB@(Pi Impl _ _) =
-  checkArgs [(Impl, Infer)] _AB
+  checkArgs [(Impl, Infer MInfer)] _AB
 checkArgs ((i1, a):as) (Pi i2 _A bnd_B) | i1 == i2 = do
   a <- check a _A
   (x, _B) <- unbind bnd_B
@@ -170,10 +170,10 @@ checkArgs [] _B = return ([], _B)
 
 inferAtom :: Exp -> TCM (Exp, Exp)
 inferAtom (Var x) = lookupType x >>= \case
-    Just _A -> return (Var x, _A)
-    Nothing -> throwNotInScope x
+  Just _A -> return (Var x, _A)
+  Nothing -> throwNotInScope x
 inferAtom Type = return (Type, Type)
-inferAtom Infer = genMeta
+inferAtom (Infer m) = genMeta m
 inferAtom (Pi i _A bnd_B) = do
   _A <- check _A Type
   (x, _B) <- unbind bnd_B

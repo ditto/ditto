@@ -28,6 +28,7 @@ symAscribe = symbol ":"
 symKind = symbol "::"
 symChoice = symbol "|"
 symInfer = symbol "*"
+symHole = symbol "?"
 symInacc = symbol "*"
 symEq = symbol "="
 symNeq = symbol "!="
@@ -170,6 +171,7 @@ parseAtom = choice [
     parens parseExp
   , parseType
   , parseInfer
+  , parseHole
   , parseVar
   ]
 
@@ -179,7 +181,10 @@ parseType :: Parser Exp
 parseType = try $ keyType >> return Type
 
 parseInfer :: Parser Exp
-parseInfer = try $ symInfer >> return Infer
+parseInfer = try $ symInfer >> return (Infer MInfer)
+
+parseHole :: Parser Exp
+parseHole = try $ symHole >> return (Infer MHole)
 
 parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName

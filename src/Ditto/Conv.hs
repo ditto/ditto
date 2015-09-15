@@ -19,7 +19,7 @@ alpha a b = alpha' [] a b
 
 alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
 alpha' dict Type Type = True
-alpha' dict Infer Infer = False
+alpha' dict (Infer _) (Infer _) = False
 alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && alphas' dict as1 as2
 alpha' dict (Con x1 as1) (Con x2 as2) =
@@ -66,7 +66,7 @@ conv' (Var x) (Var y) =
     "Variables not convertible\n"
     ++ show x ++ " != " ++ show y
 conv' Type Type = return Type
-conv' Infer Infer = throwError "Unelaborated metavariables are unique"
+conv' (Infer _) (Infer _) = throwError "Unelaborated metavariables are unique"
 conv' (App i1 f1 a1) (App i2 f2 a2) | i1 == i2 =
   App i1 <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam i1 _A1 bnd_b1) (Lam i2 _A2 bnd_b2) | i1 == i2 = do

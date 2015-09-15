@@ -49,6 +49,9 @@ newtype MName = MName Integer
 instance Show MName where
   show (MName n) = "?" ++ show n
 
+data MKind = MInfer | MHole
+  deriving (Show, Read, Eq)
+
 ----------------------------------------------------------------------
 
 type Cons = [(PName, Exp)]
@@ -63,7 +66,7 @@ data Exp =
     Type | Pi Icit Exp Bind | Lam Icit Exp Bind
   | Form PName Args | Con PName Args
   | Red PName Args | Meta MName Args
-  | Var Name | App Icit Exp Exp | Infer
+  | Var Name | App Icit Exp Exp | Infer MKind
   deriving (Show, Read, Eq)
 
 data Bind = Bind Name Exp
@@ -79,6 +82,8 @@ type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
 type CheckedClause = (Ctx, Pats, RHS)
 type Pats = [(Icit, Pat)]
+type Hole = (MName, Maybe Exp, Tel, Exp)
+type Holes = [Hole]
 
 data RHS = Prog Exp | Caseless Name
   deriving (Show, Read, Eq)
@@ -88,7 +93,7 @@ data Sigma =
   | DForm PName Tel
   | DCon PName Tel PName Args
   | DRed PName [CheckedClause] Tel Exp
-  | DMeta MName (Maybe Exp) Tel Exp
+  | DMeta MName MKind (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName Pats

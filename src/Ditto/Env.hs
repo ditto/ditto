@@ -34,28 +34,28 @@ addDef x a _A = do
 
 ----------------------------------------------------------------------
 
-genMeta :: TCM (Exp, Exp)
-genMeta = do
+genMeta :: MKind -> TCM (Exp, Exp)
+genMeta m = do
   _As <- toTel <$> getCtx
-  _X <- addMeta _As Type
+  _X <- addMeta MInfer _As Type
   let _B = Meta _X (varArgs _As)
-  x <- addMeta _As _B
+  x <- addMeta m _As _B
   let b = Meta x (varArgs _As)
   return (b, _B)
 
-addMeta :: Tel -> Exp -> TCM MName
-addMeta _As _B = do
+addMeta :: MKind -> Tel -> Exp -> TCM MName
+addMeta m _As _B = do
   x <- gensymMeta
-  addSig (DMeta x Nothing _As _B)
+  addSig (DMeta x m Nothing _As _B)
   return x
 
 solveMeta :: MName -> Exp -> TCM ()
 solveMeta x a = do
   env <- getEnv
   case find (isMNamed x) env of
-    Just s@(DMeta _ Nothing _As _B) -> do
-      updateSig s (DMeta x (Just a) _As _B)
-    Just s@(DMeta _ _ _ _) -> throwError $
+    Just s@(DMeta _ m Nothing _As _B) -> do
+      updateSig s (DMeta x m (Just a) _As _B)
+    Just s@(DMeta _ _ _ _ _) -> throwError $
       "Metavariable is already defined: " ++ show x
     _ -> throwError $
       "Metavariable does not exist in the environment: " ++ show x

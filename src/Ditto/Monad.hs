@@ -79,7 +79,7 @@ isPNamed x (DRed y _ _ _) = x == y
 isPNamed x _ = False
 
 isMNamed :: MName -> Sigma -> Bool
-isMNamed x (DMeta y _ _ _) = x == y
+isMNamed x (DMeta y _ _ _ _) = x == y
 isMNamed x _ = False
 
 isConOf :: PName -> Sigma -> Bool
@@ -91,7 +91,7 @@ isDef (Def _ _ _) = True
 isDef _ = False
 
 isMeta :: Sigma -> Bool
-isMeta (DMeta _ _ _ _) = True
+isMeta (DMeta _ _ _ _ _) = True
 isMeta _ = False
 
 envDef :: Sigma -> Maybe (Name, Exp, Exp)
@@ -103,15 +103,19 @@ envDefBody (Def _ a _) = Just a
 envDefBody _ = Nothing
 
 envUndefMeta :: Sigma -> Maybe (MName, Tel, Exp)
-envUndefMeta (DMeta x Nothing _As _B) = Just (x, _As, _B)
+envUndefMeta (DMeta x MInfer Nothing _As _B) = Just (x, _As, _B)
 envUndefMeta _ = Nothing
 
+envHole :: Sigma -> Maybe Hole
+envHole (DMeta x MHole a _As _B) = Just (x, a, _As, _B)
+envHole _ = Nothing
+
 envMetaBody :: Sigma -> Maybe Exp
-envMetaBody (DMeta x (Just a) _ _) = Just a
+envMetaBody (DMeta x _ (Just a) _ _) = Just a
 envMetaBody _ = Nothing
 
 envMetaType :: Sigma -> Maybe (Tel, Exp)
-envMetaType (DMeta x _ _As _B) = Just (_As, _B)
+envMetaType (DMeta x _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
 conSig :: Sigma -> Maybe (PName, Tel, Args)
@@ -127,7 +131,7 @@ envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
 envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
-envType (DMeta _ _ _As _B) = metaType _As _B
+envType (DMeta _ _ _ _As _B) = metaType _As _B
 
 ----------------------------------------------------------------------
 
@@ -176,6 +180,11 @@ lookupUndefMetas :: TCM [(MName, Tel, Exp)]
 lookupUndefMetas = do
   env <- getEnv
   return . catMaybes . map envUndefMeta . filter isMeta $ env
+
+lookupHoles :: TCM Holes
+lookupHoles = do
+  env <- getEnv
+  return . catMaybes . map envHole . filter isMeta $ env
 
 ----------------------------------------------------------------------
 

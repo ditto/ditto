@@ -2,7 +2,9 @@ module Ditto.Cli where
 import Ditto.Syntax
 import Ditto.Parse
 import Ditto.Check
+import Ditto.Pretty
 import Options.Applicative
+import Control.Monad
 
 ----------------------------------------------------------------------
 
@@ -41,7 +43,7 @@ runCli = do
     Left e -> putStrLn (show e)
     Right ds -> case runCheckProg (optVerbosity opts) ds of
       Left e -> putStrLn e
-      Right () -> return ()
+      Right xs -> unless (null xs) (putStrLn (renderHoles xs))
 
 ----------------------------------------------------------------------
 

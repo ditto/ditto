@@ -10,7 +10,7 @@ import Control.Monad
 fv :: Exp -> [Name]
 fv (Var x) = [x]
 fv Type = []
-fv Infer = []
+fv (Infer _) = []
 fv (Form _ is) = fvs is
 fv (Con _ as) = fvs as
 fv (Red _ as) = fvs as
@@ -60,7 +60,7 @@ sub1 xa (Meta y as) = Meta y <$> subs1 xa as
 sub1 (x, a) (Var y) | x == y = return a
 sub1 xa (Var y) = return $ Var y
 sub1 xa Type = return Type
-sub1 xa Infer = return Infer
+sub1 xa (Infer m) = return $ Infer m
 sub1 xa (Lam i _A b) = Lam i <$> sub1 xa _A <*> sub1Bind xa b
 sub1 xa (Pi i _A _B) = Pi i <$> sub1 xa _A <*> sub1Bind xa _B
 sub1 xa (App i f b) = App i <$> sub1 xa f <*> sub1 xa b
