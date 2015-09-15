@@ -52,8 +52,11 @@ renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
 
 renderHoles :: Holes -> String
 renderHoles [] = ""
-renderHoles xs = render $ text "Holes:" //
-  vcatmap (\(x, a, _As, _B) -> ppDMeta x a _As _B) xs
+renderHoles xs = render $ text "Holes:" // vcatmap ppHole xs
+
+ppHole :: Hole -> Box
+ppHole (x, a, (fromTel -> _As), _B) = (ppMName x <+> oft <+> ppExp _B)
+  // line // vcatmap0 ppCtxBind _As
 
 ----------------------------------------------------------------------
 
@@ -227,8 +230,14 @@ forced = char '*'
 hole :: Box
 hole = char '?'
 
+line :: Box
+line = text (take 30 (repeat '-'))
+
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)
+
+vcatmap0 :: (a -> Box) -> [a] -> Box
+vcatmap0 f xs = vsep 0 left (map f xs)
 
 hcatmap :: (a -> Box) -> [a] -> Box
 hcatmap f xs = hsep 1 top (map f xs)
