@@ -17,6 +17,7 @@ data DittoS = DittoS
 
 data DittoR = DittoR
   { ctx :: Ctx
+  , acts :: Acts
   }
 
 type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
@@ -40,6 +41,7 @@ initialS = DittoS
 initialR :: DittoR
 initialR = DittoR
   { ctx = []
+  , acts = []
   }
 
 extCtx :: Name -> Exp -> TCM a -> TCM a
@@ -50,6 +52,9 @@ extCtxs _As = local (\ r -> r { ctx = _As ++ ctx r })
 
 extCtxsTel :: Tel -> TCM a -> TCM a
 extCtxsTel _As = extCtxs (fromTel _As)
+
+during :: Act -> TCM a -> TCM a
+during x = local (\ r -> r { acts = x:acts r })
 
 ----------------------------------------------------------------------
 
@@ -223,6 +228,11 @@ getEnv :: TCM Env
 getEnv = do
   DittoS {env = env} <- get
   return env
+
+getActs :: TCM Acts
+getActs = do
+  DittoR {acts = acts} <- ask
+  return acts
 
 getVerbosity :: TCM Verbosity
 getVerbosity = do

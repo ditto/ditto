@@ -19,7 +19,8 @@ throwNotInScope x = do
 throwNotConv :: Exp -> Exp -> TCM a
 throwNotConv a b = do
   ctx <- renderCtxEnv
-  throwError $ renderNotConv a b ++ ctx
+  acts <- getActs
+  throwError $ renderNotConv a b ctx acts
 
 throwUnsolvedMetas :: [(MName, Tel, Exp)] -> TCM a
 throwUnsolvedMetas = throwError . renderUnsolvedMetas
@@ -43,12 +44,29 @@ renderEnv env = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse e
 renderNotInScope :: Name -> String
 renderNotInScope x = render $ text "Variable not in scope:" <+> ppName x
 
-renderNotConv :: Exp -> Exp -> String
-renderNotConv x y = render $ text "Terms not convertible:" <+> ppExp x <+> text "!=" <+> ppExp y
+renderNotConv :: Exp -> Exp -> String -> Acts -> String
+renderNotConv x y ctx acts = render $
+  text "Terms not convertible" <+> brackets (ppExp x <+> text "!=" <+> ppExp y)
+  // ppActs acts
+  // text ctx
 
 renderUnsolvedMetas :: [(MName, Tel, Exp)] -> String
 renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
+
+----------------------------------------------------------------------
+
+ppActs :: Acts -> Box
+ppActs xs = vcatmap0 ppAct xs
+
+ppAct :: Act -> Box
+ppAct (ACheck a _A) = while "checking" (ppExp a <+> oft <+> ppExp _A)
+ppAct (AConv x y) = while "unifying" (ppExp x <+> eqs <+> ppExp y)
+
+while :: String -> Box -> Box
+while str x = text "...while" <+> text str <+> brackets x
+
+----------------------------------------------------------------------
 
 renderHoles :: Holes -> String
 renderHoles [] = ""
@@ -220,6 +238,9 @@ arr = text "->"
 
 def :: Box
 def = char '='
+
+eqs :: Box
+eqs = text "=="
 
 ndef :: Box
 ndef = text "!="

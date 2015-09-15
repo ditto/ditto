@@ -50,7 +50,7 @@ alphas' dict as1 as2 = all
 ----------------------------------------------------------------------
 
 conv :: Exp -> Exp -> TCM Exp
-conv a b =
+conv a b = during (AConv a b) $
   if alpha a b
   then return a
   else do

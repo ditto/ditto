@@ -84,6 +84,7 @@ type CheckedClause = (Ctx, Pats, RHS)
 type Pats = [(Icit, Pat)]
 type Hole = (MName, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
+type Acts = [Act]
 
 data RHS = Prog Exp | Caseless Name
   deriving (Show, Read, Eq)
@@ -97,6 +98,9 @@ data Sigma =
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName Pats
+  deriving (Show, Read, Eq)
+
+data Act = ACheck Exp Exp | AConv Exp Exp
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------
