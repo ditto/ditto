@@ -40,14 +40,14 @@ findSplit _As x = (_As1, _A, tail _As2) where
 
 ----------------------------------------------------------------------
 
-cover :: [Clause] -> Tel -> TCM [CheckedClause]
-cover cs _As = do
+cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
+cover nm cs _As = do
   (_As', _) <- freshTel _As
-  cover' cs _As' (pvarPats _As')
+  cover' nm cs _As' (pvarPats _As')
 
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
-cover' :: [Clause] -> Tel -> Pats -> TCM [CheckedClause]
-cover' cs _As qs = case matchClauses cs qs of
+cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
+cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
     Var x' -> return [(fromTel _As, qs, Caseless x')]
     otherwise -> throwGenErr "Non-renaming in caseless clause"
@@ -56,7 +56,7 @@ cover' cs _As qs = case matchClauses cs qs of
     return [(fromTel _As, qs, Prog a')]
   CSplit x -> do
     qss <- split _As x
-    concat <$> mapM (\(_As' , qs') -> cover' cs _As' =<< psubPats qs qs') qss
+    concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
   CMiss -> throwGenErr "Coverage error"
 
 ----------------------------------------------------------------------

@@ -45,7 +45,7 @@ checkStmt (SDefn x _A cs) = do
   _A <- checkSolved _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
-  cs' <- cover cs _As
+  cs' <- cover x cs _As
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $ throwGenErr
       $ "Unreachable user clauses:\n"

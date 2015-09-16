@@ -1,5 +1,4 @@
 module Ditto.Pretty where
-
 import Ditto.Syntax
 import Control.Monad.State
 import Control.Monad.Reader
@@ -12,13 +11,13 @@ import Text.PrettyPrint.Boxes
 
 ppErr :: Err -> Box
 ppErr (EGen err) = text err
-ppErr (EConv a b) = textc "Terms not convertible"
-  <+> brackets (ppExp a <+> neq <+> ppExp b)
-ppErr (EScope x) = textc "Variable not in scope"
-  <+> brackets (ppName x)
-ppErr (ECaseless x) = textc "Variable is not caseless"
-  <+> brackets (ppName x)
-ppErr (EMetas xs) = textc "Unsolved metavariables" //
+ppErr (EConv a b) = text "Terms not convertible"
+  <+> code (ppExp a <+> neq <+> ppExp b)
+ppErr (EScope x) = text "Variable not in scope"
+  <+> code (ppName x)
+ppErr (ECaseless x) = text "Variable is not caseless"
+  <+> code (ppName x)
+ppErr (EMetas xs) = text "Unsolved metavariables" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
 
 withCtx :: Acts -> Ctx -> Maybe Env -> Box -> Box
@@ -55,9 +54,10 @@ ppAct :: Act -> Box
 ppAct (ACheck a _A) = while "checking" $ ppExp a <+> oft <+> ppExp _A
 ppAct (AInfer a) = while "inferring" $ ppExp a
 ppAct (AConv x y) = while "equating" $ ppExp x <+> eq <+> ppExp y
+ppAct (ACover x qs) = while "covering" $ ppPName x <+> ppPats qs
 
 while :: String -> Box -> Box
-while str x = text "...while" <+> textc str <+> brackets x
+while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
@@ -130,8 +130,8 @@ ppCtxBind (x, _A) = ppName x <+> oft <+> ppExp _A
 ----------------------------------------------------------------------
 
 ppPat :: (Icit, Pat) -> Box
-ppPat (Expl, p) = braces (ppPat' p)
-ppPat (Impl, p) = ppPat' p
+ppPat (Expl, p) = ppPat' p
+ppPat (Impl, p) = braces (ppPat' p)
 
 ppPat' :: Pat -> Box
 ppPat' (PVar x) = ppName x
@@ -219,6 +219,9 @@ parens d = char '(' <> d <> char ')'
 
 braces :: Box -> Box
 braces d = char '{' <> d <> char '}'
+
+code :: Box -> Box
+code d = char '`' <> d <> char '\''
 
 brackets :: Box -> Box
 brackets d = char '[' <> d <> char ']'
