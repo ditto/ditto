@@ -63,11 +63,11 @@ while str x = text "...while" <+> textc str <+> brackets x
 
 renderHoles :: Holes -> String
 renderHoles [] = ""
-renderHoles xs = render $ vcatmap ppHole (reverse xs)
+renderHoles xs = render $ vcatmap ppHole xs
 
 ppHole :: Hole -> Box
 ppHole (x, a, (fromTel -> _As), _B) = (text "Hole" <+> ppMName x <+> oft <+> ppExp _B)
-  // line // vcatmap0 ppCtxBind _As
+  // line // vcatmap0 ppCtxBind (reverse _As)
 
 ----------------------------------------------------------------------
 
