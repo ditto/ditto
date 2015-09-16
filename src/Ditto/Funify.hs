@@ -22,7 +22,7 @@ funifies xs (a1:as1) (a2:as2) = funify xs a1 a2 >>= \case
       Nothing -> return Nothing
       -- TODO this may need to be substitution composition
       Just s' -> return . Just $ s ++ s'
-funifies _ _ _ = throwError "Unifiying equations of differing lengths"
+funifies _ _ _ = throwGenErr "Unifiying equations of differing lengths"
 
 funify :: [Name] -> Arg -> Arg -> TCM (Maybe Sub)
 funify xs (i1, a1) (i2, a2) | i1 == i2 = do

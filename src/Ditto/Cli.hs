@@ -42,7 +42,7 @@ runCli = do
   case parseP code of
     Left e -> putStrLn (show e)
     Right ds -> case runCheckProg (optVerbosity opts) ds of
-      Left e -> putStrLn e
+      Left e -> putStr e
       Right xs -> putStr (renderHoles xs)
 
 ----------------------------------------------------------------------

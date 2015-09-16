@@ -2,6 +2,7 @@ module Ditto.Env where
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
+import Ditto.Pretty
 import Data.List
 import Control.Monad.State
 import Control.Monad.Reader
@@ -13,7 +14,7 @@ import Control.Monad.Except
 addSig :: Sigma -> TCM ()
 addSig s = do
   state@DittoS {env = env} <- get
-  when (s `elem` env) $ throwError $
+  when (s `elem` env) $ throwGenErr $
     "Element being added already exists in the environment: " ++ show s
   put state { env = s : env }
 
@@ -22,13 +23,13 @@ updateSig s s' = do
   state@DittoS {env = env} <- get
   case break (== s) env of
     (env1, _:env2) -> put state { env = env1 ++ s':env2 }
-    (env1, []) -> throwError $
+    (env1, []) -> throwGenErr $
       "Element being updated does not exist in the environment: " ++ show s
 
 addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = do
   env <- getEnv
-  when (any (isNamed x) env) $ throwError
+  when (any (isNamed x) env) $ throwGenErr
     $ "Definition name already exists in the environment: " ++ show x
   addSig (Def x a _A)
 
@@ -55,9 +56,9 @@ solveMeta x a = do
   case find (isMNamed x) env of
     Just s@(DMeta _ m Nothing _As _B) -> do
       updateSig s (DMeta x m (Just a) _As _B)
-    Just s@(DMeta _ _ _ _ _) -> throwError $
+    Just s@(DMeta _ _ _ _ _) -> throwGenErr $
       "Metavariable is already defined: " ++ show x
-    _ -> throwError $
+    _ -> throwGenErr $
       "Metavariable does not exist in the environment: " ++ show x
 
 ----------------------------------------------------------------------
@@ -65,7 +66,7 @@ solveMeta x a = do
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
   env <- getEnv
-  when (any (isPNamed x) env) $ throwError
+  when (any (isPNamed x) env) $ throwGenErr
     $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x _Is)
   addDef (pname2name x) (lams _Is (Form x (varArgs _Is))) (formType _Is)
@@ -73,7 +74,7 @@ addForm x _Is = do
 addCon :: (PName, Tel, PName, Args) -> TCM ()
 addCon (x, _As, _X, _Is) = do
   env <- getEnv
-  when (any (isPNamed x) env) $ throwError
+  when (any (isPNamed x) env) $ throwGenErr
     $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
   addDef (pname2name x) (lams _As (Con x (varArgs _As))) (pis _As $ Form _X _Is)
@@ -81,7 +82,7 @@ addCon (x, _As, _X, _Is) = do
 addRedType :: PName -> Tel -> Exp -> TCM ()
 addRedType x _As _B = do
   env <- getEnv
-  when (any (isPNamed x) env) $ throwError
+  when (any (isPNamed x) env) $ throwGenErr
     $ "Reduction name already exists in the environment: " ++ show x
   addSig (DRed x [] _As _B)
   addDef (pname2name x) (lams _As (Red x (varArgs _As))) (pis _As _B)
@@ -92,9 +93,9 @@ addRedClauses x cs = do
   case find (isPNamed x) env of
     Just s@(DRed _ [] _As _B) -> do
       updateSig s (DRed x cs _As _B)
-    Just s@(DRed _ _ _As _B) -> throwError $
+    Just s@(DRed _ _ _As _B) -> throwGenErr $
       "Reduction already contains clauses: " ++ show x
-    _ -> throwError $
+    _ -> throwGenErr $
       "Reduction does not exist in the environment: " ++ show x
 
 ----------------------------------------------------------------------

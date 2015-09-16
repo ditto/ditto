@@ -46,9 +46,9 @@ recheck a _A = do
 reinfer :: Exp -> TCM Exp
 reinfer (Var x) = lookupType x >>= \case
     Just _A -> return _A
-    Nothing -> throwNotInScope x
+    Nothing -> throwErr (EScope x)
 reinfer Type = return Type
-reinfer (Infer _) = throwError "Core language does not reinfer expressions"
+reinfer (Infer _) = throwGenErr "Core language does not reinfer expressions"
 reinfer (Pi _ _A bnd_B) = do
   recheck _A Type
   (x, _B) <- unbind bnd_B
@@ -61,30 +61,30 @@ reinfer (Form x is) = lookupPSigma x >>= \case
   Just (DForm _X _Is) -> do
     foldM_ recheckAndAdd [] (zip is _Is)
     return Type
-  otherwise -> throwError $ "Not a type former name: " ++ show x
+  otherwise -> throwGenErr $ "Not a type former name: " ++ show x
 reinfer (Con x as) = lookupPSigma x >>= \case
   Just (DCon x _As _X _Is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as
     _Is' <- subs _Is s
     return $ Form _X _Is'
-  otherwise -> throwError $ "Not a constructor name: " ++ show x
+  otherwise -> throwGenErr $ "Not a constructor name: " ++ show x
 reinfer (Red x as) = lookupPSigma x >>= \case
   Just (DRed y cs _As _B) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     sub _B (mkSub _As as)
-  otherwise -> throwError $ "Not a reduction name: " ++ show x
+  otherwise -> throwGenErr $ "Not a reduction name: " ++ show x
 reinfer (Meta x as) = lookupMetaType x >>= \case
   Just (_As, _B) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     sub _B (mkSub _As as)
-  Nothing -> throwError $ "Not a metavariable name: " ++ show x
+  Nothing -> throwGenErr $ "Not a metavariable name: " ++ show x
 reinfer (App i1 f a) = reinfer f >>= whnf >>= \case
   Pi i2 _A bnd_B | i1 == i2 -> do
     recheck a _A
     (x, _B) <- unbind bnd_B
     sub1 (x, a) _B
-  otherwise -> throwError "Function does not have Pi type"
+  otherwise -> throwGenErr "Function does not have Pi type"
 
 recheckAndAdd :: Sub -> ((Icit, Exp), (Icit, Name, Exp)) -> TCM Sub
 recheckAndAdd s ((i1, a) , (i2, x, _A)) | i1 == i2 = do
@@ -93,6 +93,6 @@ recheckAndAdd s ((i1, a) , (i2, x, _A)) | i1 == i2 = do
   recheck a' _A'
   return $ (x, a'):s
 recheckAndAdd s ((i1, a) , (i2, x, _A)) = do
-  throwError "Implicit and explicit application mismatch"
+  throwGenErr "Implicit and explicit application mismatch"
 
 ----------------------------------------------------------------------

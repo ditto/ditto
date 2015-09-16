@@ -35,7 +35,7 @@ betaRed x [] as = return $ Red x as
 betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
   Just xs -> case rhs of
     Prog a -> whnf =<< sub a xs
-    Caseless y -> throwError "Reducing a caseless RHS"
+    Caseless y -> throwGenErr "Reducing a caseless RHS"
   Nothing -> betaRed x cs as
 
 matchExps :: Pats -> Args -> TCM (Maybe Sub)
@@ -68,9 +68,9 @@ buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
   extCtxsTel tel (whnf end) >>= \case
     Form _Y _Is | _X == _Y -> return (x , tel, _Y, _Is)
-    Form _Y _Is -> throwError $ "Constructor type does not match datatype\n"
+    Form _Y _Is -> throwGenErr $ "Constructor type does not match datatype\n"
       ++ show _X ++ " != " ++ show _Y
-    otherwise -> throwError "Constructor return type is not a type former"
+    otherwise -> throwGenErr "Constructor return type is not a type former"
 
 whnfHole :: Hole -> TCM Hole
 whnfHole (x, a, _As, _B) = do

@@ -1,11 +1,13 @@
 module Ditto.Monad where
 import Ditto.Syntax
+import Ditto.Pretty
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
 import Data.Maybe
+import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
@@ -229,6 +231,11 @@ getEnv = do
   DittoS {env = env} <- get
   return env
 
+getEnvVerb :: TCM (Maybe Env)
+getEnvVerb = getVerbosity >>= \case
+  Normal -> return Nothing
+  Verbose -> Just <$> getEnv
+
 getActs :: TCM Acts
 getActs = do
   DittoR {acts = acts} <- ask
@@ -243,5 +250,17 @@ setVerbosity :: Verbosity -> TCM ()
 setVerbosity v = do
   state@DittoS{} <- get
   put state { verbosity = v }
+
+----------------------------------------------------------------------
+
+throwGenErr :: String -> TCM a
+throwGenErr = throwErr . EGen
+
+throwErr :: Err -> TCM a
+throwErr err = do
+  acts <- getActs
+  ctx <- getCtx
+  env <- getEnvVerb
+  throwError . render . withCtx acts ctx env $ ppErr err
 
 ----------------------------------------------------------------------

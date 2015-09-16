@@ -1,79 +1,72 @@
 module Ditto.Pretty where
 
 import Ditto.Syntax
-import Ditto.Monad
-import Ditto.Env
 import Control.Monad.State
 import Control.Monad.Reader
 import Control.Monad.Except
 import Control.Applicative
+import Data.Maybe
 import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
-throwNotInScope :: Name -> TCM a
-throwNotInScope x = do
-  ctx <- renderCtxEnv
-  throwError $ renderNotInScope x ++ ctx
-
-throwNotConv :: Exp -> Exp -> TCM a
-throwNotConv a b = do
-  ctx <- renderCtxEnv
-  acts <- getActs
-  throwError $ renderNotConv a b ctx acts
-
-throwUnsolvedMetas :: [(MName, Tel, Exp)] -> TCM a
-throwUnsolvedMetas = throwError . renderUnsolvedMetas
-
-renderCtxEnv :: TCM String
-renderCtxEnv = do
-  ctx <- getCtx
-  env <- getEnv
-  getVerbosity >>= \case
-    Normal -> return $ renderCtx ctx
-    Verbose -> return $ renderCtx ctx ++ renderEnv env
-
-----------------------------------------------------------------------
-
-renderCtx :: Ctx -> String
-renderCtx ctx = "\nContext:\n\n" ++ concat (map (render . ppCtxBind) (reverse ctx))
-
-renderEnv :: Env -> String
-renderEnv env = "\nEnvironment:\n\n" ++ unlines (map (render . ppSig) (reverse env))
-
-renderNotInScope :: Name -> String
-renderNotInScope x = render $ text "Variable not in scope:" <+> ppName x
-
-renderNotConv :: Exp -> Exp -> String -> Acts -> String
-renderNotConv x y ctx acts = render $
-  text "Terms not convertible" <+> brackets (ppExp x <+> text "!=" <+> ppExp y)
-  // ppActs acts
-  // text ctx
-
-renderUnsolvedMetas :: [(MName, Tel, Exp)] -> String
-renderUnsolvedMetas xs = render $ text "Unsolved metavariables:" //
+ppErr :: Err -> Box
+ppErr (EGen err) = text err
+ppErr (EConv a b) = textc "Terms not convertible"
+  <+> brackets (ppExp a <+> neq <+> ppExp b)
+ppErr (EScope x) = textc "Variable not in scope"
+  <+> brackets (ppName x)
+ppErr (ECaseless x) = textc "Variable is not caseless"
+  <+> brackets (ppName x)
+ppErr (EMetas xs) = textc "Unsolved metavariables" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
 
+withCtx :: Acts -> Ctx -> Maybe Env -> Box -> Box
+withCtx acts ctx menv x = vcatmaybes
+  [ Just x
+  , ppActs acts
+  , ppCtx ctx
+  , ppEnvVerb menv
+  ]
+
 ----------------------------------------------------------------------
 
-ppActs :: Acts -> Box
-ppActs xs = vcatmap0 ppAct xs
+ppCtx :: Ctx -> Maybe Box
+ppCtx [] = Nothing
+ppCtx xs = Just $ sec "Context" // vcatmap0 ppCtxBind (reverse xs)
+
+ppEnvVerb :: Maybe Env -> Maybe Box
+ppEnvVerb = (>>= ppEnv)
+
+ppEnv :: Env -> Maybe Box
+ppEnv [] = Nothing
+ppEnv xs = Just $ sec "Environment" // vcatmap0 ppSig (reverse xs)
+
+sec :: String -> Box
+sec str = textc str // line
+
+----------------------------------------------------------------------
+
+ppActs :: Acts -> Maybe Box
+ppActs [] = Nothing
+ppActs xs = Just $ vcatmap0 ppAct xs
 
 ppAct :: Act -> Box
-ppAct (ACheck a _A) = while "checking" (ppExp a <+> oft <+> ppExp _A)
-ppAct (AConv x y) = while "unifying" (ppExp x <+> eqs <+> ppExp y)
+ppAct (ACheck a _A) = while "checking" $ ppExp a <+> oft <+> ppExp _A
+ppAct (AInfer a) = while "inferring" $ ppExp a
+ppAct (AConv x y) = while "equating" $ ppExp x <+> eq <+> ppExp y
 
 while :: String -> Box -> Box
-while str x = text "...while" <+> text str <+> brackets x
+while str x = text "...while" <+> textc str <+> brackets x
 
 ----------------------------------------------------------------------
 
 renderHoles :: Holes -> String
 renderHoles [] = ""
-renderHoles xs = render $ text "Holes:" // vcatmap ppHole xs
+renderHoles xs = render $ vcatmap ppHole (reverse xs)
 
 ppHole :: Hole -> Box
-ppHole (x, a, (fromTel -> _As), _B) = (ppMName x <+> oft <+> ppExp _B)
+ppHole (x, a, (fromTel -> _As), _B) = (text "Hole" <+> ppMName x <+> oft <+> ppExp _B)
   // line // vcatmap0 ppCtxBind _As
 
 ----------------------------------------------------------------------
@@ -230,17 +223,23 @@ braces d = char '{' <> d <> char '}'
 brackets :: Box -> Box
 brackets d = char '[' <> d <> char ']'
 
+textc :: String -> Box
+textc x = text x <> char ':'
+
 oft :: Box
 oft = char ':'
 
 arr :: Box
 arr = text "->"
 
+eq :: Box
+eq = text "=="
+
+neq :: Box
+neq = text "!="
+
 def :: Box
 def = char '='
-
-eqs :: Box
-eqs = text "=="
 
 ndef :: Box
 ndef = text "!="
@@ -253,6 +252,12 @@ hole = char '?'
 
 line :: Box
 line = text (take 30 (repeat '-'))
+
+newline :: Box
+newline = char '\n'
+
+vcatmaybes :: [Maybe Box] -> Box
+vcatmaybes = vsep 1 left . catMaybes
 
 vcatmap :: (a -> Box) -> [a] -> Box
 vcatmap f xs = vsep 1 left (map f xs)

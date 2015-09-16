@@ -62,11 +62,9 @@ conv' :: Exp -> Exp -> TCM Exp
 conv' (Var x) (Var y) =
   if x == y
   then return (Var x)
-  else throwError $
-    "Variables not convertible\n"
-    ++ show x ++ " != " ++ show y
+  else throwErr (EConv (Var x) (Var y))
 conv' Type Type = return Type
-conv' (Infer _) (Infer _) = throwError "Unelaborated metavariables are unique"
+conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
 conv' (App i1 f1 a1) (App i2 f2 a2) | i1 == i2 =
   App i1 <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam i1 _A1 bnd_b1) (Lam i2 _A2 bnd_b2) | i1 == i2 = do
@@ -82,16 +80,16 @@ conv' (Pi i1 _A1 bnd_B1) (Pi i2 _A2 bnd_B2) | i1 == i2 = do
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> convArgs _Is1 _Is2
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =
-  throwError $ "Type former names not equal"
+  throwGenErr $ "Type former names not equal"
    ++ show x1 ++ " != "  ++ show x2
 conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> convArgs as1 as2
 conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
-  throwError "Constructor names not equal"
+  throwGenErr "Constructor names not equal"
 conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> convArgs as1 as2
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
-  throwError "Reduction names not equal"
+  throwGenErr "Reduction names not equal"
 conv' a1@(Meta x1 as1) a2 = millerPattern as1 >>= \case
   Just _As -> do
     solveMeta x1 (lams _As a2)
@@ -100,14 +98,14 @@ conv' a1@(Meta x1 as1) a2 = millerPattern as1 >>= \case
     Meta x2 as2 | x1 == x2 ->
       Meta x1 <$> convArgs as1 as2
     Meta x2 as2 | x1 /= x2 ->
-      throwError "Metavariable names not equal"
-    otherwise -> throwNotConv a1 a2
+      throwGenErr "Metavariable names not equal"
+    otherwise -> throwErr (EConv a1 a2)
 conv' a1 a2@(Meta _ _) = conv' a2 a1
-conv' a b = throwNotConv a b
+conv' a b = throwErr (EConv a b)
 
 convArg :: (Icit, Exp) -> (Icit, Exp) -> TCM (Icit, Exp)
 convArg (i1, a1) (i2, a2) | i1 == i2 = (i1,) <$> conv a1 a2
-convArg (i1, a1) (i2, a2) = throwError "One argument is explicit and the other is implicit"
+convArg (i1, a1) (i2, a2) = throwGenErr "One argument is explicit and the other is implicit"
 
 convArgs :: Args -> Args -> TCM Args
 convArgs as1 as2 = mapM (uncurry convArg) (zip as1 as2)

@@ -100,7 +100,15 @@ data Sigma =
 data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName Pats
   deriving (Show, Read, Eq)
 
-data Act = ACheck Exp Exp | AConv Exp Exp
+data Act = AInfer Exp | ACheck Exp Exp | AConv Exp Exp
+  deriving (Show, Read, Eq)
+
+data Err =
+    EGen String
+  | EConv Exp Exp
+  | EScope Name
+  | ECaseless Name
+  | EMetas [(MName, Tel, Exp)]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

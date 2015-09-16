@@ -21,7 +21,7 @@ splitVar _As x _B _Cs = extCtxsTel _As (whnf _B) >>= \case
   Form _X js -> do
     _Bs <- lookupConsFresh _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
-  otherwise -> throwError "Case splitting is only allowed on datatypes"
+  otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
 splitCon :: Tel -> Name -> (PName, Tel, Args) -> Args -> Tel -> TCM (Maybe (Tel, PSub))
 splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>= \case
@@ -50,13 +50,13 @@ cover' :: [Clause] -> Tel -> Pats -> TCM [CheckedClause]
 cover' cs _As qs = case matchClauses cs qs of
   CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
     Var x' -> return [(fromTel _As, qs, Caseless x')]
-    otherwise -> throwError "Non-renaming in caseless clause"
+    otherwise -> throwGenErr "Non-renaming in caseless clause"
   CMatch rs (Prog a) -> do
     a' <- psub a rs
     return [(fromTel _As, qs, Prog a')]
   CSplit x -> do
     qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' cs _As' =<< psubPats qs qs') qss
-  CMiss -> throwError "Coverage error"
+  CMiss -> throwGenErr "Coverage error"
 
 ----------------------------------------------------------------------

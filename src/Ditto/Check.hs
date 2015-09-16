@@ -38,7 +38,7 @@ checkStmt (SData x _A cs) = do
       addForm x tel
       cs <- mapM (\ (x, _A') -> (x,) <$> checkSolved _A' Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
-    otherwise -> throwError "Datatype former does not end in Type"
+    otherwise -> throwGenErr "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
@@ -47,7 +47,7 @@ checkStmt (SDefn x _A cs) = do
   addRedType x _As _B
   cs' <- cover cs _As
   let unreached = unreachableClauses cs cs'
-  unless (null unreached) $ throwError
+  unless (null unreached) $ throwGenErr
       $ "Unreachable user clauses:\n"
       ++ (unlines (map show unreached))
       ++ "\nCovered by:\n"
@@ -61,7 +61,7 @@ checkRHS _Delta lhs (Prog a) _As _B
   = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _As _B = split (toTel _Delta) x >>= \case
     [] -> return (Caseless x)
-    otherwise -> throwError $ "Variable is not caseless: " ++ show x
+    otherwise -> throwGenErr $ "Variable is not caseless: " ++ show x
 
 ----------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ checkLinearClauses x = mapM_ (checkLinearClause x)
 
 checkLinearClause :: PName -> Clause -> TCM ()
 checkLinearClause x (ps, rhs) =
-  unless (null xs) $ throwError $ unlines
+  unless (null xs) $ throwGenErr $ unlines
     ["Nonlinear occurrence of variables in patterns."
     , "Variables: " ++ show xs
     , "Function: " ++ show x
@@ -124,7 +124,7 @@ checkExtsSolved _As b _B = do
 checkMetas :: TCM ()
 checkMetas = do
   xs <- lookupUndefMetas
-  unless (null xs) (throwUnsolvedMetas xs)
+  unless (null xs) (throwErr (EMetas xs))
 
 ----------------------------------------------------------------------
 
@@ -149,7 +149,7 @@ check a _A = during (ACheck a _A) $ do
   return a
 
 infer :: Exp -> TCM (Exp, Exp)
-infer (viewSpine -> (f, as)) = do
+infer b@(viewSpine -> (f, as)) = during (AInfer b) $ do
   (f, _AB) <- inferAtom f
   (as, _B) <- checkArgs as =<< whnf _AB
   return (apps f as, _B)
@@ -165,13 +165,13 @@ checkArgs ((i1, a):as) (Pi i2 _A bnd_B) | i1 == i2 = do
   (as, _B) <- checkArgs as =<< whnf =<< sub1 (x, a) _B
   return ((i1, a):as, _B)
 checkArgs ((i1, a):as) _B =
-  throwError "Function does not have correct Pi type"
+  throwGenErr "Function does not have correct Pi type"
 checkArgs [] _B = return ([], _B)
 
 inferAtom :: Exp -> TCM (Exp, Exp)
 inferAtom (Var x) = lookupType x >>= \case
   Just _A -> return (Var x, _A)
-  Nothing -> throwNotInScope x
+  Nothing -> throwErr (EScope x)
 inferAtom Type = return (Type, Type)
 inferAtom (Infer m) = genMeta m
 inferAtom (Pi i _A bnd_B) = do
@@ -183,6 +183,6 @@ inferAtom (Lam i _A b) = do
   _A <- check _A Type
   (b , _B) <- inferExtBind _A b
   return (Lam i _A b, Pi i _A _B)
-inferAtom _ = throwError "Inferring a non-atomic term language"
+inferAtom _ = throwGenErr "Inferring a non-atomic term language"
 
 ----------------------------------------------------------------------
