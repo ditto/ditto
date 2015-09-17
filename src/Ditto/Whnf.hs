@@ -11,12 +11,11 @@ import Control.Monad.Except
 
 whnf :: Exp -> TCM Exp
 whnf (App i1 f a) = do
-  a' <- whnf a
   whnf f >>= \case
     Lam i2 _A xb | i1 == i2 -> do
       (x, b) <- unbind xb
-      whnf =<< sub1 (x , a') b
-    f' -> return $ App i1 f' a'
+      whnf =<< sub1 (x , a) b
+    _ -> return $ App i1 f a
 whnf (Red x as) = do
   cs <- fromJust <$> lookupRedClauses x
   betaRed x (map (\(_, ps, rhs) -> (ps, rhs)) cs) as
