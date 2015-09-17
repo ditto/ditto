@@ -57,6 +57,6 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CSplit x -> do
     qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
-  CMiss -> throwGenErr "Coverage error"
+  CMiss -> throwErr (ECover nm qs)
 
 ----------------------------------------------------------------------

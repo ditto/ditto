@@ -105,6 +105,9 @@ data Act =
   | ACheck Exp Exp
   | AConv Exp Exp
   | ACover PName Pats
+  | ADef Name
+  | AData PName
+  | ADefn PName
   deriving (Show, Read, Eq)
 
 data Err =
@@ -113,6 +116,7 @@ data Err =
   | EScope Name
   | ECaseless Name
   | EMetas [(MName, Tel, Exp)]
+  | ECover PName Pats
   | EReach PName [Clause]
   deriving (Show, Read, Eq)
 

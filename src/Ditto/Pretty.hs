@@ -19,6 +19,8 @@ ppErr (ECaseless x) = text "Variable is not caseless"
   <+> code (ppName x)
 ppErr (EMetas xs) = text "Unsolved metavariables" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
+ppErr (ECover x qs) = text "Uncovered clause"
+  <+> code (ppPName x <+> ppPats qs)
 ppErr (EReach x xs) = text "Unreachable clauses" //
   vcatmap (ppRed' x) xs
 
@@ -53,6 +55,10 @@ ppActs [] = Nothing
 ppActs xs = Just $ vcatmap0 ppAct xs
 
 ppAct :: Act -> Box
+ppAct (ADef x) = while "checking definition" $ ppName x
+ppAct (ADefn x) = while "checking function" $ ppPName x
+ppAct (AData x) = while "checking datatype" $ ppPName x
+
 ppAct (ACheck a _A) = while "checking" $ ppExp a <+> oft <+> ppExp _A
 ppAct (AInfer a) = while "inferring" $ ppExp a
 ppAct (AConv x y) = while "equating" $ ppExp x <+> eq <+> ppExp y
@@ -225,7 +231,7 @@ braces :: Box -> Box
 braces d = char '{' <> d <> char '}'
 
 code :: Box -> Box
-code x = newline <> x
+code d =  char '`' <> d <> char '\''
 
 brackets :: Box -> Box
 brackets d = char '[' <> d <> char ']'

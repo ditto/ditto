@@ -26,11 +26,11 @@ checkProg :: [Stmt] -> TCM ()
 checkProg ds = mapM_ checkStmt ds
 
 checkStmt :: Stmt -> TCM ()
-checkStmt (SDef x a _A) = do
+checkStmt (SDef x a _A) = during (ADef x) $ do
   _A <- checkSolved _A Type
   a  <- checkSolved a _A
   addDef x a _A
-checkStmt (SData x _A cs) = do
+checkStmt (SData x _A cs) = during (AData x) $ do
   _A <- checkSolved _A Type
   (tel, end) <- splitTel _A
   case end of
@@ -39,7 +39,7 @@ checkStmt (SData x _A cs) = do
       cs <- mapM (\ (x, _A') -> (x,) <$> checkSolved _A' Type) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwGenErr "Datatype former does not end in Type"
-checkStmt (SDefn x _A cs) = do
+checkStmt (SDefn x _A cs) = during (ADefn x) $ do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
   _A <- checkSolved _A Type
