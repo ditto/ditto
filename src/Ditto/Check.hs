@@ -36,7 +36,7 @@ checkStmt (SData x _A cs) = during (AData x) $ do
   case end of
     Type -> do
       addForm x tel
-      cs <- mapM (\ (x, _A') -> (x,) <$> checkSolved _A' Type) cs
+      cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' Type)) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwGenErr "Datatype former does not end in Type"
 checkStmt (SDefn x _A cs) = during (ADefn x) $ do

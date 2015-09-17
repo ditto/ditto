@@ -107,6 +107,7 @@ data Act =
   | ACover PName Pats
   | ADef Name
   | AData PName
+  | ACon PName
   | ADefn PName
   deriving (Show, Read, Eq)
 

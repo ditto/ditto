@@ -58,6 +58,7 @@ ppAct :: Act -> Box
 ppAct (ADef x) = while "checking definition" $ ppName x
 ppAct (ADefn x) = while "checking function" $ ppPName x
 ppAct (AData x) = while "checking datatype" $ ppPName x
+ppAct (ACon x) = while "checking constructor" $ ppPName x
 
 ppAct (ACheck a _A) = while "checking" $ ppExp a <+> oft <+> ppExp _A
 ppAct (AInfer a) = while "inferring" $ ppExp a
