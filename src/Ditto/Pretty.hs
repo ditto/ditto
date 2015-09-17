@@ -60,7 +60,7 @@ ppAct (ADefn x) = while "checking function" $ ppPName x
 ppAct (AData x) = while "checking datatype" $ ppPName x
 ppAct (ACon x) = while "checking constructor" $ ppPName x
 
-ppAct (ACheck a _A) = while "checking" $ ppExp a <+> oft <+> ppExp _A
+ppAct (ACheck a _A) = while "checking" $ ppwExp Wrap a <+> oft <+> ppExp _A
 ppAct (AInfer a) = while "inferring" $ ppExp a
 ppAct (AConv x y) = while "equating" $ ppExp x <+> eq <+> ppExp y
 ppAct (ACover x qs) = while "covering" $ ppPName x <+> ppPats qs
