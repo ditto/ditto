@@ -47,11 +47,8 @@ checkStmt (SDefn x _A cs) = do
   addRedType x _As _B
   cs' <- cover x cs _As
   let unreached = unreachableClauses cs cs'
-  unless (null unreached) $ throwGenErr
-      $ "Unreachable user clauses:\n"
-      ++ (unlines (map show unreached))
-      ++ "\nCovered by:\n"
-      ++ (unlines (map show cs'))
+  unless (null unreached) $
+    throwErr (EReach x unreached)
   addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
 
 ----------------------------------------------------------------------

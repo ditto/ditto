@@ -113,6 +113,7 @@ data Err =
   | EScope Name
   | ECaseless Name
   | EMetas [(MName, Tel, Exp)]
+  | EReach PName [Clause]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

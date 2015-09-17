@@ -19,6 +19,8 @@ ppErr (ECaseless x) = text "Variable is not caseless"
   <+> code (ppName x)
 ppErr (EMetas xs) = text "Unsolved metavariables" //
   vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
+ppErr (EReach x xs) = text "Unreachable clauses" //
+  vcatmap (ppRed' x) xs
 
 withCtx :: Acts -> Ctx -> Maybe Env -> Box -> Box
 withCtx acts ctx menv x = vcatmaybes
@@ -168,8 +170,10 @@ ppSig (DMeta x _ b _As _B) = ppDMeta x b _As _B
 ----------------------------------------------------------------------
 
 ppRed :: PName -> CheckedClause -> Box
-ppRed x (_As, ps, rhs) = ppRedCtx x _As //
-  (ppPName x <+> ppPats ps <+> ppRHS rhs)
+ppRed x (_As, ps, rhs) = ppRedCtx x _As // ppRed' x (ps, rhs)
+
+ppRed' :: PName -> Clause -> Box
+ppRed' x (ps, rhs) = ppPName x <+> ppPats ps <+> ppRHS rhs
 
 ppRHS :: RHS -> Box
 ppRHS (Prog a) = def <+> ppExp a
@@ -221,7 +225,7 @@ braces :: Box -> Box
 braces d = char '{' <> d <> char '}'
 
 code :: Box -> Box
-code d = char '`' <> d <> char '\''
+code x = newline <> x
 
 brackets :: Box -> Box
 brackets d = char '[' <> d <> char ']'
