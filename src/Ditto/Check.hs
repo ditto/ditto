@@ -142,7 +142,7 @@ inferExtBind _A bnd_b = do
 check :: Exp -> Exp -> TCM Exp
 check a _A = during (ACheck a _A) $ do
   (a , _A') <- infer a
-  conv _A _A'
+  conv _A' _A
   return a
 
 infer :: Exp -> TCM (Exp, Exp)

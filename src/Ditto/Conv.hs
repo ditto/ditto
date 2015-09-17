@@ -68,10 +68,9 @@ conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
 conv' (App i1 f1 a1) (App i2 f2 a2) | i1 == i2 =
   App i1 <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam i1 _A1 bnd_b1) (Lam i2 _A2 bnd_b2) | i1 == i2 = do
-  _A' <- conv _A1 _A2
   (x, b1, b2) <- unbind2 bnd_b1 bnd_b2
   b' <- extCtx x _A1 (conv b1 b2)
-  return $ Lam i1 _A' (Bind x b')
+  return $ Lam i1 _A1 (Bind x b')
 conv' (Pi i1 _A1 bnd_B1) (Pi i2 _A2 bnd_B2) | i1 == i2 = do
   _A' <- conv _A1 _A2
   (x, _B1, _B2) <- unbind2 bnd_B1 bnd_B2

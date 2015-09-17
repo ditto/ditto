@@ -77,7 +77,7 @@ addCon (x, _As, _X, _Is) = do
   when (any (isPNamed x) env) $ throwGenErr
     $ "Constructor name already exists in the environment: " ++ show x
   addSig (DCon x _As _X _Is)
-  addDef (pname2name x) (lams _As (Con x (varArgs _As))) (pis _As $ Form _X _Is)
+  addDef (pname2name x) (lams _As (Con x (varArgs _As))) (conType _As _X _Is)
 
 addRedType :: PName -> Tel -> Exp -> TCM ()
 addRedType x _As _B = do
