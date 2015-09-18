@@ -41,9 +41,7 @@ findSplit _As x = (_As1, _A, tail _As2) where
 ----------------------------------------------------------------------
 
 cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
-cover nm cs _As = do
-  (_As', _) <- freshTel _As
-  cover' nm cs _As' (pvarPats _As')
+cover nm cs _As = cover' nm cs _As (pvarPats _As)
 
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
