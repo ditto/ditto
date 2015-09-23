@@ -92,11 +92,29 @@ data step {G T : *} (M : tm G T)(N : tm G T) : Type where
 | sapp {G S T : *} {M M' : tm G (arr S T)}{N : *}
        (E : step M M')
          : step (app M N)(app M' N)
-| sbeta {G S T : *} {M : tm (dec G S) T} {N : *}
+| sbeta {G S T : *} (M : tm (dec G S) T) (N : *)
     	: step (app (lam M) N) (apply (scons idSub N) M)
 end
 
-data val (G : ctx) :: (T : tp)(M : tm G T) : Type where
+data val (G : ctx) :: (T : tp) (M : tm G T) : Type where
 | vc : val G i c
 | vlam {S T : *} (M : tm (dec G S) T) : val G (arr S T) (lam M)
+end
+
+data either (A B : Type) :: Type where
+| inl (l : A) : either A B
+| inr (r : B) : either A B
+end
+
+data ex (A : Type) (B : (a : A) : Type) :: Type where
+| pair (a : A) (b : B a) : ex A B
+end
+
+# THIS FUNCTION IS INCOMPLETE! Notice the holes
+def progress {T : *} (M : tm empty T) : either (ex (tm empty T) ((M' : tm empty T) -> (step M M'))) (val empty T M) where
+| c = inr vc
+| (lam M) = inr (vlam M)
+| (v x) != x
+| (app (lam M) N) = inl (pair (apply (scons idSub N) M) ?)
+| (app M N) = ?
 end
