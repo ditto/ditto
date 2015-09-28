@@ -17,8 +17,8 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-runCheckProg :: Verbosity -> [Stmt] -> Either String Holes
-runCheckProg v xs = runTCM v (checkProg xs >> lookupHoles >>= whnfHoles)
+runCheckProg :: Verbosity -> [Stmt] -> Either String String
+runCheckProg v xs = runTCM v (checkProg xs >> lookupHoles >>= whnfHoles >>= renderHoles)
 
 ----------------------------------------------------------------------
 
@@ -53,10 +53,10 @@ checkStmt (SDefn x _A cs) = during (ADefn x) $ do
 
 ----------------------------------------------------------------------
 
-checkRHS :: Ctx -> Pats -> RHS -> Tel -> Exp -> TCM RHS
+checkRHS :: Tel -> Pats -> RHS -> Tel -> Exp -> TCM RHS
 checkRHS _Delta lhs (Prog a) _As _B
   = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
-checkRHS _Delta lhs (Caseless x) _As _B = split (toTel _Delta) x >>= \case
+checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
     [] -> return (Caseless x)
     otherwise -> throwGenErr $ "Variable is not caseless: " ++ show x
 
@@ -112,7 +112,7 @@ checkSolved a _A = do
   checkMetas
   return a
 
-checkExtsSolved :: Ctx -> Exp -> Exp -> TCM Exp
+checkExtsSolved :: Tel -> Exp -> Exp -> TCM Exp
 checkExtsSolved _As b _B = do
   b <- checkExts _As b _B
   checkMetas
@@ -125,16 +125,16 @@ checkMetas = do
 
 ----------------------------------------------------------------------
 
-checkExt :: Name -> Exp -> Exp -> Exp -> TCM Exp
-checkExt x _A = checkExts [(x, _A)]
+checkExt :: Icit -> Name -> Exp -> Exp -> Exp -> TCM Exp
+checkExt i x _A = checkExts [(i, x, _A)]
 
-checkExts :: Ctx -> Exp -> Exp -> TCM Exp
+checkExts :: Tel -> Exp -> Exp -> TCM Exp
 checkExts _As b _B = extCtxs _As (check b _B)
 
-inferExtBind :: Exp -> Bind -> TCM (Bind, Bind)
-inferExtBind _A bnd_b = do
+inferExtBind :: Icit -> Exp -> Bind -> TCM (Bind, Bind)
+inferExtBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
-  (b, _B) <- extCtx x _A (infer b)
+  (b, _B) <- extCtx i x _A (infer b)
   return (Bind x b, Bind x _B)
 
 ----------------------------------------------------------------------
@@ -174,11 +174,11 @@ inferAtom (Infer m) = genMeta m
 inferAtom (Pi i _A bnd_B) = do
   _A <- check _A Type
   (x, _B) <- unbind bnd_B
-  _B <- checkExt x _A _B Type
+  _B <- checkExt i x _A _B Type
   return (Pi i _A (Bind x _B), Type)
 inferAtom (Lam i _A b) = do
   _A <- check _A Type
-  (b , _B) <- inferExtBind _A b
+  (b , _B) <- inferExtBind i _A b
   return (Lam i _A b, Pi i _A _B)
 inferAtom _ = throwGenErr "Inferring a non-atomic term language"
 

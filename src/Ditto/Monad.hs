@@ -18,7 +18,7 @@ data DittoS = DittoS
   }
 
 data DittoR = DittoR
-  { ctx :: Ctx
+  { ctx :: Tel
   , acts :: Acts
   }
 
@@ -46,14 +46,11 @@ initialR = DittoR
   , acts = []
   }
 
-extCtx :: Name -> Exp -> TCM a -> TCM a
-extCtx x _A = extCtxs [(x, _A)]
+extCtx :: Icit -> Name -> Exp -> TCM a -> TCM a
+extCtx i x _A = extCtxs [(i, x, _A)]
 
-extCtxs :: Ctx -> TCM a -> TCM a
-extCtxs _As = local (\ r -> r { ctx = _As ++ ctx r })
-
-extCtxsTel :: Tel -> TCM a -> TCM a
-extCtxsTel _As = extCtxs (fromTel _As)
+extCtxs :: Tel -> TCM a -> TCM a
+extCtxs _As = local (\ r -> r { ctx = ctx r ++ _As })
 
 during :: Act -> TCM a -> TCM a
 during x = local (\ r -> r { acts = x:acts r })
@@ -72,73 +69,6 @@ gensymHint x = uniqName x <$> gensym
 
 gensymMeta :: TCM MName
 gensymMeta = MName <$> gensym
-
-----------------------------------------------------------------------
-
-isNamed :: Name -> Sigma -> Bool
-isNamed x (Def y _ _) = x == y
-isNamed x _ = False
-
-isPNamed :: PName -> Sigma -> Bool
-isPNamed x (DForm y _) = x == y
-isPNamed x (DCon y _ _ _) = x == y
-isPNamed x (DRed y _ _ _) = x == y
-isPNamed x _ = False
-
-isMNamed :: MName -> Sigma -> Bool
-isMNamed x (DMeta y _ _ _ _) = x == y
-isMNamed x _ = False
-
-isConOf :: PName -> Sigma -> Bool
-isConOf x (DCon _ _ y _) = x == y
-isConOf x _ = False
-
-isDef :: Sigma -> Bool
-isDef (Def _ _ _) = True
-isDef _ = False
-
-isMeta :: Sigma -> Bool
-isMeta (DMeta _ _ _ _ _) = True
-isMeta _ = False
-
-envDef :: Sigma -> Maybe (Name, Exp, Exp)
-envDef (Def x a _A) = Just (x, a, _A)
-envDef _ = Nothing
-
-envDefBody :: Sigma -> Maybe Exp
-envDefBody (Def _ a _) = Just a
-envDefBody _ = Nothing
-
-envUndefMeta :: Sigma -> Maybe (MName, Tel, Exp)
-envUndefMeta (DMeta x MInfer Nothing _As _B) = Just (x, _As, _B)
-envUndefMeta _ = Nothing
-
-envHole :: Sigma -> Maybe Hole
-envHole (DMeta x MHole a _As _B) = Just (x, a, _As, _B)
-envHole _ = Nothing
-
-envMetaBody :: Sigma -> Maybe Exp
-envMetaBody (DMeta x _ (Just a) _ _) = Just a
-envMetaBody _ = Nothing
-
-envMetaType :: Sigma -> Maybe (Tel, Exp)
-envMetaType (DMeta x _ _ _As _B) = Just (_As, _B)
-envMetaType _ = Nothing
-
-conSig :: Sigma -> Maybe (PName, Tel, Args)
-conSig (DCon x _As _ is) = Just (x, _As, is)
-conSig _ = Nothing
-
-redClauses :: Sigma -> Maybe [CheckedClause]
-redClauses (DRed x cs _ _) = Just cs
-redClauses _ = Nothing
-
-envType :: Sigma -> Exp
-envType (Def _ _ _A) = _A
-envType (DForm _ _Is) = formType _Is
-envType (DCon _ _As _X _Is) = conType _As _X _Is
-envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
-envType (DMeta _ _ _ _As _B) = metaType _As _B
 
 ----------------------------------------------------------------------
 
@@ -181,7 +111,7 @@ lookupPType x = do
 lookupDefs :: TCM [(Name, Exp, Exp)]
 lookupDefs = do
   env <- getEnv
-  return . catMaybes . map envDef . filter isDef $ env
+  return . filterDefs $ env
 
 lookupUndefMetas :: TCM [(MName, Tel, Exp)]
 lookupUndefMetas = do
@@ -212,7 +142,7 @@ lookupType x = lookupCtx x >>= \case
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
   ctx <- getCtx
-  return $ lookup x ctx
+  return $ lookup x (telDict ctx)
 
 lookupSigma :: Name -> TCM (Maybe Sigma)
 lookupSigma x = do
@@ -221,7 +151,7 @@ lookupSigma x = do
 
 ----------------------------------------------------------------------
 
-getCtx :: TCM Ctx
+getCtx :: TCM Tel
 getCtx = do
   DittoR {ctx = ctx} <- ask
   return ctx
@@ -230,11 +160,6 @@ getEnv :: TCM Env
 getEnv = do
   DittoS {env = env} <- get
   return env
-
-getEnvVerb :: TCM (Maybe Env)
-getEnvVerb = getVerbosity >>= \case
-  Normal -> return Nothing
-  Verbose -> Just <$> getEnv
 
 getActs :: TCM Acts
 getActs = do
@@ -253,14 +178,21 @@ setVerbosity v = do
 
 ----------------------------------------------------------------------
 
+renderHoles :: Holes -> TCM String
+renderHoles xs = do
+  verb <- getVerbosity
+  env <- getEnv
+  return . render $ ppHoles verb env xs
+
 throwGenErr :: String -> TCM a
 throwGenErr = throwErr . EGen
 
 throwErr :: Err -> TCM a
 throwErr err = do
+  verb <- getVerbosity
   acts <- getActs
   ctx <- getCtx
-  env <- getEnvVerb
-  throwError . render . withCtx acts ctx env $ ppErr err
+  env <- getEnv
+  throwError . render . ppCtxErr verb acts ctx env $ err
 
 ----------------------------------------------------------------------

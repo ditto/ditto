@@ -17,7 +17,7 @@ split _As x = splitVar _As1 x _A _As2
 
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitVar _As x _B _Cs = extCtxsTel _As (whnf _B) >>= \case
+splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X js -> do
     _Bs <- lookupConsFresh _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
@@ -47,14 +47,14 @@ cover nm cs _As = cover' nm cs _As (pvarPats _As)
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
 cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
-    Var x' -> return [(fromTel _As, qs, Caseless x')]
+    Var x' -> return [(_As, qs, Caseless x')]
     otherwise -> throwGenErr "Non-renaming in caseless clause"
   CMatch rs (Prog a) -> do
     a' <- psub a rs
-    return [(fromTel _As, qs, Prog a')]
+    return [(_As, qs, Prog a')]
   CSplit x -> do
     qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
-  CMiss -> throwErr (ECover nm qs)
+  CMiss -> throwErr (ECover _As nm qs)
 
 ----------------------------------------------------------------------

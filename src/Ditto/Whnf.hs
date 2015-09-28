@@ -58,14 +58,14 @@ splitTel :: Exp -> TCM (Tel , Exp)
 splitTel _T = whnf _T >>= \case
   Pi i _A bnd_B -> do
     (x, _B) <- unbind bnd_B
-    (rest, end) <- extCtx x _A (splitTel _B)
+    (rest, end) <- extCtx i x _A (splitTel _B)
     return ((i, x, _A) : rest, end)
   _A -> return ([], _A)
 
 buildCon :: PName -> (PName, Exp) -> TCM (PName, Tel, PName, Args)
 buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
-  extCtxsTel tel (whnf end) >>= \case
+  extCtxs tel (whnf end) >>= \case
     Form _Y _Is | _X == _Y -> return (x , tel, _Y, _Is)
     Form _Y _Is -> throwGenErr $ "Constructor type does not match datatype\n"
       ++ show _X ++ " != " ++ show _Y

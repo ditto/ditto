@@ -27,6 +27,10 @@ data Id (A : Type) (x y : A) : Type where
 | refl (A : Type) (x : A) : Id A x x
 end
 
+def shadow (A : Type) (x x : A) : Id A x x where
+| A * x = refl A x
+end
+
 def one : Nat where suc zero end
 def two : Nat where suc one end
 def three : Nat where suc two end

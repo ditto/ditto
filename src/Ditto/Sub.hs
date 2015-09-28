@@ -25,9 +25,9 @@ fvs as = concatMap fv (map snd as)
 fvBind :: Bind -> [Name]
 fvBind (Bind n b) = n `delete` nub (fv b)
 
-fvTel :: Ctx -> [Name]
+fvTel :: Tel -> [Name]
 fvTel [] = []
-fvTel ((_X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
+fvTel ((_, _X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
 
 ----------------------------------------------------------------------
 

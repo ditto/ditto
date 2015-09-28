@@ -27,13 +27,13 @@ recheckProg = mapM_ recheckDef =<< lookupDefs
 
 ----------------------------------------------------------------------
 
-reinferExtBind :: Exp -> Bind -> TCM Bind
-reinferExtBind _A bnd_b = do
+reinferExtBind :: Icit -> Exp -> Bind -> TCM Bind
+reinferExtBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
-  Bind x <$> extCtx x _A (reinfer b)
+  Bind x <$> extCtx i x _A (reinfer b)
 
-recheckExt :: Name -> Exp -> Exp -> Exp -> TCM ()
-recheckExt x _A b _B = extCtx x _A (recheck b _B)
+recheckExt :: Icit -> Name -> Exp -> Exp -> Exp -> TCM ()
+recheckExt i x _A b _B = extCtx i x _A (recheck b _B)
 
 ----------------------------------------------------------------------
 
@@ -49,14 +49,14 @@ reinfer (Var x) = lookupType x >>= \case
     Nothing -> throwErr (EScope x)
 reinfer Type = return Type
 reinfer (Infer _) = throwGenErr "Core language does not reinfer expressions"
-reinfer (Pi _ _A bnd_B) = do
+reinfer (Pi i _A bnd_B) = do
   recheck _A Type
   (x, _B) <- unbind bnd_B
-  recheckExt x _A _B Type
+  recheckExt i x _A _B Type
   return Type
 reinfer (Lam i _A b) = do
   recheck _A Type
-  Pi i _A <$> reinferExtBind _A b
+  Pi i _A <$> reinferExtBind i _A b
 reinfer (Form x is) = lookupPSigma x >>= \case
   Just (DForm _X _Is) -> do
     foldM_ recheckAndAdd [] (zip is _Is)

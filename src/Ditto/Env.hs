@@ -16,7 +16,7 @@ addSig s = do
   state@DittoS {env = env} <- get
   when (s `elem` env) $ throwGenErr $
     "Element being added already exists in the environment: " ++ show s
-  put state { env = s : env }
+  put state { env = snoc env s }
 
 updateSig :: Sigma -> Sigma -> TCM ()
 updateSig s s' = do
@@ -37,7 +37,7 @@ addDef x a _A = do
 
 genMeta :: MKind -> TCM (Exp, Exp)
 genMeta m = do
-  _As <- toTel <$> getCtx
+  _As <- getCtx
   _X <- addMeta MInfer _As Type
   let _B = Meta _X (varArgs _As)
   x <- addMeta m _As _B

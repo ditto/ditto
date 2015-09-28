@@ -1,156 +1,180 @@
 module Ditto.Pretty where
 import Ditto.Syntax
-import Control.Monad.State
-import Control.Monad.Reader
-import Control.Monad.Except
-import Control.Applicative
 import Data.Maybe
+import Data.List
 import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
-ppErr :: Err -> Box
-ppErr (EGen err) = text err
-ppErr (EConv a b) = text "Terms not convertible"
-  <+> code (ppExp a <+> neq <+> ppExp b)
-ppErr (EScope x) = text "Variable not in scope"
-  <+> code (ppName x)
-ppErr (ECaseless x) = text "Variable is not caseless"
-  <+> code (ppName x)
-ppErr (EMetas xs) = text "Unsolved metavariables" //
-  vcatmap (\(x, _As, _B) -> ppMetaType x _As _B) xs
-ppErr (ECover x qs) = text "Uncovered clause"
-  <+> code (ppPName x <+> ppPats qs)
-ppErr (EReach x xs) = text "Unreachable clauses" //
-  vcatmap (ppRed' x) xs
+nameFor :: [Name] -> Name -> Name
+nameFor xs (namesFor -> ys) = fromJust (find (flip notElem xs) ys)
 
-withCtx :: Acts -> Ctx -> Maybe Env -> Box -> Box
-withCtx acts ctx menv x = vcatmaybes
-  [ Just x
-  , ppActs acts
-  , ppCtx ctx
-  , ppEnvVerb menv
-  ]
+namesFor :: Name -> [Name]
+namesFor (Name x _) = s2n x : map (\n -> s2n (x ++ show n)) [2..]
+
+domRen :: Ren -> [Name]
+domRen = map fst
+
+codRen :: Ren -> [Name]
+codRen = map snd
+
+extRen :: Ren -> Name -> Ren
+extRen ren x@(Name _ Nothing) = snoc ren (x, x)
+extRen ren x = snoc ren (x, nameFor (codRen ren) x)
+
+envRen :: Env -> Ren
+envRen = map (\x -> (x, x)) . defNames
+
+telRen :: Ren -> Tel -> Ren
+telRen ren (names -> xs) = foldl extRen ren xs
 
 ----------------------------------------------------------------------
 
-ppCtx :: Ctx -> Maybe Box
-ppCtx [] = Nothing
-ppCtx xs = Just $ sec "Context" // vcatmap0 ppCtxBind (reverse xs)
+ppErr :: Ren -> Err -> Box
+ppErr ren (EGen err) = text err
+ppErr ren (EConv a b) = text "Terms not convertible"
+  <+> code (ppExp ren a <+> neq <+> ppExp ren b)
+ppErr ren (EScope x) = text "Variable not in scope"
+  <+> code (ppName ren x)
+ppErr ren (ECaseless x) = text "Variable is not caseless"
+  <+> code (ppName ren x)
+ppErr ren (EMetas xs) = text "Unsolved metavariables" //
+  vcatmap1 (\(x, _As, _B) -> ppMetaType ren x _As _B) xs
+ppErr ren (ECover _As x qs) = text "Uncovered clause"
+  <+> code (ppPName x <+> vcat0 (ppPats (telRen ren _As) qs))
+ppErr ren (EReach x xs) = text "Unreachable clauses" //
+  vcatmap1 (ppRed' ren x) xs
 
-ppEnvVerb :: Maybe Env -> Maybe Box
-ppEnvVerb = (>>= ppEnv)
+ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Box
+ppCtxErr verb acts ctx env err = vcatmaybes
+  [ Just (ppErr ren2 err)
+  , ppActs ren2 acts
+  , ppCtx ren1 ctx
+  , ppEnvVerb verb ren1 env
+  ]
+ where
+ ren1 = envRen env
+ ren2 = telRen ren1 ctx  
 
-ppEnv :: Env -> Maybe Box
-ppEnv [] = Nothing
-ppEnv xs = Just $ sec "Environment" // vcatmap0 ppSig (reverse xs)
+----------------------------------------------------------------------
+
+ppCtx :: Ren -> Tel -> Maybe Box
+ppCtx ren [] = Nothing
+ppCtx ren xs = Just $ sec "Context" // vcat0 (ppCtxBinds ren xs)
+
+ppEnvVerb :: Verbosity -> Ren -> Env -> Maybe Box
+ppEnvVerb Normal ren env = Nothing
+ppEnvVerb Verbose ren env = ppEnv ren env
+
+ppEnv :: Ren -> Env -> Maybe Box
+ppEnv ren [] = Nothing
+ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppSig ren) xs
 
 sec :: String -> Box
 sec str = textc str // line
 
 ----------------------------------------------------------------------
 
-ppActs :: Acts -> Maybe Box
-ppActs [] = Nothing
-ppActs xs = Just $ vcatmap0 ppAct xs
+ppActs :: Ren -> Acts -> Maybe Box
+ppActs ren [] = Nothing
+ppActs ren xs = Just $ vcatmap0 (ppAct ren) xs
 
-ppAct :: Act -> Box
-ppAct (ADef x) = while "checking definition" $ ppName x
-ppAct (ADefn x) = while "checking function" $ ppPName x
-ppAct (AData x) = while "checking datatype" $ ppPName x
-ppAct (ACon x) = while "checking constructor" $ ppPName x
+ppAct :: Ren -> Act -> Box
+ppAct ren (ADef x) = while "checking definition" $ ppName ren x
+ppAct ren (ADefn x) = while "checking function" $ ppPName x
+ppAct ren (AData x) = while "checking datatype" $ ppPName x
+ppAct ren (ACon x) = while "checking constructor" $ ppPName x
 
-ppAct (ACheck a _A) = while "checking" $ ppwExp Wrap a <+> oft <+> ppExp _A
-ppAct (AInfer a) = while "inferring" $ ppExp a
-ppAct (AConv x y) = while "equating" $ ppExp x <+> eq <+> ppExp y
-ppAct (ACover x qs) = while "covering" $ ppPName x <+> ppPats qs
+ppAct ren (ACheck a _A) = while "checking" $ ppwExp ren Wrap a <+> oft <+> ppExp ren _A
+ppAct ren (AInfer a) = while "inferring" $ ppExp ren a
+ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> eq <+> ppExp ren y
+ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> vcat0 (ppPats ren qs)
 
 while :: String -> Box -> Box
 while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
-renderHoles :: Holes -> String
-renderHoles [] = ""
-renderHoles xs = render $ vcatmap ppHole xs
+ppHoles :: Verbosity -> Env -> Holes -> Box
+ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env]
+  where
+  ren = envRen env
+  holes = vcatmap1 (ppHole ren) xs
 
-ppHole :: Hole -> Box
-ppHole (x, a, (fromTel -> _As), _B) = (text "Hole" <+> ppMName x <+> oft <+> ppExp _B)
-  // line // vcatmap0 ppCtxBind (reverse _As)
+ppHole :: Ren -> Hole -> Box
+ppHole ren (x, a, _As, _B) =
+  (text "Hole" <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
+  // line // vcat0 (ppCtxBinds ren _As)
 
 ----------------------------------------------------------------------
 
-ppExp :: Exp -> Box
-ppExp = ppwExp NoWrap
+ppExp :: Ren -> Exp -> Box
+ppExp ren = ppwExp ren NoWrap
 
-ppArg :: (Icit, Exp) -> Box
-ppArg (Expl, a) = ppwExp Wrap a
-ppArg (Impl, a) = braces (ppExp a)
+ppArg :: Ren -> (Icit, Exp) -> Box
+ppArg ren (Expl, a) = ppwExp ren Wrap a
+ppArg ren (Impl, a) = braces (ppExp ren a)
 
-ppwExp :: Wrap -> Exp -> Box
-ppwExp w Type = text "Type"
-ppwExp w (Infer m) = ppInfer m
-ppwExp w (Var x) = ppName x
-ppwExp w x@(Pi _ _ _) = ppPis w x
-ppwExp w x@(Lam _ _ _) = ppLams w x
-ppwExp w (Form _X _Is) = ppPrim w _X _Is
-ppwExp w (Con x as) = ppPrim w x as
-ppwExp w (Red x as) = ppPrim w x as
-ppwExp w (Meta x as) = ppMeta w x as
-ppwExp w (App i f a) = lefty w $ ppwExp NoWrapL f <+> ppArg (i, a)
+ppwExp :: Ren -> Wrap -> Exp -> Box
+ppwExp ren w Type = text "Type"
+ppwExp ren w (Infer m) = ppInfer m
+ppwExp ren w (Var x) = ppName ren x
+ppwExp ren w x@(Pi _ _ _) = righty w (ppPis ren x)
+ppwExp ren w x@(Lam _ _ _) = righty w (ppLams ren x)
+ppwExp ren w (Form _X _Is) = ppPrim ren w _X _Is
+ppwExp ren w (Con x as) = ppPrim ren w x as
+ppwExp ren w (Red x as) = ppPrim ren w x as
+ppwExp ren w (Meta x as) = ppMeta ren w x as
+ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
 ppInfer :: MKind -> Box
 ppInfer MInfer = forced
 ppInfer MHole = hole
 
-ppPrim :: Wrap -> PName -> Args -> Box
-ppPrim w x [] = ppPName x
-ppPrim w x as = lefty w $ ppPName x <+> hcatmap ppArg as
+ppPrim :: Ren -> Wrap -> PName -> Args -> Box
+ppPrim ren w x [] = ppPName x
+ppPrim ren w x as = lefty w $ ppPName x <+> hcatmap1 (ppArg ren) as
 
-ppMeta :: Wrap -> MName -> Args -> Box
-ppMeta w x [] = ppMName x
-ppMeta w x as = lefty w $ ppMName x <+> hcatmap ppArg as
-
-----------------------------------------------------------------------
-
-ppPis :: Wrap -> Exp -> Box
-ppPis w (viewPis -> (_As, _B)) = righty w $ hcatmap ppBind _As <+> oft <+> ppExp _B
-
-ppLams :: Wrap -> Exp -> Box
-ppLams w (viewLams -> (as, b)) = righty w $ hcatmap ppBind as <+> arr <+> ppExp b
-
-viewPis :: Exp -> (Tel, Exp)
-viewPis (Pi i _A (Bind x _B)) = ((i, x, _A):_As, _B')
-  where (_As, _B') = viewPis _B
-viewPis a = ([], a)
-
-viewLams :: Exp -> (Tel, Exp)
-viewLams (Lam i _A (Bind x b)) = ((i, x, _A):_As, b')
-  where (_As, b') = viewLams b
-viewLams a = ([], a)
-
-ppBind :: (Icit, Name, Exp) -> Box
-ppBind (Expl, x, _A) = parens $ curry ppCtxBind x _A
-ppBind (Impl, x, _A) = braces $ curry ppCtxBind x _A
-
-ppCtxBind :: (Name, Exp) -> Box
-ppCtxBind (x, _A) = ppName x <+> oft <+> ppExp _A
+ppMeta :: Ren -> Wrap -> MName -> Args -> Box
+ppMeta ren w x [] = ppMName x
+ppMeta ren w x as = lefty w $ ppMName x <+> hcatmap1 (ppArg ren) as
 
 ----------------------------------------------------------------------
 
-ppPat :: (Icit, Pat) -> Box
-ppPat (Expl, p) = ppPat' p
-ppPat (Impl, p) = braces (ppPat' p)
+ppPis :: Ren -> Exp -> Box
+ppPis ren (Pi i _A (Bind x _B)) = ppBind ren (i, x, _A) <+> ppPis (extRen ren x) _B
+ppPis ren _B = oft <+> ppExp ren _B
 
-ppPat' :: Pat -> Box
-ppPat' (PVar x) = ppName x
-ppPat' (Inacc Nothing) = forced
-ppPat' (Inacc (Just a)) = text "." <> ppwExp Wrap a
-ppPat' (PCon x []) = ppPName x
-ppPat' (PCon x ps) = parens $ ppPName x <+> ppPats ps
+ppLams :: Ren -> Exp -> Box
+ppLams ren (Lam i _A (Bind x b)) = ppBind ren (i, x, _A) <+> ppLams (extRen ren x) b
+ppLams ren b = arr <+> ppExp ren b
 
-ppPats :: Pats -> Box
-ppPats = hcatmap ppPat
+ppBind :: Ren -> (Icit, Name, Exp) -> Box
+ppBind ren (Expl, x, _A) = parens $ curry (ppCtxBind ren) x _A
+ppBind ren (Impl, x, _A) = braces $ curry (ppCtxBind ren) x _A
+
+ppCtxBind :: Ren -> (Name, Exp) -> Box
+ppCtxBind ren (x, _A) = ppName (extRen ren x) x <+> oft <+> ppExp ren _A
+
+ppCtxBinds :: Ren -> Tel -> [Box]
+ppCtxBinds ren [] = []
+ppCtxBinds ren ((_, x, _A):_As) = ppCtxBind ren (x, _A) : ppCtxBinds (extRen ren x) _As
+
+----------------------------------------------------------------------
+
+ppPat :: Ren -> (Icit, Pat) -> Box
+ppPat ren (Expl, p) = ppPat' ren p
+ppPat ren (Impl, p) = braces (ppPat' ren p)
+
+ppPat' :: Ren -> Pat -> Box
+ppPat' ren (PVar x) = ppName ren x
+ppPat' ren (Inacc Nothing) = forced
+ppPat' ren (Inacc (Just a)) = text "." <> ppwExp ren Wrap a
+ppPat' ren (PCon x []) = ppPName x
+ppPat' ren (PCon x ps) = parens $ ppPName x <+> vcat0 (ppPats ren ps)
+
+ppPats :: Ren -> Pats -> [Box]
+ppPats ren = map (ppPat ren)
 
 ----------------------------------------------------------------------
 
@@ -166,59 +190,60 @@ lefty _ = id
 
 ----------------------------------------------------------------------
 
-ppSig :: Sigma -> Box
-ppSig (Def x a _A) = ppDefType x _A // ppDefBod x a
-ppSig (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
-ppSig (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
-ppSig (DRed x cs _As _B) = brackets (ppPName x <+> text "reduction rules")
-  /+/ vcatmap (ppRed x) (reverse cs)
-ppSig (DMeta x _ b _As _B) = ppDMeta x b _As _B
+ppSig :: Ren -> Sigma -> Box
+ppSig ren (Def x a _A) = ppDefType ren x _A // ppDefBod ren x a
+ppSig ren (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
+ppSig ren (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
+ppSig ren (DRed x cs _As _B) = if null cs then header
+  else header /+/ vcatmap1 (ppRed ren x) cs
+  where header = brackets (ppPName x <+> text "reduction rules")
+ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
-ppRed :: PName -> CheckedClause -> Box
-ppRed x (_As, ps, rhs) = ppRedCtx x _As // ppRed' x (ps, rhs)
+ppRed :: Ren -> PName -> CheckedClause -> Box
+ppRed ren x (_As, ps, rhs) = ppRedCtx ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
-ppRed' :: PName -> Clause -> Box
-ppRed' x (ps, rhs) = ppPName x <+> ppPats ps <+> ppRHS rhs
+ppRed' :: Ren -> PName -> Clause -> Box
+ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <+> ppRHS ren rhs
 
-ppRHS :: RHS -> Box
-ppRHS (Prog a) = def <+> ppExp a
-ppRHS (Caseless x) = ndef <+> ppName x
+ppRHS :: Ren -> RHS -> Box
+ppRHS ren (Prog a) = def <+> ppExp ren a
+ppRHS ren (Caseless x) = ndef <+> ppName ren x
 
-ppRedCtx :: PName -> Ctx -> Box
-ppRedCtx x _As = ppPName x <+> hcatmap (parens . ppCtxBind) _As
+ppRedCtx :: Ren -> PName -> Tel -> Box
+ppRedCtx ren x _As = ppPName x <+> hcatmap1 parens (ppCtxBinds ren _As)
 
 --------------------------------------------------------------------------------
 
-ppDMeta :: MName -> Maybe Exp -> Tel -> Exp -> Box
-ppDMeta x b _As _B = case b of
-  Nothing -> ppMetaType x _As _B
-  Just b -> ppMetaType x _As _B // ppMetaBod x b
+ppDMeta :: Ren -> MName -> Maybe Exp -> Tel -> Exp -> Box
+ppDMeta ren x b _As _B = case b of
+  Nothing -> ppMetaType ren x _As _B
+  Just b -> ppMetaType ren x _As _B // ppMetaBod ren x b
 
-ppMetaType :: MName -> Tel -> Exp -> Box
-ppMetaType x _As@(_:_) _B = ppMName x <+> ppExp (metaType _As _B)
-ppMetaType x [] _B = ppMName x <+> oft <+> ppExp _B
+ppMetaType :: Ren -> MName -> Tel -> Exp -> Box
+ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (metaType _As _B)
+ppMetaType ren x [] _B = ppMName x <+> oft <+> ppExp ren _B
 
-ppMetaBod :: MName -> Exp -> Box
-ppMetaBod x a = ppMName x <+> def <+> ppExp a
-
-----------------------------------------------------------------------
-
-ppDefType :: Name -> Exp -> Box
-ppDefType x _A@(Pi _ _ _) = ppName x <+> ppExp _A
-ppDefType x _A = ppName x <+> oft <+> ppExp _A
-
-ppDefBod :: Name -> Exp -> Box
-ppDefBod x a = ppName x <+> def <+> ppExp a
+ppMetaBod :: Ren -> MName -> Exp -> Box
+ppMetaBod ren x a = ppMName x <+> def <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
-ppName :: Name -> Box
-ppName = text . show
+ppDefType :: Ren -> Name -> Exp -> Box
+ppDefType ren x _A@(Pi _ _ _) = ppName ren x <+> ppExp ren _A
+ppDefType ren x _A = ppName ren x <+> oft <+> ppExp ren _A
+
+ppDefBod :: Ren -> Name -> Exp -> Box
+ppDefBod ren x a = ppName ren x <+> def <+> ppExp ren a
+
+----------------------------------------------------------------------
+
+ppName :: Ren -> Name -> Box
+ppName ren x = text . show $ maybe x id (lookup x (reverse ren))
 
 ppPName :: PName -> Box
-ppPName = text . show
+ppPName (PName x) = text x
 
 ppMName :: MName -> Box
 ppMName = text . show
@@ -270,16 +295,25 @@ line = text (take 30 (repeat '-'))
 newline :: Box
 newline = char '\n'
 
-vcatmaybes :: [Maybe Box] -> Box
-vcatmaybes = vsep 1 left . catMaybes
+vcat0 :: [Box] -> Box
+vcat0 = vsep 0 left
 
-vcatmap :: (a -> Box) -> [a] -> Box
-vcatmap f xs = vsep 1 left (map f xs)
+vcat1 :: [Box] -> Box
+vcat1 = vsep 1 left
+
+hcat1 :: [Box] -> Box
+hcat1 = hsep 1 top
+
+vcatmaybes :: [Maybe Box] -> Box
+vcatmaybes = vcat1 . catMaybes
+
+vcatmap1 :: (a -> Box) -> [a] -> Box
+vcatmap1 f xs = vcat1 (map f xs)
 
 vcatmap0 :: (a -> Box) -> [a] -> Box
-vcatmap0 f xs = vsep 0 left (map f xs)
+vcatmap0 f xs = vcat0 (map f xs)
 
-hcatmap :: (a -> Box) -> [a] -> Box
-hcatmap f xs = hsep 1 top (map f xs)
+hcatmap1 :: (a -> Box) -> [a] -> Box
+hcatmap1 f xs = hcat1 (map f xs)
 
 ----------------------------------------------------------------------
