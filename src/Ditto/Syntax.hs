@@ -87,7 +87,7 @@ type CheckedClause = (Tel, Pats, RHS)
 type Pats = [(Icit, Pat)]
 type Hole = (MName, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
-type Acts = [Act]
+type Acts = [(Tel, Act)]
 
 data RHS = Prog Exp | Caseless Name
   deriving (Show, Read, Eq)

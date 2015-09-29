@@ -49,14 +49,12 @@ ppErr ren (EReach x xs) = text "Unreachable clauses" //
 
 ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Box
 ppCtxErr verb acts ctx env err = vcatmaybes
-  [ Just (ppErr ren2 err)
-  , ppActs ren2 acts
-  , ppCtx ren1 ctx
-  , ppEnvVerb verb ren1 env
+  [ Just (ppErr (telRen ren ctx) err)
+  , ppActs ren acts
+  , ppCtx ren ctx
+  , ppEnvVerb verb ren env
   ]
- where
- ren1 = envRen env
- ren2 = telRen ren1 ctx  
+ where ren = envRen env
 
 ----------------------------------------------------------------------
 
@@ -79,7 +77,7 @@ sec str = textc str // line
 
 ppActs :: Ren -> Acts -> Maybe Box
 ppActs ren [] = Nothing
-ppActs ren xs = Just $ vcatmap0 (ppAct ren) xs
+ppActs ren xs = Just $ vcatmap0 (\(ctx, act) -> ppAct (telRen ren ctx) act) xs
 
 ppAct :: Ren -> Act -> Box
 ppAct ren (ADef x) = while "checking definition" $ ppName ren x

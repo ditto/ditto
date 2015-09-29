@@ -53,7 +53,9 @@ extCtxs :: Tel -> TCM a -> TCM a
 extCtxs _As = local (\ r -> r { ctx = ctx r ++ _As })
 
 during :: Act -> TCM a -> TCM a
-during x = local (\ r -> r { acts = x:acts r })
+during x m = do
+  ctx <- getCtx
+  local (\ r -> r { acts = (ctx, x):acts r }) m
 
 ----------------------------------------------------------------------
 
