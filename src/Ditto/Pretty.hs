@@ -19,11 +19,13 @@ codRen :: Ren -> [Name]
 codRen = map snd
 
 extRen :: Ren -> Name -> Ren
-extRen ren x@(Name _ Nothing) = snoc ren (x, x)
 extRen ren x = snoc ren (x, nameFor (codRen ren) x)
 
 envRen :: Env -> Ren
-envRen = map (\x -> (x, x)) . defNames
+envRen = idRen . defNames
+
+idRen :: [Name] -> Ren
+idRen = map (\x -> (x, x))
 
 telRen :: Ren -> Tel -> Ren
 telRen ren (names -> xs) = foldl extRen ren xs
