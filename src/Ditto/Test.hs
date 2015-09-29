@@ -1,5 +1,6 @@
 module Ditto.Test where
 import Ditto.Syntax
+import Ditto.Pretty
 import Ditto.Parse
 import Ditto.Check
 import Ditto.Recheck
@@ -7,6 +8,7 @@ import Ditto.Conv
 import Ditto.Whnf
 import Ditto.Monad
 import Test.HUnit
+import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
@@ -719,6 +721,13 @@ checkTests = "Check tests" ~:
   , testChecks intrinsicEvaluatorImpl
   ]
 
+prettyTests :: Test
+prettyTests = "Pretty tests" ~:
+  [ testPretty [] "Type" "Type"
+  , testPretty ["Id"] "(A : Type) (x : A) (y : A) : Id x y" "(A : Type) (x : A) (y : A) : Id x y"
+  , testPretty ["Id"] "(A : Type) (x : A) (x2 : A) : Id x2 x2" "(A : Type) (x : A) (x : A) : Id x x"
+  ]
+
 parseTests :: Test
 parseTests = "Parse tests" ~:
   [ testParse "Type" (Just Type)
@@ -738,7 +747,7 @@ parseTests = "Parse tests" ~:
 ----------------------------------------------------------------------
 
 unitTests :: Test
-unitTests = TestList [parseTests, checkTests, convTests, whnfTests]
+unitTests = TestList [parseTests, prettyTests, checkTests, convTests, whnfTests]
 
 runTests :: IO Counts
 runTests = runTestTT unitTests
@@ -756,6 +765,12 @@ asExp :: String -> Exp
 asExp s = case parseE s of
   Right a -> a
   Left e -> error (show e)
+
+----------------------------------------------------------------------
+
+testPretty :: [String] -> String -> String -> Test
+testPretty (idRen . map s2n -> ren) (asExp -> a) (asExp -> b) = TestCase $ 
+  assertEqual "Pretty error" a (asExp . render . ppExp ren $ b)
 
 ----------------------------------------------------------------------
 
