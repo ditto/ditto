@@ -69,10 +69,10 @@ gensym = do
 gensymHint :: Name -> TCM Name
 gensymHint x = uniqName x <$> gensym
 
-gensymMeta ::Maybe String -> TCM MName
-gensymMeta nm = do
+gensymMeta :: TCM MName
+gensymMeta = do
   sym <- gensym
-  return $ MName sym nm
+  return $ MName sym
 
 ----------------------------------------------------------------------
 

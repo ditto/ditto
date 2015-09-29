@@ -46,12 +46,11 @@ name2pname _ = Nothing
 
 ----------------------------------------------------------------------
 
-data MName = MName Integer (Maybe String)
+data MName = MName Integer
   deriving (Read, Eq)
 
 instance Show MName where
-  show (MName n Nothing) = "?" ++ show n
-  show (MName n (Just nm)) = "?" ++ nm ++ "-" ++ show n
+  show (MName n) = "?" ++ show n
 
 data MKind = MInfer | MHole (Maybe String)
   deriving (Show, Read, Eq)
@@ -86,7 +85,7 @@ type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
 type CheckedClause = (Tel, Pats, RHS)
 type Pats = [(Icit, Pat)]
-type Hole = (MName, Maybe Exp, Tel, Exp)
+type Hole = (MName, Maybe String, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 
@@ -223,7 +222,7 @@ envUndefMeta (DMeta x MInfer Nothing _As _B) = Just (x, _As, _B)
 envUndefMeta _ = Nothing
 
 envHole :: Sigma -> Maybe Hole
-envHole (DMeta x (MHole foobar) a _As _B) = Just (x, a, _As, _B)
+envHole (DMeta x (MHole nm) a _As _B) = Just (x, nm, a, _As, _B)
 envHole _ = Nothing
 
 envMetaBody :: Sigma -> Maybe Exp

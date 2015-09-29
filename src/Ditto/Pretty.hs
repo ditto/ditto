@@ -102,8 +102,8 @@ ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env]
   holes = vcatmap1 (ppHole ren) xs
 
 ppHole :: Ren -> Hole -> Box
-ppHole ren (x, a, _As, _B) =
-  (text "Hole" <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
+ppHole ren (x, nm, a, _As, _B) =
+  (text "Hole" <+> ppMName x nm <+> oft <+> ppExp (telRen ren _As) _B)
   // line // vcat0 (ppCtxBinds ren _As)
 
 ----------------------------------------------------------------------
@@ -136,8 +136,8 @@ ppPrim ren w x [] = ppPName x
 ppPrim ren w x as = lefty w $ ppPName x <+> hcatmap1 (ppArg ren) as
 
 ppMeta :: Ren -> Wrap -> MName -> Args -> Box
-ppMeta ren w x [] = ppMName x
-ppMeta ren w x as = lefty w $ ppMName x <+> hcatmap1 (ppArg ren) as
+ppMeta ren w x [] = ppMName x Nothing
+ppMeta ren w x as = lefty w $ ppMName x Nothing <+> hcatmap1 (ppArg ren) as
 
 ----------------------------------------------------------------------
 
@@ -222,11 +222,11 @@ ppDMeta ren x b _As _B = case b of
   Just b -> ppMetaType ren x _As _B // ppMetaBod ren x b
 
 ppMetaType :: Ren -> MName -> Tel -> Exp -> Box
-ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (metaType _As _B)
-ppMetaType ren x [] _B = ppMName x <+> oft <+> ppExp ren _B
+ppMetaType ren x _As@(_:_) _B = ppMName x Nothing <+> ppExp ren (metaType _As _B)
+ppMetaType ren x [] _B = ppMName x Nothing <+> oft <+> ppExp ren _B
 
 ppMetaBod :: Ren -> MName -> Exp -> Box
-ppMetaBod ren x a = ppMName x <+> def <+> ppExp ren a
+ppMetaBod ren x a = ppMName x Nothing <+> def <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
@@ -245,8 +245,9 @@ ppName ren x = text . show $ maybe x id (lookup x (reverse ren))
 ppPName :: PName -> Box
 ppPName (PName x) = text x
 
-ppMName :: MName -> Box
-ppMName = text . show
+ppMName :: MName -> Maybe String -> Box
+ppMName n Nothing = text $ show n
+ppMName n (Just nm) = text $ show n ++ "-" ++ nm
 
 ----------------------------------------------------------------------
 
