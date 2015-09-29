@@ -54,7 +54,7 @@ ppCtxErr verb acts ctx env err = vcatmaybes
   ]
  where
  ren1 = envRen env
- ren2 = telRen ren1 ctx  
+ ren2 = telRen ren1 ctx
 
 ----------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
 ppInfer :: MKind -> Box
 ppInfer MInfer = forced
-ppInfer MHole = hole
+ppInfer (MHole nm) = hole nm
 
 ppPrim :: Ren -> Wrap -> PName -> Args -> Box
 ppPrim ren w x [] = ppPName x
@@ -286,8 +286,9 @@ ndef = text "!="
 forced :: Box
 forced = char '*'
 
-hole :: Box
-hole = char '?'
+hole :: Maybe String -> Box
+hole Nothing = char '?'
+hole (Just nm) = char '?'<>text nm
 
 line :: Box
 line = text (take 30 (repeat '-'))

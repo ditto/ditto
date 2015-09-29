@@ -46,13 +46,14 @@ name2pname _ = Nothing
 
 ----------------------------------------------------------------------
 
-newtype MName = MName Integer
+data MName = MName Integer (Maybe String)
   deriving (Read, Eq)
 
 instance Show MName where
-  show (MName n) = "?" ++ show n
+  show (MName n Nothing) = "?" ++ show n
+  show (MName n (Just nm)) = "?" ++ nm ++ "-" ++ show n
 
-data MKind = MInfer | MHole
+data MKind = MInfer | MHole (Maybe String)
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------
@@ -199,6 +200,10 @@ isMeta :: Sigma -> Bool
 isMeta (DMeta _ _ _ _ _) = True
 isMeta _ = False
 
+mkindName :: MKind -> Maybe String
+mkindName MInfer = Nothing
+mkindName (MHole nm) = nm
+
 filterDefs :: Env -> [(Name, Exp, Exp)]
 filterDefs = catMaybes . map envDef . filter isDef
 
@@ -218,7 +223,7 @@ envUndefMeta (DMeta x MInfer Nothing _As _B) = Just (x, _As, _B)
 envUndefMeta _ = Nothing
 
 envHole :: Sigma -> Maybe Hole
-envHole (DMeta x MHole a _As _B) = Just (x, a, _As, _B)
+envHole (DMeta x (MHole foobar) a _As _B) = Just (x, a, _As, _B)
 envHole _ = Nothing
 
 envMetaBody :: Sigma -> Maybe Exp

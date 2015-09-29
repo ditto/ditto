@@ -46,7 +46,7 @@ genMeta m = do
 
 addMeta :: MKind -> Tel -> Exp -> TCM MName
 addMeta m _As _B = do
-  x <- gensymMeta
+  x <- gensymMeta (mkindName m)
   addSig (DMeta x m Nothing _As _B)
   return x
 

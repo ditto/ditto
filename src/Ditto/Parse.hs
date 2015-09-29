@@ -184,7 +184,10 @@ parseInfer :: Parser Exp
 parseInfer = try $ symInfer >> return (Infer MInfer)
 
 parseHole :: Parser Exp
-parseHole = try $ symHole >> return (Infer MHole)
+parseHole = try $ do
+    symHole
+    nm <- optionMaybe parseIdent
+    return (Infer $ MHole nm)
 
 parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName

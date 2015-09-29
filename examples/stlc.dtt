@@ -115,6 +115,6 @@ def progress {T : *} (M : tm empty T) : either (ex (tm empty T) ((M' : tm empty 
 | c = inr vc
 | (lam M) = inr (vlam M)
 | (v x) != x
-| (app (lam M) N) = inl (pair (apply (scons idSub N) M) ?)
-| (app M N) = ?
+| (app (lam M) N) = inl (pair (apply (scons idSub N) M) ?appLambda)
+| (app M N) = ?appOther
 end
