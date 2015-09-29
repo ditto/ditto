@@ -142,23 +142,38 @@ ppMeta ren w x as = lefty w $ ppMName x Nothing <+> hcatmap1 (ppArg ren) as
 ----------------------------------------------------------------------
 
 ppPis :: Ren -> Exp -> Box
-ppPis ren (Pi i _A (Bind x _B)) = ppBind ren (i, x, _A) <+> ppPis (extRen ren x) _B
+ppPis ren (Pi i _A (Bind x _B)) = ppTelBind ren (i, x, _A) <+> ppPis (extRen ren x) _B
 ppPis ren _B = oft <+> ppExp ren _B
 
 ppLams :: Ren -> Exp -> Box
-ppLams ren (Lam i _A (Bind x b)) = ppBind ren (i, x, _A) <+> ppLams (extRen ren x) b
+ppLams ren (Lam i _A (Bind x b)) = ppTelBind ren (i, x, _A) <+> ppLams (extRen ren x) b
 ppLams ren b = arr <+> ppExp ren b
 
-ppBind :: Ren -> (Icit, Name, Exp) -> Box
-ppBind ren (Expl, x, _A) = parens $ curry (ppCtxBind ren) x _A
-ppBind ren (Impl, x, _A) = braces $ curry (ppCtxBind ren) x _A
+----------------------------------------------------------------------
+
+ppTelBind :: Ren -> (Icit, Name, Exp) -> Box
+ppTelBind ren (i, x, _A) = icit i $ curry (ppCtxBind ren) x _A
+
+ppTelBinds :: Ren -> Tel -> [Box]
+ppTelBinds ren xs = map (uncurry icit) (ppBinds ren xs)
+
+----------------------------------------------------------------------
 
 ppCtxBind :: Ren -> (Name, Exp) -> Box
 ppCtxBind ren (x, _A) = ppName (extRen ren x) x <+> oft <+> ppExp ren _A
 
 ppCtxBinds :: Ren -> Tel -> [Box]
-ppCtxBinds ren [] = []
-ppCtxBinds ren ((_, x, _A):_As) = ppCtxBind ren (x, _A) : ppCtxBinds (extRen ren x) _As
+ppCtxBinds ren xs = map snd (ppBinds ren xs)
+
+----------------------------------------------------------------------
+
+icit :: Icit -> Box -> Box
+icit Expl = parens
+icit Impl = braces
+
+ppBinds :: Ren -> Tel -> [(Icit, Box)]
+ppBinds ren [] = []
+ppBinds ren ((i, x, _A):_As) = (i, ppCtxBind ren (x, _A)) : ppBinds (extRen ren x) _As
 
 ----------------------------------------------------------------------
 
@@ -202,7 +217,7 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 ----------------------------------------------------------------------
 
 ppRed :: Ren -> PName -> CheckedClause -> Box
-ppRed ren x (_As, ps, rhs) = ppRedCtx ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
+ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
 ppRed' :: Ren -> PName -> Clause -> Box
 ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <+> ppRHS ren rhs
@@ -211,8 +226,8 @@ ppRHS :: Ren -> RHS -> Box
 ppRHS ren (Prog a) = def <+> ppExp ren a
 ppRHS ren (Caseless x) = ndef <+> ppName ren x
 
-ppRedCtx :: Ren -> PName -> Tel -> Box
-ppRedCtx ren x _As = ppPName x <+> hcatmap1 parens (ppCtxBinds ren _As)
+ppRedTel :: Ren -> PName -> Tel -> Box
+ppRedTel ren x _As = ppPName x <+> hcat1 (ppTelBinds ren _As)
 
 --------------------------------------------------------------------------------
 
