@@ -5,6 +5,7 @@ import Ditto.Match
 import Ditto.Whnf
 import Ditto.Sub
 import Ditto.Funify
+import Data.List
 import Data.Maybe
 import Control.Monad.Except
 import Control.Applicative
@@ -13,7 +14,14 @@ import Control.Applicative
 
 split :: Tel -> Name -> TCM [(Tel, PSub)]
 split _As x = splitVar _As1 x _A _As2
-  where (_As1, _A, _As2) = findSplit _As x
+  where (_As1, _A, _As2) = splitAtName _As x
+
+splitAtName :: Tel -> Name -> (Tel, Exp, Tel)
+splitAtName _As x = (_As1, _A, tail _As2) where
+  (_, _, _A) = head _As2
+  (_As1, _As2) = break (\ (_, y, _) -> (x == y)) _As
+
+----------------------------------------------------------------------
 
 --       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
@@ -33,10 +41,19 @@ splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>=
     _Cs' <- psubTel _Cs qs'
     return . Just $ (_ABs' ++ _Cs', qs')
 
-findSplit :: Tel -> Name -> (Tel, Exp, Tel)
-findSplit _As x = (_As1, _A, tail _As2) where
-  (_, _, _A) = head _As2
-  (_As1, _As2) = break (\ (_, y, _) -> (x == y)) _As
+----------------------------------------------------------------------
+
+refineTel :: Tel -> PSub -> TCM Tel
+refineTel [] xs = return []
+refineTel ((i, x, _A):_As) xs = case lookup x xs of
+  Nothing -> ((i, x, _A):) <$> refineTel _As xs
+  Just a -> case partitionByNames (fv (embedPat a)) _As of
+    (_Bs, _Cs) -> do
+      _Cs <- psubTel1 (x, a) _Cs
+      refineTel (_Bs ++ _Cs) xs
+
+partitionByNames :: [Name] -> Tel -> (Tel, Tel)
+partitionByNames xs = partition (\(_,x,_) -> elem x xs)
 
 ----------------------------------------------------------------------
 

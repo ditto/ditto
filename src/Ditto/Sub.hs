@@ -140,14 +140,6 @@ mkSub _As as = zip (names _As) (map snd as)
 
 ----------------------------------------------------------------------
 
-refineTel :: Tel -> PSub -> TCM Tel
-refineTel [] xs = return []
-refineTel ((i, x, _A):_As) xs = case lookup x xs of
-  Nothing -> ((i, x, _A):) <$> refineTel _As xs
-  Just a -> flip refineTel ((x, a) `delete` xs) =<< psubTel1 (x, a) _As
-
-----------------------------------------------------------------------
-
 psubPat :: Pat -> PSub -> TCM Pat
 psubPat (PVar x) xs = return $ maybe (PVar x) id (lookup x xs)
 psubPat (PCon x ps) xs = PCon x <$> psubPats ps xs
