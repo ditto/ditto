@@ -47,13 +47,12 @@ refineTel :: Tel -> PSub -> TCM Tel
 refineTel [] xs = return []
 refineTel ((i, x, _A):_As) xs = case lookup x xs of
   Nothing -> ((i, x, _A):) <$> refineTel _As xs
-  Just a -> case partitionByNames (fv (embedPat a)) _As of
-    (_Bs, _Cs) -> do
-      _Cs <- psubTel1 (x, a) _Cs
-      refineTel (_Bs ++ _Cs) xs
+  Just a -> let (_Bs, _Cs) = partitionByPat a _As in do
+    _Cs <- psubTel1 (x, a) _Cs
+    refineTel (_Bs ++ _Cs) xs
 
-partitionByNames :: [Name] -> Tel -> (Tel, Tel)
-partitionByNames xs = partition (\(_,x,_) -> elem x xs)
+partitionByPat :: Pat -> Tel -> (Tel, Tel)
+partitionByPat (fv . embedPat -> xs) = partition (\(_,x,_) -> elem x xs)
 
 ----------------------------------------------------------------------
 
