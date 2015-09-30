@@ -517,7 +517,7 @@ intrinsicEvaluatorUnif = unlines $ evalData ++
   , "| As * (true' *) as = true"
   , "| As * (false' *) as = false"
   , "| As C (if' * * b ct cf) as = if * (eval * * b as) (eval * * ct as) (eval * * cf as)"
-  , "| As * (lam' * A B b) as = (a : *) -> eval * * b (cons * as * a)"
+  , "| As * (lam' * A B b) as = (a : El A) -> eval * * b (cons * as * a)"
   , "| As * (app' * A B f a) as = (eval * * f as) (eval * * a as)"
   , "end"
   ]
@@ -575,7 +575,7 @@ intrinsicEvaluatorImpl = unlines
   , "| true' as = true"
   , "| false' as = false"
   , "| (if' b ct cf) as = if (eval b as) (eval ct as) (eval cf as)"
-  , "| (lam' b) as = (a : *) -> eval b (cons as a)"
+  , "| (lam' {*} {A} b) as = (a : El A) -> eval b (cons as a)"
   , "| (app' f a) as = (eval f as) (eval a as)"
   , "end"
   ]

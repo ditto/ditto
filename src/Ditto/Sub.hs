@@ -29,6 +29,9 @@ fvTel :: Tel -> [Name]
 fvTel [] = []
 fvTel ((_, _X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
 
+fvCtx :: Exp -> TCM [Name]
+fvCtx a = flip intersect (fv a) <$> (names <$> getCtx)
+
 ----------------------------------------------------------------------
 
 freshen :: Name -> Exp -> TCM (Name, Exp)

@@ -89,10 +89,10 @@ def apply {G G' T : *}(S : sub G G')(M : tm G T) : tm G' T where
 end
 
 data step {G T : *} (M : tm G T)(N : tm G T) : Type where
-| sapp {G S T : *} {M M' : tm G (arr S T)}{N : *}
+| sapp {G S T : *} {M M' : tm G (arr S T)} {N : tm G S}
        (E : step M M')
          : step (app M N)(app M' N)
-| sbeta {G S T : *} (M : tm (dec G S) T) (N : *)
+| sbeta {G S T : *} (M : tm (dec G S) T) (N : tm G S)
     	: step (app (lam M) N) (apply (scons idSub N) M)
 end
 

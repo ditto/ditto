@@ -89,7 +89,7 @@ conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> convArgs as1 as2
 conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
   throwGenErr "Reduction names not equal"
-conv' a1@(Meta x1 as1) a2 = millerPattern as1 >>= \case
+conv' a1@(Meta x1 as1) a2 = millerPattern as1 a2 >>= \case
   Just _As -> do
     solveMeta x1 (lams _As a2)
     return a2
@@ -111,10 +111,20 @@ convArgs as1 as2 = mapM (uncurry convArg) (zip as1 as2)
 
 ----------------------------------------------------------------------
 
-millerPattern :: Args -> TCM (Maybe Tel)
-millerPattern as = (sequence <$> mapM varName as) >>= \case
-  Just xs | length (names xs) == length (nub (names xs)) -> return (Just xs)
+millerPattern :: Args -> Exp -> TCM (Maybe Tel)
+millerPattern as a = (sequence <$> mapM varName as) >>= \case
+  Just _As | linearNames _As -> solInScope _As a
   otherwise -> return Nothing
+
+linearNames :: Tel -> Bool
+linearNames _As = length (names _As) == length (nub (names _As))
+
+solInScope :: Tel -> Exp -> TCM (Maybe Tel)
+solInScope _As a = do
+  xs <- fvCtx a
+  if all (flip elem (names _As)) xs
+  then return (Just _As)
+  else return Nothing
 
 varName :: (Icit, Exp) -> TCM (Maybe (Icit, Name, Exp))
 varName (i, Var x) = lookupCtx x >>= \case
