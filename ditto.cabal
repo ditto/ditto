@@ -4,8 +4,8 @@ License:        GPL-3
 License-file:   LICENSE
 Author:         Larry Diehl, Francisco Ferreira
 Maintainer:     larrytheliquid@gmail.com
-Homepage:       https://github.com/ditto-lang/ditto
-Bug-reports:    https://github.com/ditto-lang/ditto/issues
+Homepage:       https://github.com/ditto/ditto
+Bug-reports:    https://github.com/ditto/ditto/issues
 
 Stability:      Alpha
 Category:       Dependent Types
@@ -17,7 +17,7 @@ Build-type:     Simple
 
 source-repository head
   type:     git
-  location: git@github.com:ditto-lang/ditto.git
+  location: git@github.com:ditto/ditto.git
 
 Library
   hs-source-dirs: src
