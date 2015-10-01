@@ -7,7 +7,6 @@ import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
 import Data.Maybe
-import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 

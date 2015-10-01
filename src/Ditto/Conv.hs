@@ -10,7 +10,6 @@ import Control.Monad.State
 import Control.Monad.Except
 import Control.Applicative
 import Data.List
-import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 

@@ -1,8 +1,8 @@
 module Ditto.Pretty where
 import Ditto.Syntax
 import Data.Maybe
-import Data.List
-import Text.PrettyPrint.Boxes
+import Data.List hiding ( group )
+import Text.PrettyPrint.Leijen
 
 ----------------------------------------------------------------------
 
@@ -32,10 +32,10 @@ telRen ren (names -> xs) = foldl extRen ren xs
 
 ----------------------------------------------------------------------
 
-ppErr :: Ren -> Err -> Box
+ppErr :: Ren -> Err -> Doc
 ppErr ren (EGen err) = text err
 ppErr ren (EConv a b) = text "Terms not convertible"
-  <+> code (ppExp ren a <+> neq <+> ppExp ren b)
+ <+> code (ppExp ren a <+> neq <+> ppExp ren b)
 ppErr ren (EScope x) = text "Variable not in scope"
   <+> code (ppName ren x)
 ppErr ren (ECaseless x) = text "Variable is not caseless"
@@ -47,7 +47,7 @@ ppErr ren (ECover _As x qs) = text "Uncovered clause"
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
   vcatmap1 (ppRed' ren x) xs
 
-ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Box
+ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Doc
 ppCtxErr verb acts ctx env err = vcatmaybes
   [ Just (ppErr (telRen ren ctx) err)
   , ppActs ren acts
@@ -58,64 +58,64 @@ ppCtxErr verb acts ctx env err = vcatmaybes
 
 ----------------------------------------------------------------------
 
-ppCtx :: Ren -> Tel -> Maybe Box
+ppCtx :: Ren -> Tel -> Maybe Doc
 ppCtx ren [] = Nothing
 ppCtx ren xs = Just $ sec "Context" // vcat0 (ppCtxBinds ren xs)
 
-ppEnvVerb :: Verbosity -> Ren -> Env -> Maybe Box
+ppEnvVerb :: Verbosity -> Ren -> Env -> Maybe Doc
 ppEnvVerb Normal ren env = Nothing
 ppEnvVerb Verbose ren env = ppEnv ren env
 
-ppEnv :: Ren -> Env -> Maybe Box
+ppEnv :: Ren -> Env -> Maybe Doc
 ppEnv ren [] = Nothing
 ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppSig ren) xs
 
-sec :: String -> Box
-sec str = textc str // line
+sec :: String -> Doc
+sec str = textc str // dashes
 
 ----------------------------------------------------------------------
 
-ppActs :: Ren -> Acts -> Maybe Box
+ppActs :: Ren -> Acts -> Maybe Doc
 ppActs ren [] = Nothing
 ppActs ren xs = Just $ vcatmap0 (\(ctx, act) -> ppAct (telRen ren ctx) act) xs
 
-ppAct :: Ren -> Act -> Box
+ppAct :: Ren -> Act -> Doc
 ppAct ren (ADef x) = while "checking definition" $ ppName ren x
 ppAct ren (ADefn x) = while "checking function" $ ppPName x
 ppAct ren (AData x) = while "checking datatype" $ ppPName x
 ppAct ren (ACon x) = while "checking constructor" $ ppPName x
 
-ppAct ren (ACheck a _A) = while "checking" $ ppwExp ren Wrap a <+> oft <+> ppExp ren _A
+ppAct ren (ACheck a _A) = while "checking" $ ppwExp ren Wrap a <@> oft <+> ppExp ren _A
 ppAct ren (AInfer a) = while "inferring" $ ppExp ren a
 ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> eq <+> ppExp ren y
-ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> vcat0 (ppPats ren qs)
+ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> hcat1 (ppPats ren qs)
 
-while :: String -> Box -> Box
+while :: String -> Doc -> Doc
 while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
-ppHoles :: Verbosity -> Env -> Holes -> Box
+ppHoles :: Verbosity -> Env -> Holes -> Doc
 ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env]
   where
   ren = envRen env
   holes = vcatmap1 (ppHole ren) xs
 
-ppHole :: Ren -> Hole -> Box
+ppHole :: Ren -> Hole -> Doc
 ppHole ren (x, nm, a, _As, _B) =
   (text "Hole" <+> ppMName x nm <+> oft <+> ppExp (telRen ren _As) _B)
-  // line // vcat0 (ppCtxBinds ren _As)
+  // dashes // vcat0 (ppCtxBinds ren _As)
 
 ----------------------------------------------------------------------
 
-ppExp :: Ren -> Exp -> Box
+ppExp :: Ren -> Exp -> Doc
 ppExp ren = ppwExp ren NoWrap
 
-ppArg :: Ren -> (Icit, Exp) -> Box
+ppArg :: Ren -> (Icit, Exp) -> Doc
 ppArg ren (Expl, a) = ppwExp ren Wrap a
 ppArg ren (Impl, a) = braces (ppExp ren a)
 
-ppwExp :: Ren -> Wrap -> Exp -> Box
+ppwExp :: Ren -> Wrap -> Exp -> Doc
 ppwExp ren w Type = text "Type"
 ppwExp ren w (Infer m) = ppInfer m
 ppwExp ren w (Var x) = ppName ren x
@@ -127,85 +127,85 @@ ppwExp ren w (Red x as) = ppPrim ren w x as
 ppwExp ren w (Meta x as) = ppMeta ren w x as
 ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
-ppInfer :: MKind -> Box
+ppInfer :: MKind -> Doc
 ppInfer MInfer = forced
 ppInfer (MHole nm) = hole nm
 
-ppPrim :: Ren -> Wrap -> PName -> Args -> Box
+ppPrim :: Ren -> Wrap -> PName -> Args -> Doc
 ppPrim ren w x [] = ppPName x
 ppPrim ren w x as = lefty w $ ppPName x <+> hcatmap1 (ppArg ren) as
 
-ppMeta :: Ren -> Wrap -> MName -> Args -> Box
+ppMeta :: Ren -> Wrap -> MName -> Args -> Doc
 ppMeta ren w x [] = ppMName x Nothing
 ppMeta ren w x as = lefty w $ ppMName x Nothing <+> hcatmap1 (ppArg ren) as
 
 ----------------------------------------------------------------------
 
-ppPis :: Ren -> Exp -> Box
-ppPis ren (Pi i _A (Bind x _B)) = ppTelBind ren (i, x, _A) <+> ppPis (extRen ren x) _B
+ppPis :: Ren -> Exp -> Doc
+ppPis ren (Pi i _A (Bind x _B)) = ppTelBind ren (i, x, _A) <@> ppPis (extRen ren x) _B
 ppPis ren _B = oft <+> ppExp ren _B
 
-ppLams :: Ren -> Exp -> Box
-ppLams ren (Lam i _A (Bind x b)) = ppTelBind ren (i, x, _A) <+> ppLams (extRen ren x) b
+ppLams :: Ren -> Exp -> Doc
+ppLams ren (Lam i _A (Bind x b)) = ppTelBind ren (i, x, _A) <@> ppLams (extRen ren x) b
 ppLams ren b = arr <+> ppExp ren b
 
 ----------------------------------------------------------------------
 
-ppTelBind :: Ren -> (Icit, Name, Exp) -> Box
+ppTelBind :: Ren -> (Icit, Name, Exp) -> Doc
 ppTelBind ren (i, x, _A) = icit i $ curry (ppCtxBind ren) x _A
 
-ppTelBinds :: Ren -> Tel -> [Box]
+ppTelBinds :: Ren -> Tel -> [Doc]
 ppTelBinds ren xs = map (uncurry icit) (ppBinds ren xs)
 
 ----------------------------------------------------------------------
 
-ppCtxBind :: Ren -> (Name, Exp) -> Box
+ppCtxBind :: Ren -> (Name, Exp) -> Doc
 ppCtxBind ren (x, _A) = ppName (extRen ren x) x <+> oft <+> ppExp ren _A
 
-ppCtxBinds :: Ren -> Tel -> [Box]
+ppCtxBinds :: Ren -> Tel -> [Doc]
 ppCtxBinds ren xs = map snd (ppBinds ren xs)
 
 ----------------------------------------------------------------------
 
-icit :: Icit -> Box -> Box
+icit :: Icit -> Doc -> Doc
 icit Expl = parens
 icit Impl = braces
 
-ppBinds :: Ren -> Tel -> [(Icit, Box)]
+ppBinds :: Ren -> Tel -> [(Icit, Doc)]
 ppBinds ren [] = []
 ppBinds ren ((i, x, _A):_As) = (i, ppCtxBind ren (x, _A)) : ppBinds (extRen ren x) _As
 
 ----------------------------------------------------------------------
 
-ppPat :: Ren -> (Icit, Pat) -> Box
+ppPat :: Ren -> (Icit, Pat) -> Doc
 ppPat ren (Expl, p) = ppPat' ren p
-ppPat ren (Impl, p) = braces (ppPat' ren p)
+ppPat ren (Impl, p) = softindent . braces $ ppPat' ren p
 
-ppPat' :: Ren -> Pat -> Box
+ppPat' :: Ren -> Pat -> Doc
 ppPat' ren (PVar x) = ppName ren x
 ppPat' ren (Inacc Nothing) = forced
 ppPat' ren (Inacc (Just a)) = text "." <> ppwExp ren Wrap a
 ppPat' ren (PCon x []) = ppPName x
-ppPat' ren (PCon x ps) = parens $ ppPName x <+> vcat0 (ppPats ren ps)
+ppPat' ren (PCon x ps) = softindent . parens $ ppPName x <+> hcat1 (ppPats ren ps)
 
-ppPats :: Ren -> Pats -> [Box]
+ppPats :: Ren -> Pats -> [Doc]
 ppPats ren = map (ppPat ren)
 
 ----------------------------------------------------------------------
 
 data Wrap = Wrap | NoWrapL | NoWrap
 
-righty :: Wrap -> Box -> Box
+righty :: Wrap -> Doc -> Doc
 righty NoWrap = id
-righty _ = parens
+righty _ = softindent . parens
 
-lefty :: Wrap -> Box -> Box
-lefty Wrap = parens
+lefty :: Wrap -> Doc -> Doc
+lefty Wrap = softindent . parens
 lefty _ = id
 
 ----------------------------------------------------------------------
 
-ppSig :: Ren -> Sigma -> Box
+ppSig :: Ren -> Sigma -> Doc
 ppSig ren (Def x a _A) = ppDefType ren x _A // ppDefBod ren x a
 ppSig ren (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
 ppSig ren (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
@@ -216,121 +216,129 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
-ppRed :: Ren -> PName -> CheckedClause -> Box
+ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
-ppRed' :: Ren -> PName -> Clause -> Box
-ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <+> ppRHS ren rhs
+ppRed' :: Ren -> PName -> Clause -> Doc
+ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <@> ppRHS ren rhs
 
-ppRHS :: Ren -> RHS -> Box
+ppRHS :: Ren -> RHS -> Doc
 ppRHS ren (Prog a) = def <+> ppExp ren a
 ppRHS ren (Caseless x) = ndef <+> ppName ren x
 
-ppRedTel :: Ren -> PName -> Tel -> Box
+ppRedTel :: Ren -> PName -> Tel -> Doc
 ppRedTel ren x _As = ppPName x <+> hcat1 (ppTelBinds ren _As)
 
 --------------------------------------------------------------------------------
 
-ppDMeta :: Ren -> MName -> Maybe Exp -> Tel -> Exp -> Box
+ppDMeta :: Ren -> MName -> Maybe Exp -> Tel -> Exp -> Doc
 ppDMeta ren x b _As _B = case b of
   Nothing -> ppMetaType ren x _As _B
   Just b -> ppMetaType ren x _As _B // ppMetaBod ren x b
 
-ppMetaType :: Ren -> MName -> Tel -> Exp -> Box
+ppMetaType :: Ren -> MName -> Tel -> Exp -> Doc
 ppMetaType ren x _As@(_:_) _B = ppMName x Nothing <+> ppExp ren (metaType _As _B)
 ppMetaType ren x [] _B = ppMName x Nothing <+> oft <+> ppExp ren _B
 
-ppMetaBod :: Ren -> MName -> Exp -> Box
+ppMetaBod :: Ren -> MName -> Exp -> Doc
 ppMetaBod ren x a = ppMName x Nothing <+> def <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
-ppDefType :: Ren -> Name -> Exp -> Box
+ppDefType :: Ren -> Name -> Exp -> Doc
 ppDefType ren x _A@(Pi _ _ _) = ppName ren x <+> ppExp ren _A
 ppDefType ren x _A = ppName ren x <+> oft <+> ppExp ren _A
 
-ppDefBod :: Ren -> Name -> Exp -> Box
+ppDefBod :: Ren -> Name -> Exp -> Doc
 ppDefBod ren x a = ppName ren x <+> def <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
-ppName :: Ren -> Name -> Box
+ppName :: Ren -> Name -> Doc
 ppName ren x = text . show $ maybe x id (lookup x (reverse ren))
 
-ppPName :: PName -> Box
+ppPName :: PName -> Doc
 ppPName (PName x) = text x
 
-ppMName :: MName -> Maybe String -> Box
+ppMName :: MName -> Maybe String -> Doc
 ppMName n Nothing = text $ show n
 ppMName n (Just nm) = text $ show n ++ "-" ++ nm
 
 ----------------------------------------------------------------------
 
-parens :: Box -> Box
-parens d = char '(' <> d <> char ')'
+code :: Doc -> Doc
+code =  enclose (char '`') squote
 
-braces :: Box -> Box
-braces d = char '{' <> d <> char '}'
+textc :: String -> Doc
+textc x = text x <> colon
 
-code :: Box -> Box
-code d =  char '`' <> d <> char '\''
+oft :: Doc
+oft = colon
 
-brackets :: Box -> Box
-brackets d = char '[' <> d <> char ']'
-
-textc :: String -> Box
-textc x = text x <> char ':'
-
-oft :: Box
-oft = char ':'
-
-arr :: Box
+arr :: Doc
 arr = text "->"
 
-eq :: Box
+eq :: Doc
 eq = text "=="
 
-neq :: Box
+neq :: Doc
 neq = text "!="
 
-def :: Box
+def :: Doc
 def = char '='
 
-ndef :: Box
+ndef :: Doc
 ndef = text "!="
 
-forced :: Box
+forced :: Doc
 forced = char '*'
 
-hole :: Maybe String -> Box
-hole Nothing = char '?'
-hole (Just nm) = char '?'<>text nm
+qmark :: Doc
+qmark = char '?'
 
-line :: Box
-line = text (take 30 (repeat '-'))
+hole :: Maybe String -> Doc
+hole Nothing = qmark
+hole (Just nm) = qmark <> text nm
 
-newline :: Box
-newline = char '\n'
+dashes :: Doc
+dashes = text (take 30 (repeat '-'))
 
-vcat0 :: [Box] -> Box
-vcat0 = vsep 0 left
+----------------------------------------------------------------------
 
-vcat1 :: [Box] -> Box
-vcat1 = vsep 1 left
+(<@>) :: Doc -> Doc -> Doc
+x <@> y = x <> group (nest 2 line) <> y
 
-hcat1 :: [Box] -> Box
-hcat1 = hsep 1 top
+softindent :: Doc -> Doc
+softindent x = empty <> group (nest 2 linebreak) <> x
 
-vcatmaybes :: [Maybe Box] -> Box
+(//) :: Doc -> Doc -> Doc
+x // y = x <> line <> y
+
+(/+/) :: Doc -> Doc -> Doc
+x /+/ y = x <> line <> line <> y
+
+vcat0 :: [Doc] -> Doc
+vcat0 = vcat
+
+vcat1 :: [Doc] -> Doc
+vcat1 = vcat0 . punctuate line
+
+hcat1 :: [Doc] -> Doc
+hcat1 = hcat . punctuate space
+
+vcatmaybes :: [Maybe Doc] -> Doc
 vcatmaybes = vcat1 . catMaybes
 
-vcatmap1 :: (a -> Box) -> [a] -> Box
+vcatmap1 :: (a -> Doc) -> [a] -> Doc
 vcatmap1 f xs = vcat1 (map f xs)
 
-vcatmap0 :: (a -> Box) -> [a] -> Box
+vcatmap0 :: (a -> Doc) -> [a] -> Doc
 vcatmap0 f xs = vcat0 (map f xs)
 
-hcatmap1 :: (a -> Box) -> [a] -> Box
+hcatmap1 :: (a -> Doc) -> [a] -> Doc
 hcatmap1 f xs = hcat1 (map f xs)
+
+render :: Doc -> String
+render doc = displayS (renderPretty 0.4 300 doc) ""
 
 ----------------------------------------------------------------------

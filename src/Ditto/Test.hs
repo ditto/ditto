@@ -8,7 +8,6 @@ import Ditto.Conv
 import Ditto.Whnf
 import Ditto.Monad
 import Test.HUnit
-import Text.PrettyPrint.Boxes
 
 ----------------------------------------------------------------------
 
