@@ -309,7 +309,7 @@ dashes = text (take 30 (repeat '-'))
 x <@> y = x <> group (nest 2 line) <> y
 
 softindent :: Doc -> Doc
-softindent x = empty <> group (nest 2 linebreak) <> x
+softindent x = group (nest 2 linebreak) <> x
 
 (//) :: Doc -> Doc -> Doc
 x // y = x <> line <> y
