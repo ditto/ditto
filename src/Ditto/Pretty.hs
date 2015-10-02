@@ -53,7 +53,7 @@ ppCtxErr verb acts ctx env err = vcatmaybes
   , ppActs ren acts
   , ppCtx ren ctx
   , ppEnvVerb verb ren env
-  ]
+  ] <> line
  where ren = envRen env
 
 ----------------------------------------------------------------------
@@ -96,7 +96,8 @@ while str x = text "...while" <+> text str <+> code x
 ----------------------------------------------------------------------
 
 ppHoles :: Verbosity -> Env -> Holes -> Doc
-ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env]
+ppHoles verb env [] = empty
+ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env] <> line
   where
   ren = envRen env
   holes = vcatmap1 (ppHole ren) xs
@@ -104,7 +105,7 @@ ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env]
 ppHole :: Ren -> Hole -> Doc
 ppHole ren (x, nm, a, _As, _B) =
   (text "Hole" <+> ppMName x nm <+> oft <+> ppExp (telRen ren _As) _B)
-  // dashes // vcat0 (ppCtxBinds ren _As)
+  // dashes <> softapp (vcat0 . ppCtxBinds ren) _As
 
 ----------------------------------------------------------------------
 
@@ -307,6 +308,10 @@ dashes = text (take 30 (repeat '-'))
 
 (<@>) :: Doc -> Doc -> Doc
 x <@> y = x <> group (nest 2 line) <> y
+
+softapp :: ([a] -> Doc) -> [a] -> Doc
+softapp f [] = empty
+softapp f xs = line <> f xs
 
 softindent :: Doc -> Doc
 softindent x = group (nest 2 linebreak) <> x
