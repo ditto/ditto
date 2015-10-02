@@ -35,6 +35,7 @@ betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
   Just xs -> case rhs of
     Prog a -> whnf =<< sub a xs
     Caseless y -> throwGenErr "Reducing a caseless RHS"
+    Split y -> throwGenErr "Reducing a splitting RHS"
   Nothing -> betaRed x cs as
 
 matchExps :: Pats -> Args -> TCM (Maybe Sub)

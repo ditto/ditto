@@ -33,6 +33,7 @@ symHole = symbol strHole
 symInacc = symbol "*"
 symEq = symbol "="
 symNeq = symbol "!="
+symAt = symbol "@"
 symArr = symbol "->"
 symSlash = symbol "/"
 
@@ -85,6 +86,7 @@ parseRHS :: Parser RHS
 parseRHS = choice
   [ try $ Prog <$> (symEq >> parseExp)
   , try $ Caseless <$> (symNeq >> parseName)
+  , try $ Split <$> (symAt >> parseName)
   ]
 
 ----------------------------------------------------------------------

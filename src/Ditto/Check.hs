@@ -56,9 +56,12 @@ checkStmt (SDefn x _A cs) = during (ADefn x) $ do
 checkRHS :: Tel -> Pats -> RHS -> Tel -> Exp -> TCM RHS
 checkRHS _Delta lhs (Prog a) _As _B
   = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
-checkRHS _Delta lhs (Caseless x) _As _B = split _Delta x >>= \case
-    [] -> return (Caseless x)
-    otherwise -> throwGenErr $ "Variable is not caseless: " ++ show x
+checkRHS _Delta lhs (Caseless x) _ _ = split _Delta x >>= \case
+  [] -> return (Caseless x)
+  otherwise -> throwErr (ECaseless x)
+checkRHS _Delta lhs (Split x) _ _ = do
+  cs <- splitClause x _Delta lhs
+  throwErr (ESplit cs)
 
 ----------------------------------------------------------------------
 

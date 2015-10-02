@@ -46,7 +46,9 @@ ppErr ren (EMetas xs) = text "Unsolved metavariables" //
 ppErr ren (ECover _As x qs) = text "Uncovered clause"
   <+> code (ppPName x <+> vcat0 (ppPats (telRen ren _As) qs))
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
-  vcatmap1 (ppRed' ren x) xs
+  vcatmap0 (ppRed' ren x) xs
+ppErr ren (ESplit cs) = text "Clauses after split" //
+  vcatmap0 (ppClause ren) cs
 
 ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Doc
 ppCtxErr verb acts ctx env err = vcatmaybes
@@ -135,7 +137,8 @@ ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
 ppInfer :: MKind -> Doc
 ppInfer MInfer = forced
-ppInfer (MHole nm) = hole nm
+ppInfer (MHole Nothing) = qmark
+ppInfer (MHole (Just x)) = qmark <> text x
 
 ppPrim :: Ren -> Wrap -> PName -> Args -> Doc
 ppPrim ren w x [] = ppPName x
@@ -189,8 +192,7 @@ ppPat ren (Impl, p) = softindent . braces $ ppPat' ren p
 
 ppPat' :: Ren -> Pat -> Doc
 ppPat' ren (PVar x) = ppName ren x
-ppPat' ren (Inacc Nothing) = forced
-ppPat' ren (Inacc (Just a)) = text "." <> ppwExp ren Wrap a
+ppPat' ren (Inacc _) = forced
 ppPat' ren (PCon x []) = ppPName x
 ppPat' ren (PCon x ps) = softindent . parens $ ppPName x <+> hcat1 (ppPats ren ps)
 
@@ -222,6 +224,14 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
+ppClause :: Ren -> CheckedClause -> Doc
+ppClause ren (_As, ps, rhs) = bar
+  <+> hcat1 (ppPats ren' ps)
+  <@> ppRHS ren' rhs
+  where ren' = telRen ren _As
+
+----------------------------------------------------------------------
+
 ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
@@ -231,6 +241,7 @@ ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <@> ppRHS ren rhs
 ppRHS :: Ren -> RHS -> Doc
 ppRHS ren (Prog a) = def <+> ppExp ren a
 ppRHS ren (Caseless x) = ndef <+> ppName ren x
+ppRHS ren (Split x) = at <+> ppName ren x
 
 ppRedTel :: Ren -> PName -> Tel -> Doc
 ppRedTel ren x _As = ppPName x <+> hcat1 (ppTelBinds ren _As)
@@ -302,9 +313,11 @@ forced = char '*'
 qmark :: Doc
 qmark = char '?'
 
-hole :: Maybe String -> Doc
-hole Nothing = qmark
-hole (Just nm) = qmark <> text nm
+bar :: Doc
+bar = char '|'
+
+at :: Doc
+at = char '@'
 
 dashes :: Doc
 dashes = text (take 30 (repeat '-'))

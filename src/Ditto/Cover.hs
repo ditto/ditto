@@ -65,6 +65,9 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
     Var x' -> return [(_As, qs, Caseless x')]
     otherwise -> throwGenErr "Non-renaming in caseless clause"
+  CMatch rs (Split x) -> psub (Var x) rs >>= \case
+    Var x' -> return [(_As, qs, Split x')]
+    otherwise -> throwGenErr "Non-renaming in splitting clause"
   CMatch rs (Prog a) -> do
     a' <- psub a rs
     return [(_As, qs, Prog a')]
@@ -72,5 +75,16 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
     qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
   CMiss -> throwErr (ECover _As nm qs)
+
+----------------------------------------------------------------------
+
+splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
+splitClause x _As ps = do
+  unless (x `elem` names _As) $
+    extCtxs _As (throwErr (EScope x))
+  qss <- split _As x
+  if null qss
+  then return [(_As, ps, Caseless x)]
+  else mapM (\(_As, qs) -> (_As,,Prog hole) <$> psubPats ps qs) qss
 
 ----------------------------------------------------------------------

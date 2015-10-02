@@ -145,7 +145,7 @@ lookupType x = lookupCtx x >>= \case
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
   ctx <- getCtx
-  return $ lookup x (telDict ctx)
+  return $ lookupTel x ctx
 
 lookupSigma :: Name -> TCM (Maybe Sigma)
 lookupSigma x = do

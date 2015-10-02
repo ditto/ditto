@@ -89,7 +89,7 @@ type Hole = (MName, Maybe String, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 
-data RHS = Prog Exp | Caseless Name
+data RHS = Prog Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
@@ -122,6 +122,7 @@ data Err =
   | EMetas [(MName, Tel, Exp)]
   | ECover Tel PName Pats
   | EReach PName [Clause]
+  | ESplit [CheckedClause]
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------
@@ -129,8 +130,8 @@ data Err =
 names :: Tel -> [Name]
 names = map $ \(_,x,_) -> x
 
-telDict :: Tel -> [(Name, Exp)]
-telDict = map (\(_,x,a) -> (x, a))
+lookupTel :: Name -> Tel -> Maybe Exp
+lookupTel x = lookup x . map (\(_,x,a) -> (x, a))
 
 varArgs :: Tel -> Args
 varArgs = map $ \(i,x,_) -> (i, Var x)
@@ -152,6 +153,9 @@ lams = flip $ foldr $ \ (i, x , _A) _B -> Lam i _A (Bind x _B)
 
 apps :: Exp -> Args -> Exp
 apps = foldl $ \ f (i, a) -> App i f a
+
+hole :: Exp
+hole = Infer (MHole Nothing)
 
 ----------------------------------------------------------------------
 
