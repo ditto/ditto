@@ -28,7 +28,8 @@ symAscribe = symbol ":"
 symKind = symbol "::"
 symChoice = symbol "|"
 symInfer = symbol "*"
-symHole = symbol "?"
+strHole = "?"
+symHole = symbol strHole
 symInacc = symbol "*"
 symEq = symbol "="
 symNeq = symbol "!="
@@ -184,10 +185,18 @@ parseInfer :: Parser Exp
 parseInfer = try $ symInfer >> return (Infer MInfer)
 
 parseHole :: Parser Exp
-parseHole = try $ do
-    symHole
-    nm <- optionMaybe parseIdent
-    return (Infer $ MHole nm)
+parseHole = parseNamedHole <|> parseAnonHole
+
+parseNamedHole :: Parser Exp
+parseNamedHole = try $ do
+  string strHole
+  nm <- parseIdent
+  return . Infer . MHole . Just $ nm
+
+parseAnonHole :: Parser Exp
+parseAnonHole = try $ do
+  symHole
+  return . Infer . MHole $ Nothing
 
 parseVar :: Parser Exp
 parseVar = try $ Var <$> parseName
