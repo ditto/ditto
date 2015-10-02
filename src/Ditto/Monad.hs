@@ -185,7 +185,7 @@ renderHoles :: Holes -> TCM String
 renderHoles xs = do
   verb <- getVerbosity
   env <- getEnv
-  return . render $ ppHoles verb env xs
+  return . render $ ppCtxHoles verb env xs
 
 throwGenErr :: String -> TCM a
 throwGenErr = throwErr . EGen

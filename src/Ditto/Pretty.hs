@@ -1,6 +1,7 @@
 module Ditto.Pretty where
 import Ditto.Syntax
 import Data.Maybe
+import Data.Maybe
 import Data.List hiding ( group )
 import Text.PrettyPrint.Leijen
 
@@ -53,7 +54,7 @@ ppCtxErr verb acts ctx env err = vcatmaybes
   , ppActs ren acts
   , ppCtx ren ctx
   , ppEnvVerb verb ren env
-  ] <> line
+  ]
  where ren = envRen env
 
 ----------------------------------------------------------------------
@@ -95,17 +96,21 @@ while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
-ppHoles :: Verbosity -> Env -> Holes -> Doc
-ppHoles verb env [] = empty
-ppHoles verb env xs = vcatmaybes [Just holes, ppEnvVerb verb ren env] <> line
+ppCtxHoles :: Verbosity -> Env -> Holes -> Doc
+ppCtxHoles verb env xs = vcatmaybes [holes, envVerb]
   where
   ren = envRen env
-  holes = vcatmap1 (ppHole ren) xs
+  holes = ppHoles ren xs
+  envVerb = ppEnvVerb verb ren env
+
+ppHoles :: Ren -> Holes -> Maybe Doc
+ppHoles ren [] = Nothing
+ppHoles ren xs = Just $ vcatmap1 (ppHole ren) xs
 
 ppHole :: Ren -> Hole -> Doc
 ppHole ren (x, nm, a, _As, _B) =
   (text "Hole" <+> ppMName x nm <+> oft <+> ppExp (telRen ren _As) _B)
-  // dashes <> softapp (vcat0 . ppCtxBinds ren) _As
+  // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
 
 ----------------------------------------------------------------------
 
@@ -309,9 +314,13 @@ dashes = text (take 30 (repeat '-'))
 (<@>) :: Doc -> Doc -> Doc
 x <@> y = x <> group (nest 2 line) <> y
 
-softapp :: ([a] -> Doc) -> [a] -> Doc
-softapp f [] = empty
-softapp f xs = line <> f xs
+softappl :: ([a] -> Doc) -> [a] -> Doc
+softappl f [] = empty
+softappl f xs = line <> f xs
+
+softappr :: ([a] -> Doc) -> [a] -> Doc
+softappr f [] = empty
+softappr f xs = f xs <> line
 
 softindent :: Doc -> Doc
 softindent x = group (nest 2 linebreak) <> x
@@ -332,7 +341,7 @@ hcat1 :: [Doc] -> Doc
 hcat1 = hcat . punctuate space
 
 vcatmaybes :: [Maybe Doc] -> Doc
-vcatmaybes = vcat1 . catMaybes
+vcatmaybes = softappr vcat1 . catMaybes
 
 vcatmap1 :: (a -> Doc) -> [a] -> Doc
 vcatmap1 f xs = vcat1 (map f xs)
