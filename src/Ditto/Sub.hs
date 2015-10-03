@@ -7,28 +7,6 @@ import Control.Monad
 
 ----------------------------------------------------------------------
 
-fv :: Exp -> [Name]
-fv (Var x) = [x]
-fv Type = []
-fv (Infer _) = []
-fv (Form _ is) = fvs is
-fv (Con _ as) = fvs as
-fv (Red _ as) = fvs as
-fv (Meta _ as) = fvs as
-fv (Pi _ _A _B) = fv _A ++ fvBind _B
-fv (Lam _ _A b) = fv _A ++ fvBind b
-fv (App _ a b) = fv a ++ fv b
-
-fvs :: Args -> [Name]
-fvs as = concatMap fv (map snd as)
-
-fvBind :: Bind -> [Name]
-fvBind (Bind n b) = n `delete` nub (fv b)
-
-fvTel :: Tel -> [Name]
-fvTel [] = []
-fvTel ((_, _X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
-
 fvCtx :: Exp -> TCM [Name]
 fvCtx a = flip intersect (fv a) <$> (names <$> getCtx)
 

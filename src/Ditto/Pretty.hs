@@ -186,18 +186,31 @@ ppBinds ren ((i, x, _A):_As) = (i, ppCtxBind ren (x, _A)) : ppBinds (extRen ren 
 
 ----------------------------------------------------------------------
 
-ppPat :: Ren -> (Icit, Pat) -> Doc
-ppPat ren (Expl, p) = ppPat' ren p
-ppPat ren (Impl, p) = softindent . braces $ ppPat' ren p
+type UsedNames = Maybe [Name]
 
-ppPat' :: Ren -> Pat -> Doc
-ppPat' ren (PVar x) = ppName ren x
-ppPat' ren (Inacc _) = forced
-ppPat' ren (PCon x []) = ppPName x
-ppPat' ren (PCon x ps) = softindent . parens $ ppPName x <+> hcat1 (ppPats ren ps)
+ppPat :: UsedNames -> Ren -> (Icit, Pat) -> Doc
+ppPat xs ren (Expl, p) = ppPat' xs ren p
+ppPat xs ren (Impl, p) = softindent . braces $ ppPat' xs ren p
+
+ppPat' :: UsedNames -> Ren -> Pat -> Doc
+ppPat' xs ren (PVar x) = ppName ren x
+ppPat' xs ren (Inacc _) = forced
+ppPat' xs ren (PCon x (ppPats' xs ren -> [])) = ppPName x
+ppPat' xs ren (PCon x (ppPats' xs ren -> ps)) = softindent . parens $ ppPName x <+> hcat1 ps
+
+hiddenPat :: UsedNames -> (Icit, Pat) -> Bool
+hiddenPat xs (Impl, Inacc _) = True
+hiddenPat (Just xs) (Impl, PVar x) | isUniq x = x `notElem` xs
+hiddenPat xs _ = False
+
+ppPats' :: UsedNames -> Ren -> Pats -> [Doc]
+ppPats' xs ren = map (ppPat xs ren) . reject (hiddenPat xs)
+
+ppPatsHiding :: RHS -> Ren -> Pats -> [Doc]
+ppPatsHiding (Just . fvRHS -> xs) = ppPats' xs
 
 ppPats :: Ren -> Pats -> [Doc]
-ppPats ren = map (ppPat ren)
+ppPats = ppPats' Nothing
 
 ----------------------------------------------------------------------
 
@@ -226,7 +239,7 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ppClause :: Ren -> CheckedClause -> Doc
 ppClause ren (_As, ps, rhs) = bar
-  <+> hcat1 (ppPats ren' ps)
+  <+> hcat1 (ppPatsHiding rhs ren' ps)
   <@> ppRHS ren' rhs
   where ren' = telRen ren _As
 
@@ -236,7 +249,7 @@ ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
 ppRed' :: Ren -> PName -> Clause -> Doc
-ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <@> ppRHS ren rhs
+ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPatsHiding rhs ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc
 ppRHS ren (Prog a) = def <+> ppExp ren a

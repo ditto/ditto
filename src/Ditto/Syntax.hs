@@ -1,10 +1,14 @@
 module Ditto.Syntax where
+import Data.List
 import Data.Maybe
 
 ----------------------------------------------------------------------
 
 snoc :: [a] -> a -> [a]
 snoc xs x = xs ++ [x]
+
+reject :: (a -> Bool) -> [a] -> [a]
+reject p = filter (not . p)
 
 ----------------------------------------------------------------------
 
@@ -157,6 +161,10 @@ apps = foldl $ \ f (i, a) -> App i f a
 hole :: Exp
 hole = Infer (MHole Nothing)
 
+isUniq :: Name -> Bool
+isUniq (Name _ (Just _)) = True
+isUniq _ = False
+
 ----------------------------------------------------------------------
 
 formType :: Tel -> Exp
@@ -174,6 +182,35 @@ viewSpine :: Exp -> (Exp, Args)
 viewSpine (App i f a) = (g, snoc as (i, a))
   where (g, as) = viewSpine f
 viewSpine x = (x, [])
+
+----------------------------------------------------------------------
+
+fv :: Exp -> [Name]
+fv (Var x) = [x]
+fv Type = []
+fv (Infer _) = []
+fv (Form _ is) = fvs is
+fv (Con _ as) = fvs as
+fv (Red _ as) = fvs as
+fv (Meta _ as) = fvs as
+fv (Pi _ _A _B) = fv _A ++ fvBind _B
+fv (Lam _ _A b) = fv _A ++ fvBind b
+fv (App _ a b) = fv a ++ fv b
+
+fvs :: Args -> [Name]
+fvs as = concatMap fv (map snd as)
+
+fvBind :: Bind -> [Name]
+fvBind (Bind n b) = n `delete` nub (fv b)
+
+fvTel :: Tel -> [Name]
+fvTel [] = []
+fvTel ((_, _X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
+
+fvRHS :: RHS -> [Name]
+fvRHS (Prog a) = fv a
+fvRHS (Caseless x) = [x]
+fvRHS (Split x) = [x]
 
 ----------------------------------------------------------------------
 
