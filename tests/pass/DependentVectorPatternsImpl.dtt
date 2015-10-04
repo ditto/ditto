@@ -3,12 +3,12 @@ data Nat : Type where
 | suc (n : Nat) : Nat
 end
 
-def add (n m : Nat) : Nat where
+def add (n,m : Nat) : Nat where
 | zero m = m
 | (suc n) m = suc (add n m)
 end
 
-def mult (n m : Nat) : Nat where
+def mult (n,m : Nat) : Nat where
 | zero m = zero
 | (suc n) m = add m (mult n m)
 end
@@ -18,12 +18,12 @@ data Vec (A : Type) :: (n : Nat) : Type where
 | cons {n : Nat} (x : A) (xs : Vec A n) : Vec A (suc n)
 end
 
-def append {A : Type} {n m : Nat} (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where
+def append {A : Type} {n,m : Nat} (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where
 | nil ys = ys
 | (cons x xs) ys = cons x (append xs ys)
 end
 
-def concat {A : Type} {n m : Nat} (xss : Vec (Vec A m) n) : Vec A (mult n m) where
+def concat {A : Type} {n,m : Nat} (xss : Vec (Vec A m) n) : Vec A (mult n m) where
 | nil = nil
 | (cons xs xss) = append xs (concat xss)
 end

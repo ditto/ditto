@@ -88,7 +88,7 @@ duplicateConstructor = unlines
 
 enumerationPatterns = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "def not (b : Bool) : Bool where"
@@ -96,13 +96,13 @@ enumerationPatterns = unlines
   , "| false = true"
   , "end"
 
-  , "def nand (b1 b2 : Bool) : Bool where"
+  , "def nand (b1,b2 : Bool) : Bool where"
   , "| true true = false"
   , "| b1 b2 = true"
   , "end"
 
   , "data RGB : Type where"
-  , "| red/green/blue : RGB"
+  , "| red,green,blue : RGB"
   , "end"
 
   , "def colorBlind (r : RGB) : Bool where"
@@ -122,17 +122,17 @@ nonDependentPatterns = unlines
   , "| (suc n) = n"
   , "end"
 
-  , "def add (n m : Nat) : Nat where"
+  , "def add (n,m : Nat) : Nat where"
   , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
 
-  , "def mult (n m : Nat) : Nat where"
+  , "def mult (n,m : Nat) : Nat where"
   , "| zero m = zero"
   , "| (suc n) m = add n (mult n m)"
   , "end"
 
-  , "def max (x y : Nat) : Nat where"
+  , "def max (x,y : Nat) : Nat where"
   , "| x zero = x"
   , "| zero y = y"
   , "| (suc x) (suc y) = suc (max x y)"
@@ -141,7 +141,7 @@ nonDependentPatterns = unlines
 
 simpleComputingPatterns = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Nat : Type where"
@@ -149,7 +149,7 @@ simpleComputingPatterns = unlines
   , "| suc (n : Nat) : Nat"
   , "end"
 
-  , "def add (n m : Nat) : Nat where"
+  , "def add (n,m : Nat) : Nat where"
   , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
@@ -159,12 +159,12 @@ simpleComputingPatterns = unlines
   , "| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)"
   , "end"
 
-  , "def zeroPad (n m : Nat) (bs : Bits m) : Bits (add n m) where"
+  , "def zeroPad (n,m : Nat) (bs : Bits m) : Bits (add n m) where"
   , "| zero m bs = bs"
   , "| (suc n) m bs = cons (add n m) false (zeroPad n m bs)"
   , "end"
 
-  , "data Id (A : Type) (x y : A) : Type where"
+  , "data Id (A : Type) (x,y : A) : Type where"
   , "| refl (A : Type) (x : A) : Id A x x"
   , "end"
 
@@ -187,14 +187,14 @@ simpleComputingPatterns = unlines
 
 simpleCapturingRHS = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Sing (b : Bool) : Type where"
   , "| sing : (b : Bool) : Sing b "
   , "end"
 
-  , "def capture (x x : Bool) : Sing x where"
+  , "def capture (x,x : Bool) : Sing x where"
   , "| y true = sing true"
   , "| y false = sing false"
   , "end"
@@ -202,7 +202,7 @@ simpleCapturingRHS = unlines
 
 unreachableIllTypedNonDependent = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Nat : Type where"
@@ -218,7 +218,7 @@ unreachableIllTypedNonDependent = unlines
 
 unreachableMultipleWildcardsNonDependent = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "def illNot (b : Bool) : Bool where"
@@ -229,7 +229,7 @@ unreachableMultipleWildcardsNonDependent = unlines
 
 nonLinearPatterns = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Bits : Type where"
@@ -246,7 +246,7 @@ nonLinearPatterns = unlines
 
 uncoveredNonDependent = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Nat : Type where"
@@ -262,11 +262,11 @@ uncoveredNonDependent = unlines
 
 captureConArgs = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Foo (b : Bool) : Type where"
-  , "| foo (b b : Bool) : Foo b"
+  , "| foo (b,b : Bool) : Foo b"
   , "end"
 
   , "def captureTest : Foo true where"
@@ -276,7 +276,7 @@ captureConArgs = unlines
 
 inferringCon = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Sing (A : Type) (a : A) : Type where"
@@ -294,7 +294,7 @@ inferringCon = unlines
 
 captureDeltaWithLambda = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "def capture (b : Bool) : Bool where"
@@ -333,7 +333,7 @@ exFalsoCapture = unlines
 
 captureDeltaWithCoveringWithoutBinding = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "def capture (Bool : Bool) : Type where"
@@ -343,7 +343,7 @@ captureDeltaWithCoveringWithoutBinding = unlines
 
 captureDeltaWithCoveringWithBinding = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Sing (b : Bool) : Type where"
@@ -357,7 +357,7 @@ captureDeltaWithCoveringWithBinding = unlines
 
 simpleDependentPatterns = unlines
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "data Nat : Type where"
@@ -365,12 +365,12 @@ simpleDependentPatterns = unlines
   , "| suc (n : Nat) : Nat"
   , "end"
 
-  , "def add (n m : Nat) : Nat where"
+  , "def add (n,m : Nat) : Nat where"
   , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
 
-  , "def mult (n m : Nat) : Nat where"
+  , "def mult (n,m : Nat) : Nat where"
   , "| zero m = zero"
   , "| (suc n) m = add n (mult n m)"
   , "end"
@@ -380,7 +380,7 @@ simpleDependentPatterns = unlines
   , "| cons (n : Nat) (b : Bool) (bs : Bits n) : Bits (suc n)"
   , "end"
 
-  , "def append (n m : Nat) (xs : Bits n) (ys : Bits m) : Bits (add n m) where"
+  , "def append (n,m : Nat) (xs : Bits n) (ys : Bits m) : Bits (add n m) where"
   , "| * m nil ys = ys"
   , "| * m (cons n x xs) ys = cons (add n m) x (append n m xs ys)"
   , "end"
@@ -397,12 +397,12 @@ vectorData =
   , "| suc (n : Nat) : Nat"
   , "end"
 
-  , "def add (n m : Nat) : Nat where"
+  , "def add (n,m : Nat) : Nat where"
   , "| zero m = m"
   , "| (suc n) m = suc (add n m)"
   , "end"
 
-  , "def mult (n m : Nat) : Nat where"
+  , "def mult (n,m : Nat) : Nat where"
   , "| zero m = zero"
   , "| (suc n) m = add m (mult n m)"
   , "end"
@@ -418,12 +418,12 @@ dependentVectorPatternsUnif = unlines $ vectorData ++
   , "| A n (cons * * x xs) = xs"
   , "end"
 
-  , "def append (A : *) (n m : *) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
+  , "def append (A : *) (n,m : *) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
   , "| A * m (nil *) ys = ys"
   , "| A * m (cons * n x xs) ys = cons * * x (append * * * xs ys)"
   , "end"
 
-  , "def concat (A : *) (n m : *) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
+  , "def concat (A : *) (n,m : *) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
   , "| A * m (nil *) = nil *"
   , "| A * m (cons * n xs xss) = append * * * xs (concat * * * xss)"
   , "end"
@@ -434,12 +434,12 @@ dependentVectorPatterns = unlines $ vectorData ++
   , "| A n (cons * * x xs) = xs"
   , "end"
 
-  , "def append (A : Type) (n m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
+  , "def append (A : Type) (n,m : Nat) (xs : Vec A n) (ys : Vec A m) : Vec A (add n m) where"
   , "| A * m (nil *) ys = ys"
   , "| A * m (cons * n x xs) ys = cons A (add n m) x (append A n m xs ys)"
   , "end"
 
-  , "def concat (A : Type) (n m : Nat) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
+  , "def concat (A : Type) (n,m : Nat) (xss : Vec (Vec A m) n) : Vec A (mult n m) where"
   , "| A * m (nil *) = nil A"
   , "| A * m (cons * n xs xss) = append A m (mult n m) xs (concat A n m xss)"
   , "end"
@@ -448,7 +448,7 @@ dependentVectorPatterns = unlines $ vectorData ++
 evalData =
   [ "data Tp : Type where"
   , "| Bool' : Tp"
-  , "| Arr' (A B : Tp) : Tp"
+  , "| Arr' (A,B : Tp) : Tp"
   , "end"
 
   , "data Ctx : Type where"
@@ -458,14 +458,14 @@ evalData =
 
   , "data In : (A : Tp) (As : Ctx) : Type where"
   , "| here (A : Tp) (As : Ctx) : In A (ext As A)"
-  , "| there (A B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)"
+  , "| there (A,B : Tp) (As : Ctx) (i : In A As) : In A (ext As B)"
   , "end"
 
   , "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
-  , "def if (C : Type) (b : Bool) (ct cf : C) : C where"
+  , "def if (C : Type) (b : Bool) (ct,cf : C) : C where"
   , "| C true ct cf = ct"
   , "| C false ct cf = cf"
   , "end"
@@ -482,10 +482,10 @@ evalData =
 
   , "data Exp : (As : Ctx) (A : Tp) : Type where"
   , "| var' (As : Ctx) (A : Tp) (i : In A As) : Exp As A"
-  , "| true'/false' (As : Ctx) : Exp As Bool'"
-  , "| if' (As : Ctx) (C : Tp) (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
-  , "| lam' (As : Ctx) (A B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
-  , "| app' (As : Ctx) (A B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "| true',false' (As : Ctx) : Exp As Bool'"
+  , "| if' (As : Ctx) (C : Tp) (b : Exp As Bool') (ct,cf : Exp As C) : Exp As C"
+  , "| lam' (As : Ctx) (A,B : Tp) (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' (As : Ctx) (A,B : Tp) (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
   , "end"
   ]
 
@@ -524,7 +524,7 @@ intrinsicEvaluatorUnif = unlines $ evalData ++
 intrinsicEvaluatorImpl = unlines
   [ "data Tp : Type where"
   , "| Bool' : Tp"
-  , "| Arr' (A B : Tp) : Tp"
+  , "| Arr' (A,B : Tp) : Tp"
   , "end"
 
   , "data Ctx : Type where"
@@ -538,10 +538,10 @@ intrinsicEvaluatorImpl = unlines
   , "end"
 
   , "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
-  , "def if {C : Type} (b : Bool) (ct cf : C) : C where"
+  , "def if {C : Type} (b : Bool) (ct,cf : C) : C where"
   , "| true ct cf = ct"
   , "| false ct cf = cf"
   , "end"
@@ -558,10 +558,10 @@ intrinsicEvaluatorImpl = unlines
 
   , "data Exp (As : Ctx) :: (A : Tp) : Type where"
   , "| var' {A : Tp} (i : In A As) : Exp As A"
-  , "| true'/false' : Exp As Bool'"
-  , "| if' {C : Tp} (b : Exp As Bool') (ct cf : Exp As C) : Exp As C"
-  , "| lam' {A B : Tp} (b : Exp (ext As A) B) : Exp As (Arr' A B)"
-  , "| app' {A B : Tp} (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
+  , "| true',false' : Exp As Bool'"
+  , "| if' {C : Tp} (b : Exp As Bool') (ct,cf : Exp As C) : Exp As C"
+  , "| lam' {A,B : Tp} (b : Exp (ext As A) B) : Exp As (Arr' A B)"
+  , "| app' {A,B : Tp} (f : Exp As (Arr' A B)) (a : Exp As A) : Exp As B"
   , "end"
 
   , "def lookup {A : *} {As : *} (i : In A As) (as : Env As) : El A where"
@@ -582,11 +582,11 @@ intrinsicEvaluatorImpl = unlines
 intrinsicUnifUnsolved = unlines $
   [ "data Tp : Type where"
   , "| Bool' : Tp"
-  , "| Arr' (A B : *) : Tp"
+  , "| Arr' (A,B : *) : Tp"
   , "end"
 
   , "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
 
   , "def El (A : Tp) : Type where"
@@ -614,17 +614,17 @@ caselessDependent = unlines
   , "| suc (n : Nat) : Nat"
   , "end"
 
-  , "data Leq (n m : Nat) : Type where"
+  , "data Leq (n,m : Nat) : Type where"
   , "| leqZero (n : Nat) : Leq zero n"
-  , "| leqSuc {n m : Nat} (p : Leq n m) : Leq (suc n) (suc m)"
+  , "| leqSuc {n,m : Nat} (p : Leq n m) : Leq (suc n) (suc m)"
   , "end"
 
-  , "def leqSucR (n m : Nat) (p : Leq n m) : Leq n (suc m) where"
+  , "def leqSucR (n,m : Nat) (p : Leq n m) : Leq n (suc m) where"
   , "| * m (leqZero *) = leqZero (suc m)"
   , "| * * (leqSuc {n} {m} p) = leqSuc {n} {suc m} (leqSucR n m p)"
   , "end"
 
-  , "def leqPredL {n m : Nat} (p : Leq (suc n) m) : Leq n m where"
+  , "def leqPredL {n,m : Nat} (p : Leq (suc n) m) : Leq n m where"
   , "| {n} {zero} p != p"
   , "| {n} {suc m} (leqSuc {*} {*} p) = leqSucR n m p"
   , "end"
@@ -632,12 +632,12 @@ caselessDependent = unlines
 
 boolData =
   [ "data Bool : Type where"
-  , "| true/false : Bool"
+  , "| true,false : Bool"
   , "end"
   ]
 
 simpleUnif = unlines $ boolData ++
-  [ "data Id {A : Type} (x y : A) : Type where"
+  [ "data Id {A : Type} (x,y : A) : Type where"
   , "| refl {A : Type} {x : A} : Id {A} x x"
   , "end"
 
@@ -647,7 +647,7 @@ simpleUnif = unlines $ boolData ++
   ]
 
 simpleImpl = unlines $ boolData ++
-  [ "data Id {A : Type} (x y : A) : Type where"
+  [ "data Id {A : Type} (x,y : A) : Type where"
   , "| refl {A : Type} {x : A} : Id x x"
   , "end"
 

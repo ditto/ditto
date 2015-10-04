@@ -35,7 +35,7 @@ symEq = symbol "="
 symNeq = symbol "!="
 symAt = symbol "@"
 symArr = symbol "->"
-symSlash = symbol "/"
+symComma = symbol ","
 
 symLParen = symbol "("
 symRParen = symbol ")"
@@ -143,8 +143,8 @@ parseParams = try $ do
 parseCon :: Parser Cons
 parseCon = try $ do
   symChoice
-  xs <- slashSep parsePName
-  optional $ symAscribe
+  xs <- commaSep parsePName
+  optional symAscribe
   _A <- parseExp
   return (map (\x -> (x, _A)) xs)
 
@@ -240,22 +240,22 @@ parseTel = concat <$> many1 (parseImplAnnot <|> parseExplAnnot)
 
 parseImplAnnot :: Parser Tel
 parseImplAnnot = try $ braces $ do
-  xs <- many1 parseName
-  symAscribe
+  xs <- commaSep parseName
+  optional symAscribe
   a <- parseExp
   return $ map (\ x -> (Impl, x , a)) xs
 
 parseExplAnnot :: Parser Tel
 parseExplAnnot = try $ parens $ do
-  xs <- many1 parseName
-  symAscribe
+  xs <- commaSep parseName
+  optional symAscribe
   a <- parseExp
   return $ map (\ x -> (Expl, x , a)) xs
 
 ----------------------------------------------------------------------
 
-slashSep :: Parser a -> Parser [a]
-slashSep p = p `sepBy1` symSlash
+commaSep :: Parser a -> Parser [a]
+commaSep p = p `sepBy1` symComma
 
 parens :: Parser a -> Parser a
 parens = between symLParen symRParen
