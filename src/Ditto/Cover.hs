@@ -27,7 +27,7 @@ splitAtName _As x = (_As1, _A, tail _As2) where
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X js -> do
-    _Bs <- lookupConsFresh _X
+    _Bs <- lookupConsFresh Acc _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
@@ -57,7 +57,9 @@ partitionByPat (fv . embedPat -> xs) = partition (\(_,x,_) -> elem x xs)
 ----------------------------------------------------------------------
 
 cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
-cover nm cs _As = cover' nm cs _As (pvarPats _As)
+cover nm cs _As = do
+  (_As', _) <- freshTel Acc _As
+  cover' nm cs _As' (pvarPats _As')
 
      --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]

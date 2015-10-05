@@ -18,20 +18,28 @@ data Verbosity = Normal | Verbose
 data Icit = Expl | Impl
   deriving (Show, Read, Eq)
 
+data Essible = Acc | Inacc
+  deriving (Show, Read, Eq)
+
 ----------------------------------------------------------------------
 
-data Name = Name String (Maybe Integer)
+data Name = Name Essible String (Maybe Integer)
   deriving (Read, Eq)
 
 instance Show Name where
-  show (Name x Nothing) = x
-  show (Name x (Just n)) = x ++ "$" ++ show n
+  show (Name e x m) = prefix ++ x ++ suffix
+    where
+    prefix = case e of Acc -> ""; Inacc -> "."
+    suffix = case m of Nothing -> ""; Just n -> "$" ++ show n
 
-s2n :: String -> Name
-s2n x = Name x Nothing
+s2n :: Essible -> String -> Name
+s2n e x = Name e x Nothing
 
 uniqName :: Name -> Integer -> Name
-uniqName (Name x _) n = Name x (Just n)
+uniqName x@(Name e _ _) n = uniqEName e x n
+
+uniqEName :: Essible -> Name -> Integer -> Name
+uniqEName e (Name _ x _) n = Name e x (Just n)
 
 ----------------------------------------------------------------------
 
@@ -42,10 +50,10 @@ instance Show PName where
   show (PName x) = "#" ++ x
 
 pname2name :: PName -> Name
-pname2name (PName x) = Name x Nothing
+pname2name (PName x) = Name Acc x Nothing
 
 name2pname :: Name -> Maybe PName
-name2pname (Name x Nothing) = Just (PName x)
+name2pname (Name Acc x Nothing) = Just (PName x)
 name2pname _ = Nothing
 
 ----------------------------------------------------------------------

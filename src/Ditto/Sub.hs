@@ -61,23 +61,23 @@ subTel1 xa = mapM (\(i, y, _A) -> (i,y,) <$> sub1 xa _A)
 
 ----------------------------------------------------------------------
 
-freshTel :: Tel -> TCM (Tel, Sub)
-freshTel [] = return ([], [])
-freshTel ((i, x, _A):_As) = do
-  x' <- gensymHint x
-  (_As', xs) <- freshTel =<< subTel1 (x, Var x') _As
+freshTel :: Essible -> Tel -> TCM (Tel, Sub)
+freshTel e [] = return ([], [])
+freshTel e ((i, x, _A):_As) = do
+  x' <- gensymEHint e x
+  (_As', xs) <- freshTel e =<< subTel1 (x, Var x') _As
   return ((i, x', _A):_As', (x, Var x'):xs)
 
 ----------------------------------------------------------------------
 
-freshCons :: (PName, Tel, Args) -> TCM (PName, Tel, Args)
-freshCons (y, _Bs, is) = do
-  (_Bs', xs) <- freshTel _Bs
+freshCons :: Essible -> (PName, Tel, Args) -> TCM (PName, Tel, Args)
+freshCons e (y, _Bs, is) = do
+  (_Bs', xs) <- freshTel e _Bs
   is' <- subs is xs
   return (y, _Bs', is')
 
-lookupConsFresh :: PName -> TCM [(PName, Tel, Args)]
-lookupConsFresh x = mapM freshCons =<< lookupCons x
+lookupConsFresh :: Essible -> PName -> TCM [(PName, Tel, Args)]
+lookupConsFresh e x = mapM (freshCons e) =<< lookupCons x
 
 ----------------------------------------------------------------------
 

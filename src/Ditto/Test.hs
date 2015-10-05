@@ -656,6 +656,12 @@ simpleImpl = unlines $ boolData ++
   , "end"
   ]
 
+inaccParam = unlines $ boolData ++
+  [ "def not (* : Bool) : Bool where"
+  , "| true = false"
+  , "| false = true"
+  , "end"
+  ]
 
 printCtx = "def Fail : Type where undefined end"
 
@@ -718,6 +724,7 @@ checkTests = "Check tests" ~:
   , testChecks intrinsicEvaluatorUnif
   , testChecksFails intrinsicUnifUnsolved
   , testChecks intrinsicEvaluatorImpl
+  , testChecks inaccParam
   ]
 
 prettyTests :: Test
@@ -730,7 +737,7 @@ prettyTests = "Pretty tests" ~:
 parseTests :: Test
 parseTests = "Parse tests" ~:
   [ testParse "Type" (Just Type)
-  , testParse "A" (Just (Var (s2n "A")))
+  , testParse "A" (Just (Var (s2n Acc "A")))
   , testParse "F x y z" Nothing
   , testParseFails "(x : where) (y : B) : Type"
   , testParseFails "(Type : A) (y : B) : Type"
@@ -768,7 +775,7 @@ asExp s = case parseE s of
 ----------------------------------------------------------------------
 
 testPretty :: [String] -> String -> String -> Test
-testPretty (idRen . map s2n -> ren) (asExp -> a) (asExp -> b) = TestCase $ 
+testPretty (idRen . map (s2n Acc) -> ren) (asExp -> a) (asExp -> b) = TestCase $ 
   assertEqual "Pretty error" a (asExp . render . ppExp ren $ b)
 
 ----------------------------------------------------------------------

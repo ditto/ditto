@@ -11,7 +11,7 @@ nameFor :: [Name] -> Name -> Name
 nameFor xs (namesFor -> ys) = fromJust (find (flip notElem xs) ys)
 
 namesFor :: Name -> [Name]
-namesFor (Name x _) = s2n x : map (\n -> s2n (x ++ show n)) [2..]
+namesFor (Name e x _) = s2n e x : map (\n -> s2n e (x ++ show n)) [2..]
 
 domRen :: Ren -> [Name]
 domRen = map fst

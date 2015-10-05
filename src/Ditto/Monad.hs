@@ -68,6 +68,9 @@ gensym = do
 gensymHint :: Name -> TCM Name
 gensymHint x = uniqName x <$> gensym
 
+gensymEHint :: Essible -> Name -> TCM Name
+gensymEHint e x = uniqEName e x <$> gensym
+
 gensymMeta :: TCM MName
 gensymMeta = do
   sym <- gensym

@@ -114,7 +114,7 @@ parsePCon = try $ do
   return $ PCon x xs
 
 parsePVar :: Parser Pat
-parsePVar = try $ PVar <$> parseName
+parsePVar = try $ PVar <$> parseAccName
 
 parsePInacc :: Parser Pat
 parsePInacc = try $ do
@@ -207,7 +207,15 @@ parsePName :: Parser PName
 parsePName = PName <$> parseIdent
 
 parseName :: Parser Name
-parseName = s2n <$> parseIdent
+parseName = parseAccName <|> parseInaccName
+
+parseAccName :: Parser Name
+parseAccName = s2n Acc <$> parseIdent
+
+parseInaccName :: Parser Name
+parseInaccName = try $ do
+  symInacc
+  return (s2n Inacc "x")
 
 parseIdent :: Parser String
 parseIdent = try $ do
