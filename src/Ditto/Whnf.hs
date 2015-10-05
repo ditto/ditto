@@ -49,7 +49,7 @@ matchExp (i1, p) (i2, a) = return Nothing
 
 matchExp' :: Pat -> Exp -> TCM (Maybe Sub)
 matchExp' (PVar x) a = return $ Just [(x, a)]
-matchExp' (Inacc _) a = return $ Just []
+matchExp' (PInacc _) a = return $ Just []
 matchExp' (PCon x ps) (Con y as) | x == y = matchExps ps as
 matchExp' _ _ = return Nothing
 

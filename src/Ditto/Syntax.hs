@@ -104,7 +104,7 @@ data Sigma =
   | DMeta MName MKind (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
 
-data Pat = PVar Name | Inacc (Maybe Exp) | PCon PName Pats
+data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
   deriving (Show, Read, Eq)
 
 data Act =

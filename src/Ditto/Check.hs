@@ -87,7 +87,7 @@ patternsVars = concat . map (patternVars . snd)
 
 patternVars :: Pat -> [Name]
 patternVars (PVar x) = [x]
-patternVars (Inacc _) = []
+patternVars (PInacc _) = []
 patternVars (PCon _ ps) = patternsVars ps
 
 ----------------------------------------------------------------------
@@ -105,7 +105,7 @@ atomizePattern (PVar x) = case name2pname x of
     otherwise -> return $ PVar x
   Nothing -> return $ PVar x
 atomizePattern (PCon x ps) = PCon x <$> atomizePatterns ps
-atomizePattern x@(Inacc _) = return x
+atomizePattern x@(PInacc _) = return x
 
 ----------------------------------------------------------------------
 

@@ -24,11 +24,11 @@ munion _ (MStuck ys) = MStuck ys
 
 match1 :: Pat -> Pat -> Match
 match1 (PVar x) p = MSolve [(x, p)]
-match1 (Inacc _) _ = MSolve []
+match1 (PInacc _) _ = MSolve []
 match1 (PCon x ps) (PCon y qs) | x == y = match ps qs
 match1 (PCon x _) (PCon y _) = MClash
 match1 (PCon x ps) (PVar y) = MStuck [y]
-match1 (PCon x ps) (Inacc _) = MStuck []
+match1 (PCon x ps) (PInacc _) = MStuck []
 
 match :: Pats -> Pats -> Match
 match [] [] = MSolve []

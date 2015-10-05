@@ -84,8 +84,8 @@ lookupConsFresh x = mapM freshCons =<< lookupCons x
 embedPat :: Pat -> Exp
 embedPat (PVar x) = Var x
 embedPat (PCon x as) = apps (Var (pname2name x)) (embedPats as)
-embedPat (Inacc (Just a)) = a
-embedPat (Inacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
+embedPat (PInacc (Just a)) = a
+embedPat (PInacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 
 embedPats :: Pats -> Args
 embedPats = map $ \(i, a) -> (i, embedPat a)
@@ -94,7 +94,7 @@ embedPSub :: PSub -> Sub
 embedPSub = map (\ (x, p) -> (x, embedPat p))
 
 injectSub :: Sub -> PSub
-injectSub = map (\(x, a) -> (x, Inacc (Just a)))
+injectSub = map (\(x, a) -> (x, PInacc (Just a)))
 
 ----------------------------------------------------------------------
 
@@ -124,8 +124,8 @@ mkSub _As as = zip (names _As) (map snd as)
 psubPat :: Pat -> PSub -> TCM Pat
 psubPat (PVar x) xs = return $ maybe (PVar x) id (lookup x xs)
 psubPat (PCon x ps) xs = PCon x <$> psubPats ps xs
-psubPat (Inacc Nothing) xs = return $ Inacc Nothing
-psubPat (Inacc (Just a)) xs = Inacc . Just <$> psub a xs
+psubPat (PInacc Nothing) xs = return $ PInacc Nothing
+psubPat (PInacc (Just a)) xs = PInacc . Just <$> psub a xs
 
 psubPats :: Pats -> PSub -> TCM Pats
 psubPats ps xs = mapM (\(i, p) -> (i,) <$> psubPat p xs) ps

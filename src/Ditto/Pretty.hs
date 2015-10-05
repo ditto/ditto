@@ -194,12 +194,12 @@ ppPat xs ren (Impl, p) = softindent . braces $ ppPat' xs ren p
 
 ppPat' :: UsedNames -> Ren -> Pat -> Doc
 ppPat' xs ren (PVar x) = ppName ren x
-ppPat' xs ren (Inacc _) = forced
+ppPat' xs ren (PInacc _) = forced
 ppPat' xs ren (PCon x (ppPats' xs ren -> [])) = ppPName x
 ppPat' xs ren (PCon x (ppPats' xs ren -> ps)) = softindent . parens $ ppPName x <+> hcat1 ps
 
 hiddenPat :: UsedNames -> (Icit, Pat) -> Bool
-hiddenPat xs (Impl, Inacc _) = True
+hiddenPat xs (Impl, PInacc _) = True
 hiddenPat (Just xs) (Impl, PVar x) = x `notElem` xs
 hiddenPat xs _ = False
 

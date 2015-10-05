@@ -119,7 +119,7 @@ parsePVar = try $ PVar <$> parseName
 parsePInacc :: Parser Pat
 parsePInacc = try $ do
   symInacc
-  return $ Inacc Nothing
+  return $ PInacc Nothing
 
 ----------------------------------------------------------------------
 
