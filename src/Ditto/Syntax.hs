@@ -161,10 +161,6 @@ apps = foldl $ \ f (i, a) -> App i f a
 hole :: Exp
 hole = Infer (MHole Nothing)
 
-isUniq :: Name -> Bool
-isUniq (Name _ (Just _)) = True
-isUniq _ = False
-
 ----------------------------------------------------------------------
 
 formType :: Tel -> Exp

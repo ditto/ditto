@@ -48,7 +48,7 @@ ppErr ren (ECover _As x qs) = text "Uncovered clause"
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
   vcatmap0 (ppRed' ren x) xs
 ppErr ren (ESplit cs) = text "Clauses after split" //
-  vcatmap0 (ppClause ren) cs
+  vcatmap0 (ppSplitting ren) cs
 
 ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Doc
 ppCtxErr verb acts ctx env err = vcatmaybes
@@ -200,7 +200,7 @@ ppPat' xs ren (PCon x (ppPats' xs ren -> ps)) = softindent . parens $ ppPName x 
 
 hiddenPat :: UsedNames -> (Icit, Pat) -> Bool
 hiddenPat xs (Impl, Inacc _) = True
-hiddenPat (Just xs) (Impl, PVar x) | isUniq x = x `notElem` xs
+hiddenPat (Just xs) (Impl, PVar x) = x `notElem` xs
 hiddenPat xs _ = False
 
 ppPats' :: UsedNames -> Ren -> Pats -> [Doc]
@@ -237,8 +237,8 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
-ppClause :: Ren -> CheckedClause -> Doc
-ppClause ren (_As, ps, rhs) = bar
+ppSplitting :: Ren -> CheckedClause -> Doc
+ppSplitting ren (_As, ps, rhs) = bar
   <+> hcat1 (ppPatsHiding rhs ren' ps)
   <@> ppRHS ren' rhs
   where ren' = telRen ren _As
@@ -249,7 +249,7 @@ ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
 ppRed' :: Ren -> PName -> Clause -> Doc
-ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPatsHiding rhs ren ps) <@> ppRHS ren rhs
+ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc
 ppRHS ren (Prog a) = def <+> ppExp ren a
