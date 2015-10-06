@@ -9,27 +9,27 @@ data ctx : Type where
 end
 
 data var (G : ctx) (T : tp) : Type where
-| top {G T : *} : var (dec G T) T
-| pop {G S T : *} (V : var G T) : var (dec G S) T
+| top {G,T : *} : var (dec G T) T
+| pop {G,S,T : *} (V : var G T) : var (dec G S) T
 end
 
 data ren (G : ctx)(G' : ctx) : Type where
 | rempty {G : *} : ren empty G
-| rcons  {G G' T : *}(R : ren G G')(V : var G' T) : ren (dec G T) G'
+| rcons  {G,G',T : *}(R : ren G G')(V : var G' T) : ren (dec G T) G'
 end
 
-def appRen {G G' T : *} (R : ren G G')(V : var G T) : var G' T where
+def appRen {G,G',T : *} (R : ren G G')(V : var G T) : var G' T where
 | (rcons R x) top = x
 | (rcons R x) (pop V) = appRen R V
 | rempty V != V
 end
 
-def wknRenIm {G G' T : *} (R : ren G G') : ren G (dec G' T) where
+def wknRenIm {G,G',T : *} (R : ren G G') : ren G (dec G' T) where
 | rempty = rempty
 | (rcons R x) = rcons (wknRenIm R) (pop x)
 end
 
-def wknRen {G G' T : *} (S : ren G G') : ren (dec G T) (dec G' T) where
+def wknRen {G,G',T : *} (S : ren G G') : ren (dec G T) (dec G' T) where
 | R = rcons (wknRenIm  R) top
 end
 
@@ -40,33 +40,33 @@ end
 
 data tm (G : ctx) :: (T : tp) : Type where
 | c : tm G i
-| app {S T : *}(M : tm G (arr S T))(N : tm G S) : tm G T
-| lam {S T : *}(M : tm (dec G S) T) : tm G (arr S T)
+| app {S,T : *}(M : tm G (arr S T))(N : tm G S) : tm G T
+| lam {S,T : *}(M : tm (dec G S) T) : tm G (arr S T)
 | v {T : *} (V : var G T) : tm G T
 end
 
-def appRenTm {G G' T : *} (R : ren G G')(M : tm G T) : tm G' T where
+def appRenTm {G,G',T : *} (R : ren G G')(M : tm G T) : tm G' T where
 | R c = c
 | R (app M N) = app (appRenTm R M) (appRenTm R N)
 | R (lam M) = lam (appRenTm (wknRen R) M)
 | R (v x) = v (appRen R x)
 end
 
-def wkn {G T S : *} (M : tm G T) : tm (dec G S) T where
+def wkn {G,T,S : *} (M : tm G T) : tm (dec G S) T where
 | M = appRenTm (wknRenIm idRen) M
 end
 
 data sub (G : ctx)(G' : ctx) : Type where
 | sempty {G : *} : sub empty G
-| scons  {G G' T : *}(S : sub G G')(M : tm G' T) : sub (dec G T) G'
+| scons  {G,G',T : *}(S : sub G G')(M : tm G' T) : sub (dec G T) G'
 end
 
-def wknSubIm {G G' T : *} (S : sub G G') : sub G (dec G' T) where
+def wknSubIm {G,G',T : *} (S : sub G G') : sub G (dec G' T) where
 | sempty = sempty
 | (scons S M) = scons (wknSubIm S) (wkn M)
 end
 
-def wknSub {G G' T : *} (S : sub G G') : sub (dec G T) (dec G' T) where
+def wknSub {G,G',T : *} (S : sub G G') : sub (dec G T) (dec G' T) where
 | S = scons (wknSubIm S) (v top)
 end
 
@@ -75,33 +75,33 @@ def idSub {G : *} : sub G G where
 | {dec H T} = scons (wknSubIm idSub) (v top)
 end
 
-def lookup {G G' T : *} (S : sub G G')(V : var G T) : tm G' T where
+def lookup {G,G',T : *} (S : sub G G')(V : var G T) : tm G' T where
 | (scons R M) top = M
 | (scons R x) (pop V) = lookup R V
 | sempty V != V
 end
 
-def apply {G G' T : *}(S : sub G G')(M : tm G T) : tm G' T where
+def apply {G,G',T : *}(S : sub G G')(M : tm G T) : tm G' T where
 | S c = c
 | S (app M N) = app (apply S M) (apply S N)
 | S (lam M) = lam (apply (wknSub S) M)
 | S (v x) = lookup S x
 end
 
-data step {G T : *} (M : tm G T)(N : tm G T) : Type where
-| sapp {G S T : *} {M M' : tm G (arr S T)} {N : tm G S}
+data step {G,T : *} (M : tm G T)(N : tm G T) : Type where
+| sapp {G,S,T : *} {M,M' : tm G (arr S T)} {N : tm G S}
        (E : step M M')
          : step (app M N)(app M' N)
-| sbeta {G S T : *} (M : tm (dec G S) T) (N : tm G S)
+| sbeta {G,S,T : *} (M : tm (dec G S) T) (N : tm G S)
     	: step (app (lam M) N) (apply (scons idSub N) M)
 end
 
 data val (G : ctx) :: (T : tp) (M : tm G T) : Type where
 | vc : val G i c
-| vlam {S T : *} (M : tm (dec G S) T) : val G (arr S T) (lam M)
+| vlam {S,T : *} (M : tm (dec G S) T) : val G (arr S T) (lam M)
 end
 
-data either (A B : Type) :: Type where
+data either (A,B : Type) :: Type where
 | inl (l : A) : either A B
 | inr (r : B) : either A B
 end
