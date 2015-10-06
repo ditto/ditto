@@ -18,8 +18,8 @@ data Options = Options
 parseOptions :: Parser Options
 parseOptions = Options
    <$> strOption
-       ( long "check"
-      <> short 'c'
+       ( long "typecheck"
+      <> short 't'
       <> metavar "FILENAME"
       <> help "Type check FILENAME" )
    <*> flag Normal Verbose
