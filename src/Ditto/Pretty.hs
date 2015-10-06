@@ -1,7 +1,6 @@
 module Ditto.Pretty where
 import Ditto.Syntax
 import Data.Maybe
-import Data.Maybe
 import Data.List hiding ( group )
 import Text.PrettyPrint.Leijen
 

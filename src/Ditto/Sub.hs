@@ -59,6 +59,14 @@ sub1Bind (x, a) (Bind y b) = do
 subTel1 :: (Name, Exp) -> Tel -> TCM Tel
 subTel1 xa = mapM (\(i, y, _A) -> (i,y,) <$> sub1 xa _A)
 
+renTel1 :: (Name, Name) -> Tel -> TCM Tel
+renTel1 (x, x') [] = return []
+renTel1 (x, x') ((i, y, _A):ys) | x == y = do
+  ((i, x', _A):) <$> subTel1 (x, Var x') ys
+renTel1 (x, x') ((i, y, _A):ys) = do
+  _A <- sub1 (x, Var x') _A
+  ((i, y, _A):) <$> renTel1 (x, x') ys
+
 ----------------------------------------------------------------------
 
 freshTel :: Essible -> Tel -> TCM (Tel, Sub)
@@ -88,13 +96,21 @@ embedPat (PInacc (Just a)) = a
 embedPat (PInacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 
 embedPats :: Pats -> Args
-embedPats = map $ \(i, a) -> (i, embedPat a)
+embedPats = map (\(i, a) -> (i, embedPat a))
 
 embedPSub :: PSub -> Sub
-embedPSub = map (\ (x, p) -> (x, embedPat p))
+embedPSub = map (\(x, p) -> (x, embedPat p))
 
 injectSub :: Sub -> PSub
 injectSub = map (\(x, a) -> (x, PInacc (Just a)))
+
+----------------------------------------------------------------------
+
+ren2sub :: Ren -> Sub
+ren2sub = map (\(x, y) -> (x, Var y))
+
+ren2psub :: Ren -> PSub
+ren2psub = map (\(x, y) -> (x, PVar y))
 
 ----------------------------------------------------------------------
 
@@ -106,6 +122,9 @@ subs as xs = mapM (\(i, a) -> (i,) <$> sub a xs) as
 
 subTel :: Tel -> Sub -> TCM Tel
 subTel _As xs = foldM (flip subTel1) _As xs
+
+renTel :: Tel -> Ren -> TCM Tel
+renTel _As xs = foldM (flip renTel1) _As xs
 
 psub :: Exp -> PSub -> TCM Exp
 psub a xs = sub a (embedPSub xs)

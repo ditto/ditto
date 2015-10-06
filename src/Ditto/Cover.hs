@@ -12,8 +12,8 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-split :: Tel -> Name -> TCM [(Tel, PSub)]
-split _As x = splitVar _As1 x _A _As2
+split :: Essible -> Tel -> Name -> TCM [(Tel, PSub)]
+split e _As x = splitVar e _As1 x _A _As2
   where (_As1, _A, _As2) = splitAtName _As x
 
 splitAtName :: Tel -> Name -> (Tel, Exp, Tel)
@@ -23,11 +23,11 @@ splitAtName _As x = (_As1, _A, tail _As2) where
 
 ----------------------------------------------------------------------
 
---       Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
-splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
+--          Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
+splitVar :: Essible -> Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
+splitVar e _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X js -> do
-    _Bs <- lookupConsFresh Acc _X
+    _Bs <- lookupConsFresh e _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
@@ -56,25 +56,40 @@ partitionByPat (fv . embedPat -> xs) = partition (\(_,x,_) -> elem x xs)
 
 ----------------------------------------------------------------------
 
+accPatNames :: PSub -> TCM Ren
+accPatNames [] = return []
+accPatNames ((_, PVar x):xs) = do
+  y <- gensymEHint Acc x
+  ((x, y):) <$> accPatNames xs
+accPatNames ((_, _):xs) = accPatNames xs
+
+----------------------------------------------------------------------
+
 cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
 cover nm cs _As = do
-  (_As', _) <- freshTel Acc _As
+  (_As', _) <- freshTel Inacc _As
   cover' nm cs _As' (pvarPats _As')
 
-     --  [σ = rhs]   Δ        δ   →  [Δ' ⊢ δ[δ'] = rhs']
+--                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
 cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
-  CMatch rs (Caseless x) -> psub (Var x) rs >>= \case
-    Var x' -> return [(_As, qs, Caseless x')]
-    otherwise -> throwGenErr "Non-renaming in caseless clause"
-  CMatch rs (Split x) -> psub (Var x) rs >>= \case
-    Var x' -> return [(_As, qs, Split x')]
-    otherwise -> throwGenErr "Non-renaming in splitting clause"
-  CMatch rs (Prog a) -> do
-    a' <- psub a rs
-    return [(_As, qs, Prog a')]
+  CMatch rs rhs -> do
+    ren <- accPatNames rs
+    _As <- renTel _As ren
+    qs <- psubPats qs (ren2psub ren)
+    let subRHS x = psub x rs >>= flip sub (ren2sub ren) 
+    case rhs of
+      Caseless x -> subRHS (Var x) >>= \case
+        Var x -> return [(_As, qs, Caseless x)]
+        _ -> throwGenErr "Non-renaming in caseless clause"
+      Split x -> subRHS (Var x) >>= \case
+        Var x -> return [(_As, qs, Split x)]
+        _ -> throwGenErr "Non-renaming in splitting clause"
+      Prog a -> do
+        a <- subRHS a
+        return [(_As, qs, Prog a)]
   CSplit x -> do
-    qss <- split _As x
+    qss <- split Inacc _As x
     concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
   CMiss -> throwErr (ECover _As nm qs)
 
@@ -84,7 +99,7 @@ splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
 splitClause x _As ps = do
   unless (x `elem` names _As) $
     extCtxs _As (throwErr (EScope x))
-  qss <- split _As x
+  qss <- split Acc _As x
   if null qss
   then return [(_As, ps, Caseless x)]
   else mapM (\(_As, qs) -> (_As,,Prog hole) <$> psubPats ps qs) qss
