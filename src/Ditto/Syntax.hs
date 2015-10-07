@@ -41,6 +41,10 @@ uniqName x@(Name e _ _) n = uniqEName e x n
 uniqEName :: Essible -> Name -> Integer -> Name
 uniqEName e (Name _ x _) n = Name e x (Just n)
 
+isInacc :: Name -> Bool
+isInacc (Name Inacc _ _) = True
+isInacc _ = False
+
 ----------------------------------------------------------------------
 
 newtype PName = PName String

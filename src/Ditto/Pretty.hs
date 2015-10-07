@@ -30,6 +30,12 @@ idRen = map (\x -> (x, x))
 telRen :: Ren -> Tel -> Ren
 telRen ren (names -> xs) = foldl extRen ren xs
 
+accRen :: Ren -> Ren
+accRen = map (\(x, y) -> (x, toAcc y))
+  where
+  toAcc :: Name -> Name
+  toAcc (Name _ x n) = Name Acc x n
+
 ----------------------------------------------------------------------
 
 ppErr :: Ren -> Err -> Doc
@@ -43,7 +49,7 @@ ppErr ren (ECaseless x) = text "Variable is not caseless"
 ppErr ren (EMetas xs) = text "Unsolved metavariables" //
   vcatmap1 (\(x, _As, _B) -> ppMetaType ren x _As _B) xs
 ppErr ren (ECover _As x qs) = text "Uncovered clause"
-  <+> code (ppPName x <+> vcat0 (ppPats (telRen ren _As) qs))
+  <+> code (ppPName x <+> vcat0 (ppPats VCore (telRen ren _As) qs))
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
   vcatmap0 (ppRed' ren x) xs
 ppErr ren (ESplit cs) = text "Clauses after split" //
@@ -90,7 +96,7 @@ ppAct ren (ACon x) = while "checking constructor" $ ppPName x
 ppAct ren (ACheck a _A) = while "checking" $ ppwExp ren Wrap a <@> oft <+> ppExp ren _A
 ppAct ren (AInfer a) = while "inferring" $ ppExp ren a
 ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> eq <+> ppExp ren y
-ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> hcat1 (ppPats ren qs)
+ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> hcat1 (ppPats VCore ren qs)
 
 while :: String -> Doc -> Doc
 while str x = text "...while" <+> text str <+> code x
@@ -185,31 +191,26 @@ ppBinds ren ((i, x, _A):_As) = (i, ppCtxBind ren (x, _A)) : ppBinds (extRen ren 
 
 ----------------------------------------------------------------------
 
-type UsedNames = Maybe [Name]
+data Visbility = VCore | VSurface
 
-ppPat :: UsedNames -> Ren -> (Icit, Pat) -> Doc
-ppPat xs ren (Expl, p) = ppPat' xs ren p
-ppPat xs ren (Impl, p) = softindent . braces $ ppPat' xs ren p
+ppPat :: Visbility -> Ren -> (Icit, Pat) -> Doc
+ppPat vis ren (Expl, p) = ppPat' vis ren p
+ppPat vis ren (Impl, p) = softindent . braces $ ppPat' vis ren p
 
-ppPat' :: UsedNames -> Ren -> Pat -> Doc
-ppPat' xs ren (PVar x) = ppName ren x
-ppPat' xs ren (PInacc _) = forced
-ppPat' xs ren (PCon x (ppPats' xs ren -> [])) = ppPName x
-ppPat' xs ren (PCon x (ppPats' xs ren -> ps)) = softindent . parens $ ppPName x <+> hcat1 ps
+ppPat' :: Visbility -> Ren -> Pat -> Doc
+ppPat' VCore ren (PVar x) = ppName ren x
+ppPat' VSurface ren (PVar x) = ppName (accRen ren) x
+ppPat' vis ren (PInacc _) = forced
+ppPat' vis ren (PCon x (ppPats vis ren -> [])) = ppPName x
+ppPat' vis ren (PCon x (ppPats vis ren -> ps)) = softindent . parens $ ppPName x <+> hcat1 ps
 
-hiddenPat :: UsedNames -> (Icit, Pat) -> Bool
-hiddenPat xs (Impl, PInacc _) = True
-hiddenPat (Just xs) (Impl, PVar x) = x `notElem` xs
-hiddenPat xs _ = False
+hiddenPat :: Visbility -> (Icit, Pat) -> Bool
+hiddenPat VSurface (Impl, PInacc _) = True
+hiddenPat VSurface (Impl, PVar x) = isInacc x
+hiddenPat vis _ = False
 
-ppPats' :: UsedNames -> Ren -> Pats -> [Doc]
-ppPats' xs ren = map (ppPat xs ren) . reject (hiddenPat xs)
-
-ppPatsHiding :: RHS -> Ren -> Pats -> [Doc]
-ppPatsHiding (Just . fvRHS -> xs) = ppPats' xs
-
-ppPats :: Ren -> Pats -> [Doc]
-ppPats = ppPats' Nothing
+ppPats :: Visbility -> Ren -> Pats -> [Doc]
+ppPats vis ren = map (ppPat vis ren) . reject (hiddenPat vis)
 
 ----------------------------------------------------------------------
 
@@ -238,7 +239,7 @@ ppSig ren (DMeta x _ b _As _B) = ppDMeta ren x b _As _B
 
 ppSplitting :: Ren -> CheckedClause -> Doc
 ppSplitting ren (_As, ps, rhs) = bar
-  <+> hcat1 (ppPatsHiding rhs ren' ps)
+  <+> hcat1 (ppPats VSurface ren' ps)
   <@> ppRHS ren' rhs
   where ren' = telRen ren _As
 
@@ -248,7 +249,7 @@ ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
 ppRed' :: Ren -> PName -> Clause -> Doc
-ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats ren ps) <@> ppRHS ren rhs
+ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats VCore ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc
 ppRHS ren (Prog a) = def <+> ppExp ren a

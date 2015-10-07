@@ -78,14 +78,14 @@ freshTel e ((i, x, _A):_As) = do
 
 ----------------------------------------------------------------------
 
-freshCons :: Essible -> (PName, Tel, Args) -> TCM (PName, Tel, Args)
-freshCons e (y, _Bs, is) = do
-  (_Bs', xs) <- freshTel e _Bs
+freshCons :: (PName, Tel, Args) -> TCM (PName, Tel, Args)
+freshCons (y, _Bs, is) = do
+  (_Bs', xs) <- freshTel Inacc _Bs
   is' <- subs is xs
   return (y, _Bs', is')
 
-lookupConsFresh :: Essible -> PName -> TCM [(PName, Tel, Args)]
-lookupConsFresh e x = mapM (freshCons e) =<< lookupCons x
+lookupConsFresh :: PName -> TCM [(PName, Tel, Args)]
+lookupConsFresh x = mapM freshCons =<< lookupCons x
 
 ----------------------------------------------------------------------
 

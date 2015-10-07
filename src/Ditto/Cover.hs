@@ -12,8 +12,8 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-split :: Essible -> Tel -> Name -> TCM [(Tel, PSub)]
-split e _As x = splitVar e _As1 x _A _As2
+split :: Tel -> Name -> TCM [(Tel, PSub)]
+split _As x = splitVar _As1 x _A _As2
   where (_As1, _A, _As2) = splitAtName _As x
 
 splitAtName :: Tel -> Name -> (Tel, Exp, Tel)
@@ -24,10 +24,10 @@ splitAtName _As x = (_As1, _A, tail _As2) where
 ----------------------------------------------------------------------
 
 --          Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
-splitVar :: Essible -> Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitVar e _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
+splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
+splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
   Form _X js -> do
-    _Bs <- lookupConsFresh e _X
+    _Bs <- lookupConsFresh _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
@@ -89,7 +89,7 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
         a <- subRHS a
         return [(_As, qs, Prog a)]
   CSplit x -> do
-    qss <- split Inacc _As x
+    qss <- split _As x
     concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
   CMiss -> throwErr (ECover _As nm qs)
 
@@ -99,7 +99,7 @@ splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
 splitClause x _As ps = do
   unless (x `elem` names _As) $
     extCtxs _As (throwErr (EScope x))
-  qss <- split Acc _As x
+  qss <- split _As x
   if null qss
   then return [(_As, ps, Caseless x)]
   else mapM (\(_As, qs) -> (_As,,Prog hole) <$> psubPats ps qs) qss
