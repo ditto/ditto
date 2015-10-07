@@ -58,10 +58,15 @@ partitionByPat (fv . embedPat -> xs) = partition (\(_,x,_) -> elem x xs)
 
 accPatNames :: PSub -> TCM Ren
 accPatNames [] = return []
-accPatNames ((_, PVar x):xs) = do
-  y <- gensymEHint Acc x
+accPatNames ((y, accPatName -> Just x):xs) = do
+  y <- gensymHint y
   ((x, y):) <$> accPatNames xs
 accPatNames ((_, _):xs) = accPatNames xs
+
+accPatName :: Pat -> Maybe Name
+accPatName (PVar x) = Just x
+accPatName (PInacc (Just (Var x))) = Just x
+accPatName _ = Nothing
 
 ----------------------------------------------------------------------
 
