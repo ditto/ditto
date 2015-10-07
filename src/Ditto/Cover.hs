@@ -68,6 +68,14 @@ accPatName (PVar x) = Just x
 accPatName (PInacc (Just (Var x))) = Just x
 accPatName _ = Nothing
 
+accPSub :: PSub -> Tel -> Pats -> TCM (Tel, Pats, Exp -> TCM Exp)
+accPSub rs _As qs = do
+  ren <- accPatNames rs
+  _As <- renTel _As ren
+  qs <- psubPats qs (ren2psub ren)
+  let subRHS x = psub x rs >>= flip sub (ren2sub ren)
+  return (_As, qs, subRHS)
+
 ----------------------------------------------------------------------
 
 cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
@@ -79,10 +87,7 @@ cover nm cs _As = do
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
 cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CMatch rs rhs -> do
-    ren <- accPatNames rs
-    _As <- renTel _As ren
-    qs <- psubPats qs (ren2psub ren)
-    let subRHS x = psub x rs >>= flip sub (ren2sub ren) 
+    (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of
       Caseless x -> subRHS (Var x) >>= \case
         Var x -> return [(_As, qs, Caseless x)]
@@ -94,19 +99,26 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
         a <- subRHS a
         return [(_As, qs, Prog a)]
   CSplit x -> do
-    qss <- split _As x
-    concat <$> mapM (\(_As' , qs') -> cover' nm cs _As' =<< psubPats qs qs') qss
+    rss <- split _As x
+    concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
   CMiss -> throwErr (ECover _As nm qs)
 
 ----------------------------------------------------------------------
+
+splitClauseGoal :: Pats -> Tel -> Pats -> TCM CheckedClause
+splitClauseGoal ps _As qs = case match ps qs of
+  MSolve rs -> do
+    (_As, qs, _) <- accPSub rs _As qs
+    return (_As, qs, Prog hole)
+  _ -> throwGenErr "Split clause did not match original clause"
 
 splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
 splitClause x _As ps = do
   unless (x `elem` names _As) $
     extCtxs _As (throwErr (EScope x))
-  qss <- split _As x
-  if null qss
+  rss <- split _As x
+  if null rss
   then return [(_As, ps, Caseless x)]
-  else mapM (\(_As, qs) -> (_As,,Prog hole) <$> psubPats ps qs) qss
+  else mapM (\(_As, rs) -> splitClauseGoal ps _As =<< psubPats ps rs) rss
 
 ----------------------------------------------------------------------
