@@ -71,10 +71,8 @@ gensymHint x = uniqName x <$> gensym
 gensymEHint :: Essible -> Name -> TCM Name
 gensymEHint e x = uniqEName e x <$> gensym
 
-gensymMeta :: TCM MName
-gensymMeta = do
-  sym <- gensym
-  return $ MName sym
+gensymMeta :: MKind -> TCM MName
+gensymMeta k = MName k <$> gensym
 
 ----------------------------------------------------------------------
 

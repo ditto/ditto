@@ -73,11 +73,11 @@ buildCon _X (x, _A) = do
     otherwise -> throwGenErr "Constructor return type is not a type former"
 
 whnfHole :: Hole -> TCM Hole
-whnfHole (x, nm, a, _As, _B) = do
+whnfHole (x, a, _As, _B) = do
   a <- mapM whnf a
   _As <- mapM (\(i, x, _A) -> (i,x,) <$> whnf _A) _As
   _B <- whnf _B
-  return (x, nm, a, _As, _B)
+  return (x, a, _As, _B)
 
 whnfHoles :: Holes -> TCM Holes
 whnfHoles = mapM whnfHole

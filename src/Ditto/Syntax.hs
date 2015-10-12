@@ -62,11 +62,16 @@ name2pname _ = Nothing
 
 ----------------------------------------------------------------------
 
-data MName = MName Integer
+data MName = MName MKind Integer
   deriving (Read, Eq)
 
 instance Show MName where
-  show (MName n) = "?" ++ show n
+  show (MName k n) = "?" ++ prefix k ++ show n
+    where
+    prefix :: MKind -> String
+    prefix MInfer = ""
+    prefix (MHole Nothing) = ""
+    prefix (MHole (Just nm)) = nm ++ "-"
 
 data MKind = MInfer | MHole (Maybe String)
   deriving (Show, Read, Eq)
@@ -101,7 +106,7 @@ type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
 type CheckedClause = (Tel, Pats, RHS)
 type Pats = [(Icit, Pat)]
-type Hole = (MName, Maybe String, Maybe Exp, Tel, Exp)
+type Hole = (MName, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 
@@ -113,7 +118,7 @@ data Sigma =
   | DForm PName Tel
   | DCon PName Tel PName Args
   | DRed PName [CheckedClause] Tel Exp
-  | DMeta MName MKind (Maybe Exp) Tel Exp
+  | DMeta MName (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
@@ -233,7 +238,7 @@ isPNamed x (DRed y _ _ _) = x == y
 isPNamed x _ = False
 
 isMNamed :: MName -> Sigma -> Bool
-isMNamed x (DMeta y _ _ _ _) = x == y
+isMNamed x (DMeta y _ _ _) = x == y
 isMNamed x _ = False
 
 isConOf :: PName -> Sigma -> Bool
@@ -245,12 +250,8 @@ isDef (Def _ _ _) = True
 isDef _ = False
 
 isMeta :: Sigma -> Bool
-isMeta (DMeta _ _ _ _ _) = True
+isMeta (DMeta _ _ _ _) = True
 isMeta _ = False
-
-mkindName :: MKind -> Maybe String
-mkindName MInfer = Nothing
-mkindName (MHole nm) = nm
 
 filterDefs :: Env -> [(Name, Exp, Exp)]
 filterDefs = catMaybes . map envDef . filter isDef
@@ -266,20 +267,24 @@ envDefBody :: Sigma -> Maybe Exp
 envDefBody (Def _ a _) = Just a
 envDefBody _ = Nothing
 
+isHole :: MName -> Bool
+isHole (MName (MHole _) _) = True
+isHole (MName _ _) = False
+
 envUndefMeta :: Sigma -> Maybe (MName, Tel, Exp)
-envUndefMeta (DMeta x MInfer Nothing _As _B) = Just (x, _As, _B)
+envUndefMeta (DMeta x Nothing _As _B) | not (isHole x) = Just (x, _As, _B)
 envUndefMeta _ = Nothing
 
 envHole :: Sigma -> Maybe Hole
-envHole (DMeta x (MHole nm) a _As _B) = Just (x, nm, a, _As, _B)
+envHole (DMeta x a _As _B) | isHole x = Just (x, a, _As, _B)
 envHole _ = Nothing
 
 envMetaBody :: Sigma -> Maybe Exp
-envMetaBody (DMeta x _ (Just a) _ _) = Just a
+envMetaBody (DMeta _ (Just a) _ _) = Just a
 envMetaBody _ = Nothing
 
 envMetaType :: Sigma -> Maybe (Tel, Exp)
-envMetaType (DMeta x _ _ _As _B) = Just (_As, _B)
+envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
 conSig :: Sigma -> Maybe (PName, Tel, Args)
@@ -295,6 +300,6 @@ envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
 envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
-envType (DMeta _ _ _ _As _B) = metaType _As _B
+envType (DMeta _ _ _As _B) = metaType _As _B
 
 ----------------------------------------------------------------------
