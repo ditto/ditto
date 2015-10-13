@@ -200,8 +200,9 @@ ppPat vis ren (Impl, p) = softindent . braces $ ppPat' vis ren p
 ppPat' :: Visbility -> Ren -> Pat -> Doc
 ppPat' VCore ren (PVar x) = ppName ren x
 ppPat' VSurface ren (PVar x) = ppName (accRen ren) x
-ppPat' vis ren (PInacc Nothing) = forced
-ppPat' vis ren (PInacc (Just a)) = brackets (ppExp ren a)
+ppPat' VCore ren (PInacc Nothing) = forced
+ppPat' VCore ren (PInacc (Just a)) = brackets (ppExp ren a)
+ppPat' VSurface ren (PInacc _) = forced
 ppPat' vis ren (PCon x (ppPats vis ren -> [])) = ppPName x
 ppPat' vis ren (PCon x (ppPats vis ren -> ps)) = softindent . parens $ ppPName x <+> hcat1 ps
 
