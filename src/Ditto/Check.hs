@@ -183,6 +183,9 @@ inferAtom (Lam i _A b) = do
   _A <- check _A Type
   (b , _B) <- inferExtBind i _A b
   return (Lam i _A b, Pi i _A _B)
-inferAtom _ = throwGenErr "Inferring a non-atomic term language"
+inferAtom (Form x is) = infer (apps (Var (pname2name x)) is)
+inferAtom (Con x as) = infer (apps (Var (pname2name x)) as)
+inferAtom (Red x as) = infer (apps (Var (pname2name x)) as)
+inferAtom x = throwGenErr ("Inferring a non-atomic term\n" ++ show x)
 
 ----------------------------------------------------------------------
