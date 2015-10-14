@@ -16,7 +16,7 @@ import Data.List
 alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 
-alpha' :: [(Name, Name)] -> Exp -> Exp -> Bool
+alpha' :: Ren -> Exp -> Exp -> Bool
 alpha' dict Type Type = True
 alpha' dict (Infer _) (Infer _) = False
 alpha' dict (Form x1 as1) (Form x2 as2) =
@@ -41,7 +41,7 @@ alpha' dict (App i1 f1 a1) (App i2 f2 a2) =
   i1 == i2 && alpha' dict f1 f2 && alpha' dict a1 a2
 alpha' dict _ _ = False
 
-alphas' :: [(Name, Name)] -> Args -> Args -> Bool
+alphas' :: Ren -> Args -> Args -> Bool
 alphas' dict as1 as2 = all
   (\((i1, a1) , (i2, a2)) -> i1 == i2 && alpha' dict a1 a2)
   (zip as1 as2)
