@@ -44,7 +44,7 @@ symRBrace = symbol "}"
 
 ----------------------------------------------------------------------
 
-parseStmts :: Parser [Stmt]
+parseStmts :: Parser Prog
 parseStmts = many1 $ choice [
     parseDef
   , parseDefn

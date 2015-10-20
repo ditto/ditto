@@ -762,7 +762,7 @@ main = runTests >> return ()
 
 ----------------------------------------------------------------------
 
-asProg :: String -> [Stmt]
+asProg :: String -> Prog
 asProg s = case parseP s of
   Right a -> a
   Left e -> error (show e)
@@ -842,7 +842,7 @@ testParseFails s = TestCase $ case parseE s of
 
 ----------------------------------------------------------------------
 
-trunCheckProg :: [Stmt] -> Either String ()
+trunCheckProg :: Prog -> Either String ()
 trunCheckProg xs = runTCMVerbose (checkProg xs >> recheckProg)
 
 trunCheck :: Exp -> Exp -> Either String ()

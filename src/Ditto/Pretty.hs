@@ -269,7 +269,7 @@ ppDMeta ren x b _As _B = case b of
   Just b -> ppMetaType ren x _As _B // ppMetaBod ren x b
 
 ppMetaType :: Ren -> MName -> Tel -> Exp -> Doc
-ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (metaType _As _B)
+ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (pis _As _B)
 ppMetaType ren x [] _B = ppMName x <+> oft <+> ppExp ren _B
 
 ppMetaBod :: Ren -> MName -> Exp -> Doc

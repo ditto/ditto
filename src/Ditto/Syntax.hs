@@ -84,6 +84,7 @@ data Stmt =
     SDef Name Exp Exp
   | SData PName Exp Cons
   | SDefn PName Exp [Clause]
+  | SMeta MName (Maybe Exp) Exp
   deriving (Show, Read, Eq)
 
 data Exp =
@@ -96,6 +97,7 @@ data Exp =
 data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
+type Prog = [Stmt]
 type Arg = (Icit, Exp)
 type Args = [Arg]
 type Env = [Sigma]
@@ -185,9 +187,6 @@ formType _Is = pis _Is Type
 
 conType :: Tel -> PName -> Args -> Exp
 conType _As _X _Is = pis _As (Form _X _Is)
-
-metaType :: Tel -> Exp -> Exp
-metaType _As _B = pis _As _B
 
 ----------------------------------------------------------------------
 
@@ -287,6 +286,9 @@ envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
+conSigs :: Env -> [(PName, Tel, Args)]
+conSigs = catMaybes . map conSig
+
 conSig :: Sigma -> Maybe (PName, Tel, Args)
 conSig (DCon x _As _ is) = Just (x, _As, is)
 conSig _ = Nothing
@@ -300,6 +302,6 @@ envType (Def _ _ _A) = _A
 envType (DForm _ _Is) = formType _Is
 envType (DCon _ _As _X _Is) = conType _As _X _Is
 envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
-envType (DMeta _ _ _As _B) = metaType _As _B
+envType (DMeta _ _ _As _B) = pis _As _B
 
 ----------------------------------------------------------------------

@@ -17,12 +17,12 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
-runCheckProg :: Verbosity -> [Stmt] -> Either String String
+runCheckProg :: Verbosity -> Prog -> Either String String
 runCheckProg v xs = runTCM v (checkProg xs >> lookupHoles >>= whnfHoles >>= renderHoles)
 
 ----------------------------------------------------------------------
 
-checkProg :: [Stmt] -> TCM ()
+checkProg :: Prog -> TCM ()
 checkProg ds = mapM_ checkStmt ds
 
 checkStmt :: Stmt -> TCM ()
@@ -50,6 +50,8 @@ checkStmt (SDefn x _A cs) = during (ADefn x) $ do
   unless (null unreached) $
     throwErr (EReach x unreached)
   addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
+checkStmt (SMeta x ma _A) =
+  throwGenErr "User cannot specify metavariables"
 
 ----------------------------------------------------------------------
 

@@ -79,7 +79,7 @@ gensymMeta k = MName k <$> gensym
 lookupCons :: PName -> TCM [(PName, Tel, Args)]
 lookupCons x = do
   env <- getEnv
-  return . catMaybes . map conSig . filter (isConOf x) $ env
+  return . conSigs . filter (isConOf x) $ env
 
 lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do

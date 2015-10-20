@@ -23,7 +23,6 @@ Library
   hs-source-dirs: src
   Exposed-modules:
                   Ditto.Check
-                , Ditto.Recheck
                 , Ditto.Cli
                 , Ditto.Conv
                 , Ditto.Cover
@@ -34,10 +33,12 @@ Library
                 , Ditto.Monad
                 , Ditto.Parse
                 , Ditto.Pretty
+                , Ditto.Recheck
                 , Ditto.Sub
+                , Ditto.Surf
                 , Ditto.Syntax
-                , Ditto.Whnf
                 , Ditto.Test
+                , Ditto.Whnf
 
   Build-depends:  base >=4 && <5
                 , parsec
