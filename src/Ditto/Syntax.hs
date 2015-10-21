@@ -111,6 +111,7 @@ type Pats = [(Icit, Pat)]
 type Hole = (MName, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
+type CtxErr = ([Name], Env, Acts, Tel, Err)
 
 data RHS = Prog Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)

@@ -843,15 +843,15 @@ testParseFails s = TestCase $ case parseE s of
 ----------------------------------------------------------------------
 
 trunCheckProg :: Prog -> Either String ()
-trunCheckProg xs = runTCMVerbose (checkProg xs >> recheckProg)
+trunCheckProg xs = runPipelineV (checkProg xs >> recheckProg) id
 
 trunCheck :: Exp -> Exp -> Either String ()
-trunCheck a _A = runTCMVerbose (check a _A) >> return ()
+trunCheck a _A = runPipelineV (check a _A) (const ())
 
 trunConv :: Exp -> Exp -> Either String Exp
-trunConv a b = runTCMVerbose (conv a b)
+trunConv a b = runPipelineV (conv a b) id
 
 trunWhnf :: Exp -> Either String Exp
-trunWhnf a = runTCMVerbose (whnf a)
+trunWhnf a = runPipelineV (whnf a) id
 
 ----------------------------------------------------------------------

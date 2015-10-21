@@ -5,8 +5,6 @@ import Ditto.Delta
 import Ditto.Conv
 import Ditto.Monad
 import Ditto.Sub
-import Ditto.Env
-import Ditto.Pretty
 import Data.Maybe
 import Data.List
 import Control.Monad.Except

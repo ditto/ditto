@@ -21,9 +21,6 @@ codRen = map snd
 extRen :: Ren -> Name -> Ren
 extRen ren x = snoc ren (x, nameFor (codRen ren) x)
 
-envRen :: Env -> Ren
-envRen = idRen . defNames
-
 idRen :: [Name] -> Ren
 idRen = map (\x -> (x, x))
 
@@ -55,14 +52,13 @@ ppErr ren (EReach x xs) = text "Unreachable clauses" //
 ppErr ren (ESplit cs) = text "Clauses after split" //
   vcatmap0 (ppSplitting ren) cs
 
-ppCtxErr :: Verbosity -> Acts -> Tel -> Env -> Err -> Doc
-ppCtxErr verb acts ctx env err = vcatmaybes
+ppCtxErr :: Verbosity -> [Name] -> Env -> Acts -> Tel -> Err -> Doc
+ppCtxErr verb (idRen -> ren) env acts ctx err = vcatmaybes
   [ Just (ppErr (telRen ren ctx) err)
   , ppActs ren acts
   , ppCtx ren ctx
   , ppEnvVerb verb ren env
   ]
- where ren = envRen env
 
 ----------------------------------------------------------------------
 
@@ -103,10 +99,9 @@ while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
-ppCtxHoles :: Verbosity -> Env -> Holes -> Doc
-ppCtxHoles verb env xs = vcatmaybes [holes, envVerb]
+ppCtxHoles :: Verbosity -> [Name] -> Env -> Holes -> Doc
+ppCtxHoles verb (idRen -> ren) env xs = vcatmaybes [holes, envVerb]
   where
-  ren = envRen env
   holes = ppHoles ren xs
   envVerb = ppEnvVerb verb ren env
 

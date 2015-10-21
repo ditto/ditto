@@ -1,8 +1,6 @@
 module Ditto.Env where
 import Ditto.Syntax
 import Ditto.Monad
-import Ditto.Sub
-import Ditto.Pretty
 import Data.List
 import Control.Monad.State
 import Control.Monad.Reader

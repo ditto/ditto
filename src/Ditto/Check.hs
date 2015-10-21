@@ -17,13 +17,27 @@ import Control.Applicative
 
 ----------------------------------------------------------------------
 
+runPipeline :: Verbosity -> TCM a -> (a -> b) -> Either String b
+runPipeline v p f = case runTCM v p of
+  Left (xs, env, acts, ctx, err) ->
+    Left . render . ppCtxErr v xs env acts ctx $ err
+  Right a -> Right (f a)
+
+runPipelineV = runPipeline Verbose
+
 runCheckProg :: Verbosity -> Prog -> Either String String
-runCheckProg v xs = runTCM v (checkProg xs >> lookupHoles >>= whnfHoles >>= renderHoles)
+runCheckProg v ds = runPipeline v (checkProg ds) post
+  where
+  post (xs, env, holes) = render . ppCtxHoles v xs env $ holes
 
 ----------------------------------------------------------------------
 
-checkProg :: Prog -> TCM ()
-checkProg ds = mapM_ checkStmt ds
+checkProg :: Prog -> TCM ([Name], Env, Holes)
+checkProg ds = do
+  mapM_ checkStmt ds
+  env <- getEnv
+  holes <- whnfHoles =<< lookupHoles
+  return (defNames env, env, holes)
 
 checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = during (ADef x) $ do

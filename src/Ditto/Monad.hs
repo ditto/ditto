@@ -1,9 +1,7 @@
 module Ditto.Monad where
 import Ditto.Syntax
-import Ditto.Pretty
 import Control.Monad.State
 import Control.Monad.Reader
-import Control.Monad.Identity
 import Control.Monad.Except
 import Data.List
 import Data.Maybe
@@ -21,16 +19,29 @@ data DittoR = DittoR
   , acts :: Acts
   }
 
-type TCM = StateT DittoS (ReaderT DittoR (ExceptT String Identity))
+type TCM = StateT DittoS (ReaderT DittoR (Except CtxErr))
 
-runTCM :: Verbosity -> TCM a -> Either String a
-runTCM v = runIdentity
-  . runExceptT
+----------------------------------------------------------------------
+
+runTCM :: Verbosity -> TCM a -> Either CtxErr a
+runTCM v =
+    runExcept
   . flip runReaderT initialR
   . flip evalStateT initialS {verbosity = v}
 
-runTCMVerbose :: TCM a -> Either String a
-runTCMVerbose = runTCM Verbose
+----------------------------------------------------------------------
+
+throwGenErr :: String -> TCM a
+throwGenErr = throwErr . EGen
+
+throwErr :: Err -> TCM a
+throwErr err = do
+  env <- getEnv
+  acts <- getActs
+  ctx <- getCtx
+  throwError (defNames env, env, acts, ctx, err)
+
+----------------------------------------------------------------------
 
 initialS :: DittoS
 initialS = DittoS
@@ -44,6 +55,8 @@ initialR = DittoR
   { ctx = []
   , acts = []
   }
+
+----------------------------------------------------------------------
 
 extCtx :: Icit -> Name -> Exp -> TCM a -> TCM a
 extCtx i x _A = extCtxs [(i, x, _A)]
@@ -179,24 +192,5 @@ setVerbosity :: Verbosity -> TCM ()
 setVerbosity v = do
   state@DittoS{} <- get
   put state { verbosity = v }
-
-----------------------------------------------------------------------
-
-renderHoles :: Holes -> TCM String
-renderHoles xs = do
-  verb <- getVerbosity
-  env <- getEnv
-  return . render $ ppCtxHoles verb env xs
-
-throwGenErr :: String -> TCM a
-throwGenErr = throwErr . EGen
-
-throwErr :: Err -> TCM a
-throwErr err = do
-  verb <- getVerbosity
-  acts <- getActs
-  ctx <- getCtx
-  env <- getEnv
-  throwError . render . ppCtxErr verb acts ctx env $ err
 
 ----------------------------------------------------------------------

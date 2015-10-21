@@ -4,7 +4,6 @@ import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
-import Ditto.Pretty
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Except
