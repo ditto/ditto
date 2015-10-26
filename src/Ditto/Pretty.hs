@@ -1,4 +1,10 @@
-module Ditto.Pretty where
+module Ditto.Pretty
+  ( ppCtxErr
+  , ppCtxHoles
+  , ppExp
+  , render
+  , idRen
+  ) where
 import Ditto.Syntax
 import Data.Maybe
 import Data.List hiding ( group )
@@ -38,7 +44,7 @@ accRen = map (\(x, y) -> (x, toAcc y))
 ppErr :: Ren -> Err -> Doc
 ppErr ren (EGen err) = text err
 ppErr ren (EConv a b) = text "Terms not convertible"
- <+> code (ppExp ren a <+> neq <+> ppExp ren b)
+ <+> code (ppExp ren a <+> nconv <+> ppExp ren b)
 ppErr ren (EAtom a) = text "Inferring non-atomic term"
  <+> code (ppExp ren a)
 ppErr ren (EScope x) = text "Variable not in scope"
@@ -93,7 +99,7 @@ ppAct ren (ACon x) = while "checking constructor" $ ppPName x
 
 ppAct ren (ACheck a _A) = while "checking" $ ppwExp ren Wrap a <@> oft <+> ppExp ren _A
 ppAct ren (AInfer a) = while "inferring" $ ppExp ren a
-ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> eq <+> ppExp ren y
+ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> conv <+> ppExp ren y
 ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> hcat1 (ppPats VCore ren qs)
 
 while :: String -> Doc -> Doc
@@ -149,6 +155,12 @@ ppPrim ren w x as = lefty w $ ppPName x <+> hcatmap1 (ppArg ren) as
 ppMeta :: Ren -> Wrap -> MName -> Args -> Doc
 ppMeta ren w x [] = ppMName x
 ppMeta ren w x as = lefty w $ ppMName x <+> hcatmap1 (ppArg ren) as
+
+----------------------------------------------------------------------
+
+ppExpType :: Ren -> Exp -> Doc
+ppExpType ren _A@(Pi _ _ _) = ppExp ren _A
+ppExpType ren _A = oft <+> ppExp ren _A
 
 ----------------------------------------------------------------------
 
@@ -225,6 +237,57 @@ lefty _ = id
 
 ----------------------------------------------------------------------
 
+ppPrimType :: Ren -> PName -> Exp -> Doc
+ppPrimType ren x _A = ppPName x <+> ppExpType ren _A
+
+ppCon :: Ren -> (PName, Exp) -> Doc
+ppCon ren (x, _A) = bar <+> ppPrimType ren x _A
+
+ppDataBod :: Ren -> Cons -> Doc
+ppDataBod ren [] = end
+ppDataBod ren cs = vcatmap0 (ppCon ren) cs // end
+
+----------------------------------------------------------------------
+
+ppRedBod :: Ren -> [Clause] -> Doc
+ppRedBod ren [] = end
+ppRedBod ren cs = vcatmap0 (ppClause ren) cs // end
+
+ppClause :: Ren -> Clause -> Doc
+ppClause ren (ps, rhs) = bar
+  <+> hcat1 (ppPats VCore ren ps)
+  <@> ppRHS ren rhs
+
+ppSplitting :: Ren -> CheckedClause -> Doc
+ppSplitting ren (_As, ps, rhs) = bar
+  <+> hcat1 (ppPats VSurface ren' ps)
+  <@> ppRHS ren' rhs
+  where ren' = telRen ren _As
+
+----------------------------------------------------------------------
+
+ppStmt :: Ren -> Stmt -> Doc
+ppStmt ren (SData x _A cs) = dayta
+  <+> ppPrimType ren x _A
+  <+> wear
+  // ppDataBod ren cs
+ppStmt ren (SDefn x _A cs) = def
+  <+> ppPrimType ren x _A
+  <+> wear
+  // ppRedBod ren cs
+ppStmt ren (SDef x a _A) = def
+  <+> ppDefType ren x _A
+  <+> wear
+  // ppDefBod ren x a
+  // end
+ppStmt ren (SMeta x a _A) = def
+  <+> ppMetaType' ren x _A
+  <+> wear
+  // maybe qmark (ppMetaBod ren x) a
+  // end
+
+----------------------------------------------------------------------
+
 ppSig :: Ren -> Sigma -> Doc
 ppSig ren (Def x a _A) = ppDefType ren x _A // ppDefBod ren x a
 ppSig ren (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
@@ -236,14 +299,6 @@ ppSig ren (DMeta x b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
-ppSplitting :: Ren -> CheckedClause -> Doc
-ppSplitting ren (_As, ps, rhs) = bar
-  <+> hcat1 (ppPats VSurface ren' ps)
-  <@> ppRHS ren' rhs
-  where ren' = telRen ren _As
-
-----------------------------------------------------------------------
-
 ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
@@ -251,8 +306,8 @@ ppRed' :: Ren -> PName -> Clause -> Doc
 ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats VCore ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc
-ppRHS ren (Prog a) = def <+> ppExp ren a
-ppRHS ren (Caseless x) = ndef <+> ppName ren x
+ppRHS ren (Prog a) = eq <+> ppExp ren a
+ppRHS ren (Caseless x) = neq <+> ppName ren x
 ppRHS ren (Split x) = at <+> ppName ren x
 
 ppRedTel :: Ren -> PName -> Tel -> Doc
@@ -269,17 +324,19 @@ ppMetaType :: Ren -> MName -> Tel -> Exp -> Doc
 ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (pis _As _B)
 ppMetaType ren x [] _B = ppMName x <+> oft <+> ppExp ren _B
 
+ppMetaType' :: Ren -> MName -> Exp -> Doc
+ppMetaType' ren x _A = ppMName x <+> ppExpType ren _A
+
 ppMetaBod :: Ren -> MName -> Exp -> Doc
-ppMetaBod ren x a = ppMName x <+> def <+> ppExp ren a
+ppMetaBod ren x a = ppMName x <+> eq <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
 ppDefType :: Ren -> Name -> Exp -> Doc
-ppDefType ren x _A@(Pi _ _ _) = ppName ren x <+> ppExp ren _A
-ppDefType ren x _A = ppName ren x <+> oft <+> ppExp ren _A
+ppDefType ren x _A = ppName ren x <+> ppExpType ren _A
 
 ppDefBod :: Ren -> Name -> Exp -> Doc
-ppDefBod ren x a = ppName ren x <+> def <+> ppExp ren a
+ppDefBod ren x a = ppName ren x <+> eq <+> ppExp ren a
 
 ----------------------------------------------------------------------
 
@@ -306,17 +363,29 @@ oft = colon
 arr :: Doc
 arr = text "->"
 
+conv :: Doc
+conv = text "=="
+
+nconv :: Doc
+nconv = text "!="
+
+def :: Doc
+def = text "def"
+
+dayta :: Doc
+dayta = text "data"
+
+wear :: Doc
+wear = text "where"
+
+end :: Doc
+end = text "end"
+
 eq :: Doc
-eq = text "=="
+eq = char '='
 
 neq :: Doc
 neq = text "!="
-
-def :: Doc
-def = char '='
-
-ndef :: Doc
-ndef = text "!="
 
 forced :: Doc
 forced = char '*'

@@ -1,5 +1,5 @@
-module Ditto.During (
-    duringInfer
+module Ditto.During
+  ( duringInfer
   , duringCheck
   , duringConv
   , duringCover

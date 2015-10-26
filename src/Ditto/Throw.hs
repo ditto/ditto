@@ -1,5 +1,5 @@
-module Ditto.Throw (
-    throwGenErr
+module Ditto.Throw
+  ( throwGenErr
   , throwConvErr
   , throwAtomErr
   , throwScopeErr
