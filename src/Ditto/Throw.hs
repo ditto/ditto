@@ -11,6 +11,7 @@ module Ditto.Throw
   ) where
 import Ditto.Syntax
 import Ditto.Monad
+import Ditto.Surf
 import Control.Monad.Except
 
 ----------------------------------------------------------------------
@@ -49,8 +50,9 @@ throwCaselessErr = throwErr . ECaseless
 throwErr :: Err -> TCM a
 throwErr err = do
   env <- getEnv
+  prog <- surfs env
   acts <- getActs
   ctx <- getCtx
-  throwError (defNames env, env, acts, ctx, err)
+  throwError (defNames env, prog, acts, ctx, err)
 
 ----------------------------------------------------------------------

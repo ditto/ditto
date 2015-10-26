@@ -33,6 +33,9 @@ idRen = map (\x -> (x, x))
 telRen :: Ren -> Tel -> Ren
 telRen ren (names -> xs) = foldl extRen ren xs
 
+patsRen :: Ren -> Pats -> Ren
+patsRen ren (fvPats -> xs) = foldl extRen ren xs
+
 accRen :: Ren -> Ren
 accRen = map (\(x, y) -> (x, toAcc y))
   where
@@ -60,7 +63,7 @@ ppErr ren (EReach x xs) = text "Unreachable clauses" //
 ppErr ren (ESplit cs) = text "Clauses after split" //
   vcatmap0 (ppSplitting ren) cs
 
-ppCtxErr :: Verbosity -> [Name] -> Env -> Acts -> Tel -> Err -> Doc
+ppCtxErr :: Verbosity -> [Name] -> Prog -> Acts -> Tel -> Err -> Doc
 ppCtxErr verb (idRen -> ren) env acts ctx err = vcatmaybes
   [ Just (ppErr (telRen ren ctx) err)
   , ppActs ren acts
@@ -74,13 +77,13 @@ ppCtx :: Ren -> Tel -> Maybe Doc
 ppCtx ren [] = Nothing
 ppCtx ren xs = Just $ sec "Context" // vcat0 (ppCtxBinds ren xs)
 
-ppEnvVerb :: Verbosity -> Ren -> Env -> Maybe Doc
+ppEnvVerb :: Verbosity -> Ren -> Prog -> Maybe Doc
 ppEnvVerb Normal ren env = Nothing
 ppEnvVerb Verbose ren env = ppEnv ren env
 
-ppEnv :: Ren -> Env -> Maybe Doc
+ppEnv :: Ren -> Prog -> Maybe Doc
 ppEnv ren [] = Nothing
-ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppSig ren) xs
+ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppStmt ren) xs
 
 sec :: String -> Doc
 sec str = textc str // dashes
@@ -107,7 +110,7 @@ while str x = text "...while" <+> text str <+> code x
 
 ----------------------------------------------------------------------
 
-ppCtxHoles :: Verbosity -> [Name] -> Env -> Holes -> Doc
+ppCtxHoles :: Verbosity -> [Name] -> Prog -> Holes -> Doc
 ppCtxHoles verb (idRen -> ren) env xs = vcatmaybes [holes, envVerb]
   where
   holes = ppHoles ren xs
@@ -255,8 +258,9 @@ ppRedBod ren cs = vcatmap0 (ppClause ren) cs // end
 
 ppClause :: Ren -> Clause -> Doc
 ppClause ren (ps, rhs) = bar
-  <+> hcat1 (ppPats VCore ren ps)
-  <@> ppRHS ren rhs
+  <+> hcat1 (ppPats VCore ren' ps)
+  <@> ppRHS ren' rhs
+  where ren' = patsRen ren ps
 
 ppSplitting :: Ren -> CheckedClause -> Doc
 ppSplitting ren (_As, ps, rhs) = bar
@@ -278,24 +282,13 @@ ppStmt ren (SDefn x _A cs) = def
 ppStmt ren (SDef x a _A) = def
   <+> ppDefType ren x _A
   <+> wear
-  // ppDefBod ren x a
+  // ppExp ren a
   // end
 ppStmt ren (SMeta x a _A) = def
   <+> ppMetaType' ren x _A
   <+> wear
-  // maybe qmark (ppMetaBod ren x) a
+  // maybe qmark (ppExp ren) a
   // end
-
-----------------------------------------------------------------------
-
-ppSig :: Ren -> Sigma -> Doc
-ppSig ren (Def x a _A) = ppDefType ren x _A // ppDefBod ren x a
-ppSig ren (DForm _X _Is) = brackets $ ppPName _X <+> text "type former"
-ppSig ren (DCon _Y _As _X _Is) = brackets $ ppPName _Y <+> text "constructor of" <+> ppPName _X
-ppSig ren (DRed x cs _As _B) = if null cs then header
-  else header /+/ vcatmap1 (ppRed ren x) cs
-  where header = brackets (ppPName x <+> text "reduction rules")
-ppSig ren (DMeta x b _As _B) = ppDMeta ren x b _As _B
 
 ----------------------------------------------------------------------
 
@@ -334,9 +327,6 @@ ppMetaBod ren x a = ppMName x <+> eq <+> ppExp ren a
 
 ppDefType :: Ren -> Name -> Exp -> Doc
 ppDefType ren x _A = ppName ren x <+> ppExpType ren _A
-
-ppDefBod :: Ren -> Name -> Exp -> Doc
-ppDefBod ren x a = ppName ren x <+> eq <+> ppExp ren a
 
 ----------------------------------------------------------------------
 

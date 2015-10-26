@@ -7,6 +7,7 @@ import Ditto.Whnf
 import Ditto.Conv
 import Ditto.Match
 import Ditto.Cover
+import Ditto.Surf
 import Ditto.Throw
 import Ditto.During
 import Ditto.Pretty
@@ -30,12 +31,13 @@ runCheckProg v ds = runPipeline v (checkProg ds) post
 
 ----------------------------------------------------------------------
 
-checkProg :: Prog -> TCM ([Name], Env, Holes)
+checkProg :: Prog -> TCM ([Name], Prog, Holes)
 checkProg ds = do
   mapM_ checkStmt ds
   env <- getEnv
+  prog <- surfs env
   holes <- whnfHoles =<< lookupHoles
-  return (defNames env, env, holes)
+  return (defNames env, prog, holes)
 
 checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = duringDef x $ do

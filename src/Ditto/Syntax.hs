@@ -111,7 +111,7 @@ type Pats = [(Icit, Pat)]
 type Hole = (MName, Maybe Exp, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
-type CtxErr = ([Name], Env, Acts, Tel, Err)
+type CtxErr = ([Name], Prog, Acts, Tel, Err)
 
 data RHS = Prog Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
@@ -225,6 +225,14 @@ fvRHS :: RHS -> [Name]
 fvRHS (Prog a) = fv a
 fvRHS (Caseless x) = [x]
 fvRHS (Split x) = [x]
+
+fvPats :: Pats -> [Name]
+fvPats = concatMap (\(i,p) -> fvPat p)
+
+fvPat :: Pat -> [Name]
+fvPat (PVar x) = [x]
+fvPat (PInacc _) = []
+fvPat (PCon _ ps) = fvPats ps
 
 ----------------------------------------------------------------------
 
