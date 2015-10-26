@@ -147,6 +147,7 @@ data Err =
   | ECover Tel PName Pats
   | EReach PName [Clause]
   | ESplit [CheckedClause]
+  | EAtom Exp
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

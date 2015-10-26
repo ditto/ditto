@@ -1,16 +1,12 @@
 module Ditto.Recheck where
 import Ditto.Syntax
+import Ditto.Monad
+import Ditto.Sub
 import Ditto.Whnf
 import Ditto.Delta
 import Ditto.Conv
-import Ditto.Monad
-import Ditto.Sub
-import Data.Maybe
-import Data.List
-import Control.Monad.Except
-import Control.Monad.Reader
+import Ditto.Throw
 import Control.Monad.State
-import Control.Applicative
 
 ----------------------------------------------------------------------
 
@@ -44,7 +40,7 @@ recheck a _A = do
 reinfer :: Exp -> TCM Exp
 reinfer (Var x) = lookupType x >>= \case
     Just _A -> return _A
-    Nothing -> throwErr (EScope x)
+    Nothing -> throwScopeErr x
 reinfer Type = return Type
 reinfer (Infer _) = throwGenErr "Core language does not reinfer expressions"
 reinfer (Pi i _A bnd_B) = do

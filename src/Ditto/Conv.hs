@@ -4,10 +4,8 @@ import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Except
-import Control.Applicative
+import Ditto.Throw
+import Ditto.During
 import Data.List
 
 ----------------------------------------------------------------------
@@ -48,7 +46,7 @@ alphas' dict as1 as2 = all
 ----------------------------------------------------------------------
 
 conv :: Exp -> Exp -> TCM Exp
-conv a b = during (AConv a b) $
+conv a b = duringConv a b $
   if alpha a b
   then return a
   else do
@@ -57,10 +55,7 @@ conv a b = during (AConv a b) $
     conv' a' b'
 
 conv' :: Exp -> Exp -> TCM Exp
-conv' (Var x) (Var y) =
-  if x == y
-  then return (Var x)
-  else throwErr (EConv (Var x) (Var y))
+conv' (Var x) (Var y) | x == y = return (Var x)
 conv' Type Type = return Type
 conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
 conv' (App i1 f1 a1) (App i2 f2 a2) | i1 == i2 =
@@ -76,17 +71,10 @@ conv' (Pi i1 _A1 bnd_B1) (Pi i2 _A2 bnd_B2) | i1 == i2 = do
   return $ Pi i1 _A' (Bind x _B')
 conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> convArgs _Is1 _Is2
-conv' (Form x1 _Is1) (Form x2 _Is2) | x1 /= x2 =
-  throwGenErr $ "Type former names not equal"
-   ++ show x1 ++ " != "  ++ show x2
 conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> convArgs as1 as2
-conv' (Con x1 as1) (Con x2 as2) | x1 /= x2 =
-  throwGenErr "Constructor names not equal"
 conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> convArgs as1 as2
-conv' (Red x1 as1) (Red x2 as2) | x1 /= x2 =
-  throwGenErr "Reduction names not equal"
 conv' a1@(Meta x1 as1) a2 = millerPattern as1 a2 >>= \case
   Just _As -> do
     solveMeta x1 (lams _As a2)
@@ -94,11 +82,9 @@ conv' a1@(Meta x1 as1) a2 = millerPattern as1 a2 >>= \case
   Nothing -> case a2 of
     Meta x2 as2 | x1 == x2 ->
       Meta x1 <$> convArgs as1 as2
-    Meta x2 as2 | x1 /= x2 ->
-      throwGenErr "Metavariable names not equal"
-    otherwise -> throwErr (EConv a1 a2)
+    otherwise -> throwConvErr a1 a2
 conv' a1 a2@(Meta _ _) = conv' a2 a1
-conv' a b = throwErr (EConv a b)
+conv' a b = throwConvErr a b
 
 convArg :: (Icit, Exp) -> (Icit, Exp) -> TCM (Icit, Exp)
 convArg (i1, a1) (i2, a2) | i1 == i2 = (i1,) <$> conv a1 a2

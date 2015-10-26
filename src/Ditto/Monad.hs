@@ -31,18 +31,6 @@ runTCM v =
 
 ----------------------------------------------------------------------
 
-throwGenErr :: String -> TCM a
-throwGenErr = throwErr . EGen
-
-throwErr :: Err -> TCM a
-throwErr err = do
-  env <- getEnv
-  acts <- getActs
-  ctx <- getCtx
-  throwError (defNames env, env, acts, ctx, err)
-
-----------------------------------------------------------------------
-
 initialS :: DittoS
 initialS = DittoS
   { env = []
@@ -63,11 +51,6 @@ extCtx i x _A = extCtxs [(i, x, _A)]
 
 extCtxs :: Tel -> TCM a -> TCM a
 extCtxs _As = local (\ r -> r { ctx = ctx r ++ _As })
-
-during :: Act -> TCM a -> TCM a
-during x m = do
-  ctx <- getCtx
-  local (\ r -> r { acts = (ctx, x):acts r }) m
 
 ----------------------------------------------------------------------
 

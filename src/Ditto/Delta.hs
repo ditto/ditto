@@ -2,9 +2,6 @@ module Ditto.Delta where
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
-import Control.Applicative
-import Control.Monad.Reader
-import Control.Monad.Except
 
 ----------------------------------------------------------------------
 

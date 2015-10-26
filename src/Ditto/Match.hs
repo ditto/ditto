@@ -1,9 +1,6 @@
 module Ditto.Match where
 import Ditto.Syntax
-import Ditto.Monad
 import Data.List
-import Control.Monad.Except
-import Control.Applicative
 
 ----------------------------------------------------------------------
 

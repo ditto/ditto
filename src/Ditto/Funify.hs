@@ -4,10 +4,7 @@ import Ditto.Whnf
 import Ditto.Monad
 import Ditto.Conv
 import Ditto.Sub
-import Data.List
-import Control.Monad.State
-import Control.Monad.Except
-import Control.Applicative
+import Ditto.Throw
 
 ----------------------------------------------------------------------
 

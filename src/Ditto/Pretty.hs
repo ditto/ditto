@@ -39,6 +39,8 @@ ppErr :: Ren -> Err -> Doc
 ppErr ren (EGen err) = text err
 ppErr ren (EConv a b) = text "Terms not convertible"
  <+> code (ppExp ren a <+> neq <+> ppExp ren b)
+ppErr ren (EAtom a) = text "Inferring non-atomic term"
+ <+> code (ppExp ren a)
 ppErr ren (EScope x) = text "Variable not in scope"
   <+> code (ppName ren x)
 ppErr ren (ECaseless x) = text "Variable is not caseless"

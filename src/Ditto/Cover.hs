@@ -5,10 +5,11 @@ import Ditto.Match
 import Ditto.Whnf
 import Ditto.Sub
 import Ditto.Funify
+import Ditto.Throw
+import Ditto.During
 import Data.List
 import Data.Maybe
 import Control.Monad.Except
-import Control.Applicative
 
 ----------------------------------------------------------------------
 
@@ -85,7 +86,7 @@ cover nm cs _As = do
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
-cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
+cover' nm cs _As qs = duringCover nm qs $ case matchClauses cs qs of
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of
@@ -101,7 +102,7 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CSplit x -> do
     rss <- split _As x
     concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
-  CMiss -> throwErr (ECover _As nm qs)
+  CMiss -> throwCoverErr _As nm qs
 
 ----------------------------------------------------------------------
 
@@ -115,7 +116,7 @@ splitClauseGoal ps _As qs = case match ps qs of
 splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
 splitClause x _As ps = do
   unless (x `elem` names _As) $
-    extCtxs _As (throwErr (EScope x))
+    extCtxs _As (throwScopeErr x)
   rss <- split _As x
   if null rss
   then return [(_As, ps, Caseless x)]

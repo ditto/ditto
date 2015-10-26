@@ -27,6 +27,7 @@ Library
                 , Ditto.Conv
                 , Ditto.Cover
                 , Ditto.Delta
+                , Ditto.During
                 , Ditto.Env
                 , Ditto.Funify
                 , Ditto.Match
@@ -37,6 +38,7 @@ Library
                 , Ditto.Sub
                 , Ditto.Surf
                 , Ditto.Syntax
+                , Ditto.Throw
                 , Ditto.Test
                 , Ditto.Whnf
 

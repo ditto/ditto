@@ -1,19 +1,17 @@
 module Ditto.Check where
 import Ditto.Syntax
+import Ditto.Monad
+import Ditto.Env
+import Ditto.Sub
 import Ditto.Whnf
 import Ditto.Conv
-import Ditto.Monad
-import Ditto.Sub
-import Ditto.Env
 import Ditto.Match
 import Ditto.Cover
+import Ditto.Throw
+import Ditto.During
 import Ditto.Pretty
-import Data.Maybe
 import Data.List
-import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Monad.State
-import Control.Applicative
 
 ----------------------------------------------------------------------
 
@@ -40,20 +38,20 @@ checkProg ds = do
   return (defNames env, env, holes)
 
 checkStmt :: Stmt -> TCM ()
-checkStmt (SDef x a _A) = during (ADef x) $ do
+checkStmt (SDef x a _A) = duringDef x $ do
   _A <- checkSolved _A Type
   a  <- checkSolved a _A
   addDef x a _A
-checkStmt (SData x _A cs) = during (AData x) $ do
+checkStmt (SData x _A cs) = duringData x $ do
   _A <- checkSolved _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
       addForm x tel
-      cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' Type)) cs
+      cs <- mapM (\ (x, _A') -> (x,) <$> duringCon x (checkSolved _A' Type)) cs
       mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwGenErr "Datatype former does not end in Type"
-checkStmt (SDefn x _A cs) = during (ADefn x) $ do
+checkStmt (SDefn x _A cs) = duringDefn x $ do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
   _A <- checkSolved _A Type
@@ -62,7 +60,7 @@ checkStmt (SDefn x _A cs) = during (ADefn x) $ do
   cs' <- cover x cs _As
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $
-    throwErr (EReach x unreached)
+    throwReachErr x unreached
   addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
 checkStmt (SMeta x ma _A) =
   throwGenErr "User cannot specify metavariables"
@@ -74,10 +72,10 @@ checkRHS _Delta lhs (Prog a) _As _B
   = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _ _ = split _Delta x >>= \case
   [] -> return (Caseless x)
-  otherwise -> throwErr (ECaseless x)
+  otherwise -> throwCaselessErr x
 checkRHS _Delta lhs (Split x) _ _ = do
   cs <- splitClause x _Delta lhs
-  throwErr (ESplit cs)
+  throwSplitErr cs
 
 ----------------------------------------------------------------------
 
@@ -140,7 +138,7 @@ checkExtsSolved _As b _B = do
 checkMetas :: TCM ()
 checkMetas = do
   xs <- lookupUndefMetas
-  unless (null xs) (throwErr (EMetas xs))
+  unless (null xs) (throwMetasErr xs)
 
 ----------------------------------------------------------------------
 
@@ -159,13 +157,13 @@ inferExtBind i _A bnd_b = do
 ----------------------------------------------------------------------
 
 check :: Exp -> Exp -> TCM Exp
-check a _A = during (ACheck a _A) $ do
+check a _A = duringCheck a _A $ do
   (a , _A') <- infer a
   conv _A' _A
   return a
 
 infer :: Exp -> TCM (Exp, Exp)
-infer b@(viewSpine -> (f, as)) = during (AInfer b) $ do
+infer b@(viewSpine -> (f, as)) = duringInfer b $ do
   (f, _AB) <- inferAtom f
   (as, _B) <- checkArgs as =<< whnf _AB
   return (apps f as, _B)
@@ -187,7 +185,7 @@ checkArgs [] _B = return ([], _B)
 inferAtom :: Exp -> TCM (Exp, Exp)
 inferAtom (Var x) = lookupType x >>= \case
   Just _A -> return (Var x, _A)
-  Nothing -> throwErr (EScope x)
+  Nothing -> throwScopeErr x
 inferAtom Type = return (Type, Type)
 inferAtom (Infer m) = genMeta m
 inferAtom (Pi i _A bnd_B) = do
@@ -202,6 +200,6 @@ inferAtom (Lam i _A b) = do
 inferAtom (Form x is) = infer (apps (Var (pname2name x)) is)
 inferAtom (Con x as) = infer (apps (Var (pname2name x)) as)
 inferAtom (Red x as) = infer (apps (Var (pname2name x)) as)
-inferAtom x = throwGenErr ("Inferring a non-atomic term\n" ++ show x)
+inferAtom x = throwAtomErr x
 
 ----------------------------------------------------------------------

@@ -2,7 +2,6 @@ module Ditto.Sub where
 import Ditto.Syntax
 import Ditto.Monad
 import Data.List
-import Control.Applicative
 import Control.Monad
 
 ----------------------------------------------------------------------
