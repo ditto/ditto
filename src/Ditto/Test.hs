@@ -775,8 +775,12 @@ asExp s = case parseE s of
 ----------------------------------------------------------------------
 
 testPretty :: [String] -> String -> String -> Test
-testPretty (idRen . map (s2n Acc) -> ren) (asExp -> a) (asExp -> b) = TestCase $ 
-  assertEqual "Pretty error" a (asExp . render . ppExp ren $ b)
+testPretty xs a b = TestCase $ 
+  assertEqual "Pretty error" a' (asExp . render . ppExp ren $ b')
+  where
+  ren = idRen (map (s2n Acc) xs)
+  a' = asExp a
+  b' = asExp b
 
 ----------------------------------------------------------------------
 
