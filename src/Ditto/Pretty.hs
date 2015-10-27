@@ -55,7 +55,7 @@ ppErr ren (EScope x) = text "Variable not in scope"
 ppErr ren (ECaseless x) = text "Variable is not caseless"
   <+> code (ppName ren x)
 ppErr ren (EMetas xs) = text "Unsolved metavariables" //
-  vcatmap1 (\(x, _As, _B) -> ppMetaType ren x _As _B) xs
+  fromJust (ppHoles ren xs)
 ppErr ren (ECover _As x qs) = text "Uncovered clause"
   <+> code (ppPName x <+> vcat0 (ppPats VCore (telRen ren _As) qs))
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
@@ -121,9 +121,10 @@ ppHoles ren [] = Nothing
 ppHoles ren xs = Just $ vcatmap1 (ppHole ren) xs
 
 ppHole :: Ren -> Hole -> Doc
-ppHole ren (x, a, _As, _B) =
-  (text "Hole" <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
+ppHole ren (x, _As, _B) =
+  (text label <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
   // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
+  where label = if isHole x then "Hole" else "Meta"
 
 ----------------------------------------------------------------------
 
@@ -284,11 +285,6 @@ ppStmt ren (SDef x a _A) = def
   <+> wear
   // ppExp ren a
   // end
-ppStmt ren (SMeta x a _A) = def
-  <+> ppMetaType' ren x _A
-  <+> wear
-  // maybe qmark (ppExp ren) a
-  // end
 
 ----------------------------------------------------------------------
 
@@ -305,23 +301,6 @@ ppRHS ren (Split x) = at <+> ppName ren x
 
 ppRedTel :: Ren -> PName -> Tel -> Doc
 ppRedTel ren x _As = ppPName x <+> hcat1 (ppTelBinds ren _As)
-
---------------------------------------------------------------------------------
-
-ppDMeta :: Ren -> MName -> Maybe Exp -> Tel -> Exp -> Doc
-ppDMeta ren x b _As _B = case b of
-  Nothing -> ppMetaType ren x _As _B
-  Just b -> ppMetaType ren x _As _B // ppMetaBod ren x b
-
-ppMetaType :: Ren -> MName -> Tel -> Exp -> Doc
-ppMetaType ren x _As@(_:_) _B = ppMName x <+> ppExp ren (pis _As _B)
-ppMetaType ren x [] _B = ppMName x <+> oft <+> ppExp ren _B
-
-ppMetaType' :: Ren -> MName -> Exp -> Doc
-ppMetaType' ren x _A = ppMName x <+> ppExpType ren _A
-
-ppMetaBod :: Ren -> MName -> Exp -> Doc
-ppMetaBod ren x a = ppMName x <+> eq <+> ppExp ren a
 
 ----------------------------------------------------------------------
 

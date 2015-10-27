@@ -22,7 +22,7 @@ throwConvErr a b = throwErr (EConv a b)
 throwAtomErr :: Exp -> TCM a
 throwAtomErr a = throwErr (EAtom a)
 
-throwMetasErr :: [(MName, Tel, Exp)] -> TCM a
+throwMetasErr :: Holes -> TCM a
 throwMetasErr as = throwErr (EMetas as)
 
 throwCoverErr :: Tel -> PName -> Pats -> TCM a

@@ -113,7 +113,7 @@ lookupDefs = do
   env <- getEnv
   return . filterDefs $ env
 
-lookupUndefMetas :: TCM [(MName, Tel, Exp)]
+lookupUndefMetas :: TCM Holes
 lookupUndefMetas = do
   env <- getEnv
   return . catMaybes . map envUndefMeta . filter isMeta $ env

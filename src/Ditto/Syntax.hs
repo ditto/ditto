@@ -84,7 +84,6 @@ data Stmt =
     SDef Name Exp Exp
   | SData PName Exp Cons
   | SDefn PName Exp [Clause]
-  | SMeta MName (Maybe Exp) Exp
   deriving (Show, Read, Eq)
 
 data Exp =
@@ -108,7 +107,7 @@ type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
 type CheckedClause = (Tel, Pats, RHS)
 type Pats = [(Icit, Pat)]
-type Hole = (MName, Maybe Exp, Tel, Exp)
+type Hole = (MName, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
@@ -143,7 +142,7 @@ data Err =
   | EConv Exp Exp
   | EScope Name
   | ECaseless Name
-  | EMetas [(MName, Tel, Exp)]
+  | EMetas Holes
   | ECover Tel PName Pats
   | EReach PName [Clause]
   | ESplit [CheckedClause]
@@ -280,12 +279,12 @@ isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
 
-envUndefMeta :: Sigma -> Maybe (MName, Tel, Exp)
+envUndefMeta :: Sigma -> Maybe Hole
 envUndefMeta (DMeta x Nothing _As _B) | not (isHole x) = Just (x, _As, _B)
 envUndefMeta _ = Nothing
 
 envHole :: Sigma -> Maybe Hole
-envHole (DMeta x a _As _B) | isHole x = Just (x, a, _As, _B)
+envHole (DMeta x ma _As _B) | isHole x = Just (x, _As, _B)
 envHole _ = Nothing
 
 envMetaBody :: Sigma -> Maybe Exp

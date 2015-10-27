@@ -64,8 +64,6 @@ checkStmt (SDefn x _A cs) = duringDefn x $ do
   unless (null unreached) $
     throwReachErr x unreached
   addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
-checkStmt (SMeta x ma _A) =
-  throwGenErr "User cannot specify metavariables"
 
 ----------------------------------------------------------------------
 

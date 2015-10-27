@@ -3,6 +3,7 @@ import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Whnf
+import Data.Maybe
 
 ----------------------------------------------------------------------
 
@@ -23,9 +24,7 @@ surfs (DCon x _As _X _Is:(skipWrap x -> xs)) = surfs xs
 surfs (DRed x cs _As _B:(skipWrap x -> xs)) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs xs
-surfs (DMeta x Nothing _As _B:xs) =
-  (:) <$> (SMeta x Nothing <$> surfExp (pis _As _B)) <*> surfs xs
-surfs (DMeta x (Just a) _As _B:xs) = surfs xs
+surfs (DMeta x ma _As _B:xs) = surfs xs
 
 ----------------------------------------------------------------------
 
