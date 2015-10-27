@@ -70,8 +70,8 @@ checkStmt (SMeta x ma _A) =
 ----------------------------------------------------------------------
 
 checkRHS :: Tel -> Pats -> RHS -> Tel -> Exp -> TCM RHS
-checkRHS _Delta lhs (Prog a) _As _B
-  = Prog <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
+checkRHS _Delta lhs (MapsTo a) _As _B
+  = MapsTo <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _ _ = split _Delta x >>= \case
   [] -> return (Caseless x)
   otherwise -> throwCaselessErr x

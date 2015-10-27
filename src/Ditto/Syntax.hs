@@ -113,7 +113,7 @@ type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 
-data RHS = Prog Exp | Caseless Name | Split Name
+data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
@@ -222,7 +222,7 @@ fvTel [] = []
 fvTel ((_, _X, _A):_As) = fv _A ++ (_X `delete` nub (fvTel _As))
 
 fvRHS :: RHS -> [Name]
-fvRHS (Prog a) = fv a
+fvRHS (MapsTo a) = fv a
 fvRHS (Caseless x) = [x]
 fvRHS (Split x) = [x]
 

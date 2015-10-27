@@ -30,7 +30,7 @@ betaRed :: PName -> [Clause] -> Args -> TCM Exp
 betaRed x [] as = return $ Red x as
 betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
   Just xs -> case rhs of
-    Prog a -> whnf =<< sub a xs
+    MapsTo a -> whnf =<< sub a xs
     Caseless y -> error "Reducing a caseless RHS"
     Split y -> error "Reducing a splitting RHS"
   Nothing -> betaRed x cs as

@@ -299,7 +299,7 @@ ppRed' :: Ren -> PName -> Clause -> Doc
 ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats VCore ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc
-ppRHS ren (Prog a) = eq <+> ppExp ren a
+ppRHS ren (MapsTo a) = eq <+> ppExp ren a
 ppRHS ren (Caseless x) = neq <+> ppName ren x
 ppRHS ren (Split x) = at <+> ppName ren x
 

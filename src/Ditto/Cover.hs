@@ -96,9 +96,9 @@ cover' nm cs _As qs = duringCover nm qs $ case matchClauses cs qs of
       Split x -> subRHS (Var x) >>= \case
         Var x -> return [(_As, qs, Split x)]
         _ -> throwGenErr "Non-renaming in splitting clause"
-      Prog a -> do
+      MapsTo a -> do
         a <- subRHS a
-        return [(_As, qs, Prog a)]
+        return [(_As, qs, MapsTo a)]
   CSplit x -> do
     rss <- split _As x
     concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
@@ -110,7 +110,7 @@ splitClauseGoal :: Pats -> Tel -> Pats -> TCM CheckedClause
 splitClauseGoal ps _As qs = case match ps qs of
   MSolve rs -> do
     (_As, qs, _) <- accPSub rs _As qs
-    return (_As, qs, Prog hole)
+    return (_As, qs, MapsTo hole)
   _ -> throwGenErr "Split clause did not match original clause"
 
 splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]

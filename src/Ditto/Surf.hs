@@ -15,19 +15,50 @@ surfs (DForm _X _Is:(tail -> xs)) = do
   cs <- mapM (\(y, _As, is) -> (y,) <$> surfExp (conType _As _X is)) cs
   (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs xs
 surfs (DCon x _As _X _Is:(tail -> xs)) = surfs xs
-surfs (DRed x cs _As _B:xs) = do
+surfs (DRed x cs _As _B:(tail -> xs)) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs xs
-surfs (DMeta x ma _As _B:xs) =
-  (:) <$> (SMeta x <$> traverse surfExp ma <*> surfExp (pis _As _B)) <*> surfs xs
+surfs (DMeta x Nothing _As _B:xs) =
+  (:) <$> (SMeta x Nothing <$> surfExp (pis _As _B)) <*> surfs xs
+surfs (DMeta x (Just a) _As _B:xs) = surfs xs
 
-surfPats :: Pats -> TCM Pats
-surfPats = return
-
-surfRHS :: RHS -> TCM RHS
-surfRHS = return
+----------------------------------------------------------------------
 
 surfExp :: Exp -> TCM Exp
-surfExp = return
+surfExp Type = return Type
+surfExp (Infer m) = Infer <$> return m
+surfExp (Pi i _A _B) = Pi i <$> surfExp _A <*> surfExpExtBind i _A _B
+surfExp (Lam i _A b) = Lam i <$> surfExp _A <*> surfExpExtBind i _A b
+surfExp (App i f a) = App i <$> surfExp f <*> surfExp a
+surfExp (Form x as) = Form x <$> surfExps as
+surfExp (Con x as) = Con x <$> surfExps as
+surfExp (Red x as) = Red x <$> surfExps as
+surfExp (Meta x as) = lookupMeta x >>= \case
+  Just a -> surfExp =<< whnf (apps a as)
+  Nothing -> Meta x <$> surfExps as
+surfExp (Var x) = return (Var x)
+
+surfExps :: Args -> TCM Args
+surfExps = mapM (\(i, a) -> (i,) <$> surfExp a)
+
+surfExpExtBind :: Icit -> Exp -> Bind -> TCM Bind
+surfExpExtBind i _A bnd_b = do
+  (x, b) <- unbind bnd_b
+  Bind x <$> extCtx i x _A (surfExp b)
+
+----------------------------------------------------------------------
+
+surfPats :: Pats -> TCM Pats
+surfPats = mapM (\(i, a) -> (i,) <$> surfPat a)
+
+surfPat :: Pat -> TCM Pat
+surfPat (PVar x) = PVar <$> return x
+surfPat (PInacc ma) = PInacc <$> traverse surfExp ma
+surfPat (PCon x ps) = PCon x <$> surfPats ps
+
+surfRHS :: RHS -> TCM RHS
+surfRHS (MapsTo a) = MapsTo <$> surfExp a
+surfRHS (Caseless x) = Caseless <$> return x
+surfRHS (Split x) = Split <$> return x
 
 ----------------------------------------------------------------------

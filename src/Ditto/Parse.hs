@@ -84,7 +84,7 @@ parseClause = try $ do
 
 parseRHS :: Parser RHS
 parseRHS = choice
-  [ try $ Prog <$> (symEq >> parseExp)
+  [ try $ MapsTo <$> (symEq >> parseExp)
   , try $ Caseless <$> (symNeq >> parseName)
   , try $ Split <$> (symAt >> parseName)
   ]
