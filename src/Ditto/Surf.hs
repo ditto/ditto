@@ -52,6 +52,24 @@ surfExpExtBind i _A bnd_b = do
 
 ----------------------------------------------------------------------
 
+surfHoles :: Holes -> TCM Holes
+surfHoles = mapM surfHole
+
+surfHole :: Hole -> TCM Hole
+surfHole (x, _As, _B) = (x,,) <$> surfTel _As <*> surfExp _B
+
+surfTel :: Tel -> TCM Tel
+surfTel = mapM (\(i, x, _A) -> (i,x,) <$> surfExp _A)
+
+----------------------------------------------------------------------
+
+surfClauses :: [CheckedClause] -> TCM [CheckedClause]
+surfClauses = mapM surfClause
+
+surfClause :: CheckedClause -> TCM CheckedClause
+surfClause (_As, ps, rhs) = (,,)
+  <$> surfTel _As <*> surfPats ps <*> surfRHS rhs
+
 surfPats :: Pats -> TCM Pats
 surfPats = mapM (\(i, a) -> (i,) <$> surfPat a)
 

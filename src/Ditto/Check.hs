@@ -36,7 +36,7 @@ checkProg ds = do
   mapM_ checkStmt ds
   env <- getEnv
   prog <- surfs env
-  holes <- whnfHoles =<< lookupHoles
+  holes <- surfHoles =<< lookupHoles
   return (defNames env, prog, holes)
 
 checkStmt :: Stmt -> TCM ()

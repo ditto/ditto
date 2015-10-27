@@ -17,19 +17,23 @@ import Control.Monad.Except
 ----------------------------------------------------------------------
 
 throwConvErr :: Exp -> Exp -> TCM a
-throwConvErr a b = throwErr (EConv a b)
+throwConvErr a b = throwErr =<<
+  EConv <$> surfExp a <*> surfExp b
 
 throwAtomErr :: Exp -> TCM a
 throwAtomErr a = throwErr (EAtom a)
 
 throwMetasErr :: Holes -> TCM a
-throwMetasErr as = throwErr (EMetas as)
+throwMetasErr as = throwErr =<<
+  EMetas <$> surfHoles as
 
 throwCoverErr :: Tel -> PName -> Pats -> TCM a
-throwCoverErr _As x ps = throwErr (ECover _As x ps)
+throwCoverErr _As x ps = throwErr =<<
+  ECover <$> surfTel _As <*> return x <*> surfPats ps
 
 throwSplitErr :: [CheckedClause] -> TCM a
-throwSplitErr ps = throwErr (ESplit ps)
+throwSplitErr cs = throwErr =<<
+  ESplit <$> surfClauses cs
 
 ----------------------------------------------------------------------
 
@@ -52,7 +56,7 @@ throwErr err = do
   env <- getEnv
   prog <- surfs env
   acts <- getActs
-  ctx <- getCtx
+  ctx <- surfTel =<< getCtx
   throwError (defNames env, prog, acts, ctx, err)
 
 ----------------------------------------------------------------------
