@@ -1,0 +1,22 @@
+data Unit : Type where
+| tt : Unit
+end
+
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+data RGB : Type where
+| red,green,blue : RGB
+end
+
+def El (c : RGB) : Type where
+| red = Nat
+| c = Unit
+end
+
+def num (n : Nat) (c : RGB) : El c where
+| n red = n
+| n c = tt
+end
