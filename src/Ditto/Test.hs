@@ -8,6 +8,10 @@ import Ditto.Conv
 import Ditto.Whnf
 import Ditto.Monad
 import Test.HUnit
+import Data.List
+import System.Directory
+import System.FilePath
+import System.Environment
 
 ----------------------------------------------------------------------
 
@@ -752,11 +756,41 @@ parseTests = "Parse tests" ~:
 
 ----------------------------------------------------------------------
 
+testFile :: FilePath -> IO Test
+testFile file = do
+  code <- readFile file
+  return $ TestLabel file (testChecks code)
+
+----------------------------------------------------------------------
+
 unitTests :: Test
 unitTests = TestList [parseTests, prettyTests, checkTests, convTests, whnfTests]
 
+integrationTests :: FilePath -> IO Test
+integrationTests directory = do
+  allFiles <- getDirectoryContents directory
+  let testFileNames = filter (isSuffixOf ".dtt") allFiles
+  let testFiles = map (directory </>) testFileNames
+  TestList <$> mapM testFile testFiles
+
+runUnitTests :: IO Counts
+runUnitTests = do
+  putStrLn "Unit tests:"
+  runTestTT unitTests
+
+runIntegrationTests :: FilePath -> IO Counts
+runIntegrationTests directory = do
+  putStrLn "Integration tests:"
+  runTestTT =<< integrationTests directory
+
 runTests :: IO Counts
-runTests = runTestTT unitTests
+runTests = do
+  args <- getArgs
+  if null args
+  then runUnitTests
+  else do
+    runUnitTests
+    runIntegrationTests (head args)
 
 main = runTests >> return ()
 

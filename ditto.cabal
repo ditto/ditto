@@ -48,6 +48,8 @@ Library
                 , wl-pprint
                 , optparse-applicative
                 , HUnit
+                , directory
+                , filepath
   Default-extensions:
                   LambdaCase
                 , TupleSections
