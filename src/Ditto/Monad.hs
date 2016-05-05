@@ -72,7 +72,7 @@ gensymMeta k = MName k <$> gensym
 
 ----------------------------------------------------------------------
 
-lookupCons :: PName -> TCM [(PName, Tel, Args)]
+lookupCons :: PName -> TCM [ConSig]
 lookupCons x = do
   env <- getEnv
   return . conSigs . filter (isConOf x) $ env

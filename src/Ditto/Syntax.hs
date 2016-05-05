@@ -106,6 +106,7 @@ type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
 type CheckedClause = (Tel, Pats, RHS)
+type ConSig = (PName, Tel, Args)
 type Pats = [(Icit, Pat)]
 type Hole = (MName, Tel, Exp)
 type Holes = [Hole]
@@ -295,10 +296,10 @@ envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
-conSigs :: Env -> [(PName, Tel, Args)]
+conSigs :: Env -> [ConSig]
 conSigs = catMaybes . map conSig
 
-conSig :: Sigma -> Maybe (PName, Tel, Args)
+conSig :: Sigma -> Maybe ConSig
 conSig (DCon x _As _ is) = Just (x, _As, is)
 conSig _ = Nothing
 
