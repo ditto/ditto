@@ -52,16 +52,16 @@ reinfer (Lam i _A b) = do
   recheck _A Type
   Pi i _A <$> reinferExtBind i _A b
 reinfer (Form x is) = lookupPSigma x >>= \case
-  Just (DForm _X _Is) -> do
+  Just (DForm _X _ _Is) -> do
     foldM_ recheckAndAdd [] (zip is _Is)
     return Type
   otherwise -> throwGenErr $ "Not a type former name: " ++ show x
-reinfer (Con x as) = lookupPSigma x >>= \case
-  Just (DCon x _As _X _Is) -> do
+reinfer (Con x as) = lookupCon x >>= \case
+  Just (_X, _As, is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as
-    _Is' <- subs _Is s
-    return $ Form _X _Is'
+    is' <- subs is s
+    return $ Form _X is'
   otherwise -> throwGenErr $ "Not a constructor name: " ++ show x
 reinfer (Red x as) = lookupPSigma x >>= \case
   Just (DRed y cs _As _B) -> do

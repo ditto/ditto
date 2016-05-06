@@ -2,6 +2,7 @@ module Ditto.Sub where
 import Ditto.Syntax
 import Ditto.Monad
 import Data.List
+import Data.Maybe
 import Control.Monad
 
 ----------------------------------------------------------------------
@@ -84,7 +85,7 @@ freshCons (y, _Bs, is) = do
   return (y, _Bs', is')
 
 lookupConsFresh :: PName -> TCM [ConSig]
-lookupConsFresh x = mapM freshCons =<< lookupCons x
+lookupConsFresh x = mapM freshCons =<< fromJust <$> lookupCons x
 
 ----------------------------------------------------------------------
 

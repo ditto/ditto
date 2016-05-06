@@ -15,11 +15,9 @@ surfs' [] xs = return []
 surfs' (Def x a _A:env) xs = if isDeltaName x xs
   then surfs' env xs
   else (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env xs
-surfs' (DForm _X _Is:env) ((_X:) -> xs) = do
-  let cs = conSigs $ filter (isConOf _X) env
+surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
   cs <- mapM (\(y, _As, is) -> (y,) <$> surfExp (conType _As _X is)) cs
   (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env xs
-surfs' (DCon x _As _X _Is:env) ((x:) -> xs) = surfs' env xs
 surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs

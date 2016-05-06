@@ -118,8 +118,7 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
 
 data Sigma =
     Def Name Exp Exp
-  | DForm PName Tel
-  | DCon PName Tel PName Args
+  | DForm PName [ConSig] Tel
   | DRed PName [CheckedClause] Tel Exp
   | DMeta MName (Maybe Exp) Tel Exp
   deriving (Show, Read, Eq)
@@ -241,18 +240,19 @@ isNamed x (Def y _ _) = x == y
 isNamed x _ = False
 
 isPNamed :: PName -> Sigma -> Bool
-isPNamed x (DForm y _) = x == y
-isPNamed x (DCon y _ _ _) = x == y
+isPNamed x (DForm y (conNames -> ys) _) = x == y || any (x==) ys
 isPNamed x (DRed y _ _ _) = x == y
 isPNamed x _ = False
+
+conNames :: [ConSig] -> [PName]
+conNames = map conName
+
+conName :: ConSig -> PName
+conName (x, _, _) = x
 
 isMNamed :: MName -> Sigma -> Bool
 isMNamed x (DMeta y _ _ _) = x == y
 isMNamed x _ = False
-
-isConOf :: PName -> Sigma -> Bool
-isConOf x (DCon _ _ y _) = x == y
-isConOf x _ = False
 
 isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
@@ -271,6 +271,10 @@ defNames = map (\(x,_,_) -> x) . filterDefs
 envDef :: Sigma -> Maybe (Name, Exp, Exp)
 envDef (Def x a _A) = Just (x, a, _A)
 envDef _ = Nothing
+
+envDefType :: Sigma -> Maybe Exp
+envDefType (Def _ _ _A) = Just _A
+envDefType _ = Nothing
 
 envDefBody :: Sigma -> Maybe Exp
 envDefBody (Def _ a _) = Just a
@@ -296,22 +300,18 @@ envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
-conSigs :: Env -> [ConSig]
-conSigs = catMaybes . map conSig
+conSig :: PName -> Sigma -> Maybe ConSig
+conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
+  Just (x, _As, is) -> Just (_X, _As, is)
+  Nothing -> Nothing
+conSig x _ = Nothing
 
-conSig :: Sigma -> Maybe ConSig
-conSig (DCon x _As _ is) = Just (x, _As, is)
-conSig _ = Nothing
+conSigs :: Sigma -> Maybe [ConSig]
+conSigs (DForm _ cs _) = Just cs
+conSigs _ = Nothing
 
 redClauses :: Sigma -> Maybe [CheckedClause]
 redClauses (DRed x cs _ _) = Just cs
 redClauses _ = Nothing
-
-envType :: Sigma -> Exp
-envType (Def _ _ _A) = _A
-envType (DForm _ _Is) = formType _Is
-envType (DCon _ _As _X _Is) = conType _As _X _Is
-envType (DRed _ _ _As _B) = error "Type of reduction not yet implemented"
-envType (DMeta _ _ _As _B) = pis _As _B
 
 ----------------------------------------------------------------------

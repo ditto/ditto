@@ -64,7 +64,7 @@ addForm x _Is = do
   env <- getEnv
   when (any (isPNamed x) env) $ throwGenErr
     $ "Type former name already exists in the environment: " ++ show x
-  addSig (DForm x _Is)
+  addSig (DForm x [] _Is)
   addDef (pname2name x) (lams _Is (Form x (varArgs _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, Args) -> TCM ()
@@ -72,8 +72,12 @@ addCon (x, _As, _X, _Is) = do
   env <- getEnv
   when (any (isPNamed x) env) $ throwGenErr
     $ "Constructor name already exists in the environment: " ++ show x
-  addSig (DCon x _As _X _Is)
-  addDef (pname2name x) (lams _As (Con x (varArgs _As))) (conType _As _X _Is)
+  case find (isPNamed _X) env of
+      Just s@(DForm _ cs _Js) -> do
+        updateSig s (DForm _X (snoc cs (x, _As, _Is)) _Js)
+        addDef (pname2name x) (lams _As (Con x (varArgs _As))) (conType _As _X _Is)
+      _ -> throwGenErr $
+        "Datatype does not exist in the environment: " ++ show _X
 
 addRedType :: PName -> Tel -> Exp -> TCM ()
 addRedType x _As _B = do

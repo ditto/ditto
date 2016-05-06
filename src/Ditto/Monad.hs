@@ -72,10 +72,15 @@ gensymMeta k = MName k <$> gensym
 
 ----------------------------------------------------------------------
 
-lookupCons :: PName -> TCM [ConSig]
+lookupCon :: PName -> TCM (Maybe (ConSig))
+lookupCon x = do
+  env <- getEnv
+  return $ conSig x =<< find (isPNamed x) env
+
+lookupCons :: PName -> TCM (Maybe [ConSig])
 lookupCons x = do
   env <- getEnv
-  return . conSigs . filter (isConOf x) $ env
+  return $ conSigs =<< find (isPNamed x) env
 
 lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do
@@ -100,11 +105,6 @@ lookupPSigma :: PName -> TCM (Maybe Sigma)
 lookupPSigma x = do
   env <- getEnv
   return $ return =<< find (isPNamed x) env
-
-lookupPType :: PName -> TCM (Maybe Exp)
-lookupPType x = do
-  s <- lookupPSigma x
-  return $ return . envType =<< s
 
 ----------------------------------------------------------------------
 
@@ -137,7 +137,7 @@ lookupType x = lookupCtx x >>= \case
   Just _A -> return . Just $ _A
   Nothing -> do
     s <- lookupSigma x
-    return $ Just . envType =<< s
+    return $ envDefType =<< s
 
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
