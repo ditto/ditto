@@ -11,6 +11,7 @@ import Ditto.Surf
 import Ditto.Throw
 import Ditto.During
 import Ditto.Pretty
+import Data.Maybe
 import Data.List
 import Control.Monad.State
 
@@ -40,25 +41,38 @@ checkProg ds = do
   return (defNames env, prog, holes)
 
 checkStmt :: Stmt -> TCM ()
-checkStmt (SDef x a _A) = duringDef x $ do
+checkStmt d = do
+  checkSig (toSig d)
+  checkBod (toBod d)
+
+checkSig :: Sig -> TCM ()
+checkSig (GDef x _A) = duringDef x $ do
   _A <- checkSolved _A Type
-  a  <- checkSolved a _A
-  addDef x (Just a) _A
-checkStmt (SData x _A cs) = duringData x $ do
+  addDef x Nothing _A
+checkSig (GData x _A) = duringData x $ do
   _A <- checkSolved _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
       addForm x tel
-      cs <- mapM (\ (x, _A') -> (x,) <$> duringCon x (checkSolved _A' Type)) cs
-      mapM_ (\c -> addCon =<< buildCon x c) cs
     otherwise -> throwGenErr "Datatype former does not end in Type"
-checkStmt (SDefn x _A cs) = duringDefn x $ do
-  cs <- atomizeClauses cs
-  checkLinearClauses x cs
+checkSig (GDefn x _A) = duringDefn x $ do
   _A <- checkSolved _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
+
+checkBod :: Bod -> TCM ()
+checkBod (BDef x a) = duringDef x $ do
+  _A <- fromJust <$> lookupType x
+  a  <- checkSolved a _A
+  updateDef x a
+checkBod (BData x cs) = duringData x $ do
+  cs <- mapM (\ (x, _A') -> (x,) <$> duringCon x (checkSolved _A' Type)) cs
+  mapM_ (\c -> addCon =<< buildCon x c) cs
+checkBod (BDefn x cs) = duringDefn x $ do
+  cs <- atomizeClauses cs
+  checkLinearClauses x cs
+  (_As, _B) <- fromJust <$> lookupRedType x
   cs' <- cover x cs _As
   let unreached = unreachableClauses cs cs'
   unless (null unreached) $

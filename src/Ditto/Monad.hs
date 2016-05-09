@@ -82,6 +82,11 @@ lookupCons x = do
   env <- getEnv
   return $ conSigs =<< find (isPNamed x) env
 
+lookupRedType :: PName -> TCM (Maybe (Tel, Exp))
+lookupRedType x = do
+  env <- getEnv
+  return $ redType =<< find (isPNamed x) env
+
 lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
 lookupRedClauses x = do
   env <- getEnv

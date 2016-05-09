@@ -29,6 +29,14 @@ addDef x a _A = do
     $ "Definition name already exists in the environment: " ++ show x
   addSig (Def x a _A)
 
+updateDef :: Name -> Exp -> TCM ()
+updateDef x a = do
+  env <- getEnv
+  case find (isNamed x) env of
+      Just s@(Def _ _ _A) -> updateSig s (Def x (Just a) _A)
+      _ -> throwGenErr $
+        "Definition does not exist in the environment: " ++ show x
+
 ----------------------------------------------------------------------
 
 genMeta :: MKind -> TCM (Exp, Exp)

@@ -86,6 +86,18 @@ data Stmt =
   | SDefn PName Exp [Clause]
   deriving (Show, Read, Eq)
 
+data Sig =
+    GDef Name Exp
+  | GData PName Exp
+  | GDefn PName Exp
+  deriving (Show, Read, Eq)
+
+data Bod =
+    BDef Name Exp
+  | BData PName Cons
+  | BDefn PName [Clause]
+  deriving (Show, Read, Eq)
+
 data Exp =
     Type | Pi Icit Exp Bind | Lam Icit Exp Bind
   | Form PName Args | Con PName Args
@@ -148,6 +160,18 @@ data Err =
   | ESplit [CheckedClause]
   | EAtom Exp
   deriving (Show, Read, Eq)
+
+----------------------------------------------------------------------
+
+toSig :: Stmt -> Sig
+toSig (SDef x _ _A) = GDef x _A
+toSig (SData x _A _) = GData x _A
+toSig (SDefn x _A _) = GDefn x _A
+
+toBod :: Stmt -> Bod
+toBod (SDef x a _) = BDef x a
+toBod (SData x _ cs) = BData x cs
+toBod (SDefn x _ cs) = BDefn x cs
 
 ----------------------------------------------------------------------
 
@@ -310,8 +334,12 @@ conSigs :: Sigma -> Maybe [ConSig]
 conSigs (DForm _ cs _) = Just cs
 conSigs _ = Nothing
 
+redType :: Sigma -> Maybe (Tel, Exp)
+redType (DRed _ _ _As _B) = Just (_As, _B)
+redType _ = Nothing
+
 redClauses :: Sigma -> Maybe [CheckedClause]
-redClauses (DRed x cs _ _) = Just cs
+redClauses (DRed _ cs _ _) = Just cs
 redClauses _ = Nothing
 
 ----------------------------------------------------------------------
