@@ -43,7 +43,7 @@ checkStmt :: Stmt -> TCM ()
 checkStmt (SDef x a _A) = duringDef x $ do
   _A <- checkSolved _A Type
   a  <- checkSolved a _A
-  addDef x a _A
+  addDef x (Just a) _A
 checkStmt (SData x _A cs) = duringData x $ do
   _A <- checkSolved _A Type
   (tel, end) <- splitTel _A

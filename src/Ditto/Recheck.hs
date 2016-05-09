@@ -10,8 +10,9 @@ import Control.Monad.State
 
 ----------------------------------------------------------------------
 
-recheckDef :: (Name, Exp, Exp) -> TCM ()
-recheckDef (x, a, _A) = do
+recheckDef :: (Name, Maybe Exp, Exp) -> TCM ()
+recheckDef (x, Nothing, _A) = return ()
+recheckDef (x, Just a, _A) = do
   _A' <- whnf =<< deltaExpand _A
   a' <- whnf =<< deltaExpand a
   recheck a' _A'

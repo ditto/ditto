@@ -108,7 +108,7 @@ lookupPSigma x = do
 
 ----------------------------------------------------------------------
 
-lookupDefs :: TCM [(Name, Exp, Exp)]
+lookupDefs :: TCM [(Name, Maybe Exp, Exp)]
 lookupDefs = do
   env <- getEnv
   return . filterDefs $ env

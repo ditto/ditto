@@ -117,7 +117,7 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
-    Def Name Exp Exp
+    Def Name (Maybe Exp) Exp
   | DForm PName [ConSig] Tel
   | DRed PName [CheckedClause] Tel Exp
   | DMeta MName (Maybe Exp) Tel Exp
@@ -262,13 +262,13 @@ isMeta :: Sigma -> Bool
 isMeta (DMeta _ _ _ _) = True
 isMeta _ = False
 
-filterDefs :: Env -> [(Name, Exp, Exp)]
+filterDefs :: Env -> [(Name, Maybe Exp, Exp)]
 filterDefs = catMaybes . map envDef . filter isDef
 
 defNames :: Env -> [Name]
 defNames = map (\(x,_,_) -> x) . filterDefs
 
-envDef :: Sigma -> Maybe (Name, Exp, Exp)
+envDef :: Sigma -> Maybe (Name, Maybe Exp, Exp)
 envDef (Def x a _A) = Just (x, a, _A)
 envDef _ = Nothing
 
@@ -277,7 +277,7 @@ envDefType (Def _ _ _A) = Just _A
 envDefType _ = Nothing
 
 envDefBody :: Sigma -> Maybe Exp
-envDefBody (Def _ a _) = Just a
+envDefBody (Def _ a _) = a
 envDefBody _ = Nothing
 
 isHole :: MName -> Bool
