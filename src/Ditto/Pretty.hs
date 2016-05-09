@@ -83,7 +83,13 @@ ppEnvVerb Verbose ren env = ppEnv ren env
 
 ppEnv :: Ren -> Prog -> Maybe Doc
 ppEnv ren [] = Nothing
-ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppStmt ren) xs
+ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppStmt ren) (forget xs)
+  where
+  forget :: Prog -> [Stmt]
+  forget [] = []
+  forget (Left d:ds) = d : forget ds
+  forget (Right ds:es) = ds ++ forget es
+
 
 sec :: String -> Doc
 sec str = textc str // dashes

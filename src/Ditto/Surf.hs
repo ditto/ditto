@@ -8,9 +8,9 @@ import Data.Maybe
 ----------------------------------------------------------------------
 
 surfs :: Env -> TCM Prog
-surfs = flip surfs' []
+surfs env = map Left <$> (surfs' env [])
 
-surfs' :: Env -> [PName] -> TCM Prog
+surfs' :: Env -> [PName] -> TCM [Stmt]
 surfs' [] xs = return []
 surfs' (Def x a _A:env) xs = if isDeltaName x xs
   then surfs' env xs

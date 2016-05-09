@@ -1,0 +1,19 @@
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+mutual
+
+data U : Type where
+| Nat' : U
+| Fun' : (A : U) (B (a : El A) : U) : U
+end
+
+def El (A : U) : Type where
+| Nat' = Nat
+| (Fun' A B) = (a : El A) : El (B a)
+end
+
+end
+

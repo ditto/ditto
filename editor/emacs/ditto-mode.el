@@ -12,7 +12,7 @@
 
 (define-generic-mode 'ditto-mode
   '("#") ;; comments
-  '("data" "def" "where" "end" "|") ;; keywords
+  '("mutual" "data" "def" "where" "end" "|") ;; keywords
   '()
   '("\\.dtt$") ;; file extension
   () ;; other functions to call

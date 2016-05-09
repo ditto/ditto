@@ -10,13 +10,14 @@ import Control.Monad
 ----------------------------------------------------------------------
 
 parseE = parse (whitespace >> parseExp <* eof) "" . stripComments
-parseP = parse (whitespace >> parseStmts <* eof) "" . stripComments
+parseP = parse (whitespace >> parseProg <* eof) "" . stripComments
 
 stripComments :: String -> String
 stripComments = unlines . map (takeWhile (/= '#')) . lines
 
 keyType = symbol "Type"
 keyData = symbol "data"
+keyMutual = symbol "mutual"
 keyDef = symbol "def"
 keyWhere = symbol "where"
 keyEnd = symbol "end"
@@ -44,12 +45,22 @@ symRBrace = symbol "}"
 
 ----------------------------------------------------------------------
 
-parseStmts :: Parser Prog
-parseStmts = many1 $ choice [
+parseProg :: Parser Prog
+parseProg = many1 $ (Right <$> parseMutual) <|> (Left <$> parseStmt)
+
+parseStmt :: Parser Stmt
+parseStmt = choice [
     parseDef
   , parseDefn
   , parseData
   ]
+
+parseMutual :: Parser [Stmt]
+parseMutual = try $ do
+  keyMutual
+  xs <- many1 parseStmt
+  keyEnd
+  return xs
 
 parseDef :: Parser Stmt
 parseDef = try $ do

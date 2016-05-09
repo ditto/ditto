@@ -78,8 +78,6 @@ data MKind = MInfer | MHole (Maybe String)
 
 ----------------------------------------------------------------------
 
-type Cons = [(PName, Exp)]
-
 data Stmt =
     SDef Name Exp Exp
   | SData PName Exp Cons
@@ -108,7 +106,9 @@ data Exp =
 data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
-type Prog = [Stmt]
+type Prog = [MStmt]
+type MStmt = Either Stmt [Stmt]
+type Cons = [(PName, Exp)]
 type Arg = (Icit, Exp)
 type Args = [Arg]
 type Env = [Sigma]

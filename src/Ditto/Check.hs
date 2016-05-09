@@ -40,10 +40,13 @@ checkProg ds = do
   holes <- surfHoles =<< lookupHoles
   return (defNames env, prog, holes)
 
-checkStmt :: Stmt -> TCM ()
-checkStmt d = do
+checkStmt :: MStmt -> TCM ()
+checkStmt (Left d) = do
   checkSig (toSig d)
   checkBod (toBod d)
+checkStmt (Right ds) = do
+  mapM_ (checkSig . toSig) ds
+  mapM_ (checkBod . toBod) ds
 
 checkSig :: Sig -> TCM ()
 checkSig (GDef x _A) = duringDef x $ do
