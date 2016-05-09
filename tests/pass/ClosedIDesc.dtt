@@ -1,0 +1,78 @@
+data Bot : Type where end
+
+data Unit : Type where
+| tt : Unit
+end
+
+data Bool : Type where
+| true,false : Bool
+end
+
+data Pair (A : Type) (B (a : A) : Type) :: Type where
+| pair (a : A) (b : B a) : Pair A B
+end
+
+def SPair (A,B : Type) : Type where
+(A,B : Type) -> Pair A ((a : A) -> B)
+end
+
+data Desc (I : Type) :: Type where
+| End (i : I) : Desc I
+| Arg (A : Type) (B (a : A) : Desc I) : Desc I
+| Rec (A : Type) (i : (a : A) : I) (D : Desc I) : Desc I
+end
+
+mutual
+
+data Ind {I : Type} (D : Desc I) :: (i : I) : Type where
+| con (xs : Data D D) : Ind D (idx D D xs)
+end
+
+def Data {I : Type} (R,D : Desc I) : Type where
+| R (End i) = Unit
+| R (Arg A D) = Pair A ((a : *) -> Data R (D a))
+| R (Rec A i D) = SPair ((a : A) : Ind R (i a)) (Data R D)
+end
+
+def idx {I : Type} (R,D : Desc I) (xs : Data R D) : I where
+| R (End i) tt = i
+| R (Arg A D) (pair a xs) = idx R (D a) xs
+| R (Rec A i D) (pair f xs) = idx R D xs
+end
+
+end
+
+mutual
+
+data Set' : Type where
+| Bot', Unit', Bool' : Set'
+| Pair', Fun' (A : Set') (B (a : ToSet A) : Set') : Set'
+| Ind' {I : Set'} (D : Desc' (ToSet I)) (i : ToSet I) : Set'
+end
+
+def ToSet (A : Set') : Type where
+| Bot' = Bot
+| Unit' = Unit
+| Bool' = Bool
+| (Pair' A B) = Pair (ToSet A) ((a : ToSet A) -> ToSet (B a))
+| (Fun' A B) = (a : ToSet A) : ToSet (B a)
+| (Ind' D i) = Ind (ToDesc D) i
+end
+
+data Desc' (I : Type) :: Type where
+| End' (i : I) : Desc' I
+| Arg' (A : Set') (D : (a : ToSet A) : Desc' I) : Desc' I
+| Rec' (A : Set') (i (a : ToSet A) : I) (D : Desc' I) : Desc' I
+end
+
+def ToDesc {I : Type} (D : Desc' I) : Desc I where
+| (End' i) = End i
+| (Arg' A D) = Arg (ToSet A) ((a : ToSet A) -> ToDesc (D a))
+| (Rec' A i D) = Rec (ToSet A) i (ToDesc D)
+end
+
+
+end
+
+
+
