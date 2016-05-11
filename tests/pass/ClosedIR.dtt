@@ -31,7 +31,7 @@ end
 def Data' {O : Type} (R,D : Desc O) : Type where
 | R (End i) = Unit
 | R (Arg A D) = Pair A ((a : *) -> Data' R (D a))
-| R (Rec A D) = Pair ((a : A) : Data R) ((f : (a : A) : Data R) -> Data' R (D ((a : A) -> fun R (f a))))
+| R (Rec A D) = Pair ((a : A) : Data R) ((f : *) -> Data' R (D ((a : A) -> fun R (f a))))
 end
 
 def fun {O : Type} (D : Desc O) (x : Data D) : O where

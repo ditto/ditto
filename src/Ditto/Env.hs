@@ -39,6 +39,16 @@ updateDef x a = do
 
 ----------------------------------------------------------------------
 
+genMetaPi :: Tel -> Icit -> TCM Exp
+genMetaPi _As i = do
+  _X <- addMeta MInfer _As Type
+  let _A = Meta _X (varArgs _As)
+  x <- gensymInacc
+  let _Bs = snoc _As (i, x, _A)
+  _Y <- addMeta MInfer _Bs Type
+  let _B = Meta _Y (varArgs _Bs)
+  return (Pi i _A (Bind x _B))
+
 genMeta :: MKind -> TCM (Exp, Exp)
 genMeta m = do
   _As <- getCtx

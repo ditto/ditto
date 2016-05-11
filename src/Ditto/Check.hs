@@ -202,8 +202,11 @@ checkArgs ((i1, a):as) (Pi i2 _A bnd_B) | i1 == i2 = do
   (x, _B) <- unbind bnd_B
   (as, _B) <- checkArgs as =<< whnf =<< sub1 (x, a) _B
   return ((i1, a):as, _B)
-checkArgs ((i1, a):as) (Meta _X bs) =
-  throwGenErr "Function type metavariable not currently bidirectionally solved"
+checkArgs as@((i, _):_) _M@(Meta _X _) = do
+  (_As, _) <- fromJust <$> lookupMetaType _X
+  _AB <- genMetaPi _As i
+  conv _M _AB
+  checkArgs as _AB
 checkArgs ((i1, a):as) _B =
   throwGenErr "Function does not have correct Pi type"
 checkArgs [] _B = return ([], _B)
