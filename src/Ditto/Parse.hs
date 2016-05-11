@@ -231,10 +231,10 @@ parseInaccName = try $ do
 parseIdent :: Parser String
 parseIdent = try $ do
   notFollowedBy keywords
-  lexeme ((:) <$> firstChar <*> many nextChar)
-  where
-  firstChar = letter
-  nextChar = choice [alphaNum, char '\'']
+  prefix <- many (char '`')
+  body <- (:) <$> letter <*> many alphaNum
+  suffix <- many (char '\'')
+  lexeme $ return $ prefix ++ body ++ suffix
 
 ----------------------------------------------------------------------
 

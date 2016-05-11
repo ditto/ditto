@@ -44,31 +44,31 @@ end
 
 mutual
 
-data Set' : Type where
-| Bot', Unit', Bool' : Set'
-| Pair', Fun' (A : Set') (B (a : ToSet A) : Set') : Set'
-| Ind' {I : Set'} (D : Desc' (ToSet I)) (i : ToSet I) : Set'
+data `Type : Type where
+| `Bot,`Unit,`Bool : `Type
+| `Pair,`Fun (A : `Type) (B (a : ToType A) : `Type) : `Type
+| `Ind {I : `Type} (D : `Desc (ToType I)) (i : ToType I) : `Type
 end
 
-def ToSet (A : Set') : Type where
-| Bot' = Bot
-| Unit' = Unit
-| Bool' = Bool
-| (Pair' A B) = Pair (ToSet A) ((a : ToSet A) -> ToSet (B a))
-| (Fun' A B) = (a : ToSet A) : ToSet (B a)
-| (Ind' D i) = Ind (ToDesc D) i
+def ToType (A : `Type) : Type where
+| `Bot = Bot
+| `Unit = Unit
+| `Bool = Bool
+| (`Pair A B) = Pair (ToType A) ((a : ToType A) -> ToType (B a))
+| (`Fun A B) = (a : ToType A) : ToType (B a)
+| (`Ind D i) = Ind (ToDesc D) i
 end
 
-data Desc' (I : Type) :: Type where
-| End' (i : I) : Desc' I
-| Arg' (A : Set') (D : (a : ToSet A) : Desc' I) : Desc' I
-| Rec' (A : Set') (i (a : ToSet A) : I) (D : Desc' I) : Desc' I
+data `Desc (I : Type) :: Type where
+| `End (i : I) : `Desc I
+| `Arg (A : `Type) (D : (a : ToType A) : `Desc I) : `Desc I
+| `Rec (A : `Type) (i (a : ToType A) : I) (D : `Desc I) : `Desc I
 end
 
-def ToDesc {I : Type} (D : Desc' I) : Desc I where
-| (End' i) = End i
-| (Arg' A D) = Arg (ToSet A) ((a : ToSet A) -> ToDesc (D a))
-| (Rec' A i D) = Rec (ToSet A) i (ToDesc D)
+def ToDesc {I : Type} (D : `Desc I) : Desc I where
+| (`End i) = End i
+| (`Arg A D) = Arg (ToType A) ((a : ToType A) -> ToDesc (D a))
+| (`Rec A i D) = Rec (ToType A) i (ToDesc D)
 end
 
 
