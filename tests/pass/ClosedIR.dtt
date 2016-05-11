@@ -65,7 +65,7 @@ end
 
 data Desc' (O : Type) :: Type where
 | End' (i : O) : Desc' O
-| Arg' (A : Set') (D : (a : ToSet A) : Desc' O) : Desc' O
+| Arg' (A : Set') (D (a : ToSet A) : Desc' O) : Desc' O
 | Rec' (A : Set') (D (i (a : ToSet A) : O) : Desc' O) : Desc' O
 end
 
