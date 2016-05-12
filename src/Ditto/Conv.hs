@@ -76,6 +76,8 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> convArgs as1 as2
 conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> convArgs as1 as2
+
+-- Solving Metavariables
 conv' a1@(Meta x1 as1) a2 = do
   a2 <- metaExpand a2
   millerPattern as1 a2 >>= \case
@@ -87,7 +89,16 @@ conv' a1@(Meta x1 as1) a2 = do
        Meta x1 <$> convArgs as1 as2
      otherwise -> throwConvErr a1 a2
 conv' a1 a2@(Meta _ _) = conv' a2 a1
+
+-- Function Eta Expansion
+conv' f1@(Lam i _A bnd_b) f2 = do
+  (x , _) <- unbind bnd_b
+  conv' f1 (Lam i _A (Bind x (App i f2 (Var x))))
+conv' f1 f2@(Lam _ _ _) = conv' f2 f1
+
 conv' a b = throwConvErr a b
+
+----------------------------------------------------------------------
 
 convArg :: (Icit, Exp) -> (Icit, Exp) -> TCM (Icit, Exp)
 convArg (i1, a1) (i2, a2) | i1 == i2 = (i1,) <$> conv a1 a2

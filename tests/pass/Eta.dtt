@@ -1,0 +1,10 @@
+data Triple (A : Type) (B (a : A) : Type) (C (a : A) (b : B a) : Type) :: Type where
+| triple (a : A) (b : B a) (c : C a b) : Triple A B C
+end
+
+def eta {A : Type} {B (a : A) : Type} {C (a : A) (b : B a) : Type}
+(a : A) (b : B a) (c : C a b)
+: Triple A ((x : A) -> B x) ((x : A) (y : B x) -> C x y) where
+| a b c = triple a b c
+end
+
