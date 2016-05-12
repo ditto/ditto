@@ -91,6 +91,8 @@ conv' a1@(Meta x1 as1) a2 = do
 conv' a1 a2@(Meta _ _) = conv' a2 a1
 
 -- Function Eta Expansion
+conv' f1@(Lam i1 _ _) f2@(Lam i2 _ _)
+  | i1 /= i2 = throwConvErr f1 f2
 conv' f1@(Lam i _A bnd_b) f2 = do
   (x , _) <- unbind bnd_b
   conv' f1 (Lam i _A (Bind x (App i f2 (Var x))))
