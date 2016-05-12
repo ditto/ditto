@@ -29,6 +29,8 @@ isDeltaName x xs = maybe False (flip elem xs) (name2pname x)
 
 ----------------------------------------------------------------------
 
+metaExpand = surfExp
+
 surfExp :: Exp -> TCM Exp
 surfExp Type = return Type
 surfExp (Infer m) = Infer <$> return m

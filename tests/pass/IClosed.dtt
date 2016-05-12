@@ -47,7 +47,7 @@ mutual
 data `Type : Type where
 | `Bot,`Unit,`Bool : `Type
 | `Pair,`Fun (A : `Type) (B (a : ToType A) : `Type) : `Type
-| `Ind {I : `Type} (D : `Desc (ToType I)) (i : ToType I) : `Type
+| `Ind {I : `Type} (D : `Desc I) (i : ToType I) : `Type
 end
 
 def ToType (A : `Type) : Type where
@@ -59,13 +59,13 @@ def ToType (A : `Type) : Type where
 | (`Ind D i) = Ind (ToDesc D) i
 end
 
-data `Desc (I : Type) :: Type where
-| `End (i : I) : `Desc I
+data `Desc (I : `Type) :: Type where
+| `End (i : ToType I) : `Desc I
 | `Arg (A : `Type) (D : (a : ToType A) : `Desc I) : `Desc I
-| `Rec (A : `Type) (i (a : ToType A) : I) (D : `Desc I) : `Desc I
+| `Rec (A : `Type) (i (a : ToType A) : ToType I) (D : `Desc I) : `Desc I
 end
 
-def ToDesc {I : Type} (D : `Desc I) : Desc I where
+def ToDesc {I : `Type} (D : `Desc I) : Desc (ToType I) where
 | (`End i) = End i
 | (`Arg A D) = Arg (ToType A) ((a : ToType A) -> ToDesc (D a))
 | (`Rec A i D) = Rec (ToType A) i (ToDesc D)

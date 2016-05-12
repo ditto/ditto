@@ -1,6 +1,7 @@
 module Ditto.Conv where
 import Ditto.Syntax
 import Ditto.Whnf
+import Ditto.Surf
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
@@ -75,14 +76,16 @@ conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> convArgs as1 as2
 conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
   Red x1 <$> convArgs as1 as2
-conv' a1@(Meta x1 as1) a2 = millerPattern as1 a2 >>= \case
-  Just _As -> do
-    solveMeta x1 (lams _As a2)
-    return a2
-  Nothing -> case a2 of
-    Meta x2 as2 | x1 == x2 ->
-      Meta x1 <$> convArgs as1 as2
-    otherwise -> throwConvErr a1 a2
+conv' a1@(Meta x1 as1) a2 = do
+  a2 <- metaExpand a2
+  millerPattern as1 a2 >>= \case
+   Just _As -> do
+     solveMeta x1 (lams _As a2)
+     return a2
+   Nothing -> case a2 of
+     Meta x2 as2 | x1 == x2 ->
+       Meta x1 <$> convArgs as1 as2
+     otherwise -> throwConvErr a1 a2
 conv' a1 a2@(Meta _ _) = conv' a2 a1
 conv' a b = throwConvErr a b
 
