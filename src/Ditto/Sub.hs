@@ -38,6 +38,7 @@ sub1 xa (Form y is) = Form y <$> subs1 xa is
 sub1 xa (Con y as) = Con y <$> subs1 xa as
 sub1 xa (Red y as) = Red y <$> subs1 xa as
 sub1 xa (Meta y as) = Meta y <$> subs1 xa as
+sub1 xa (Guard y) = return $ Guard y
 sub1 (x, a) (Var y) | x == y = return a
 sub1 xa (Var y) = return $ Var y
 sub1 xa Type = return Type

@@ -23,6 +23,7 @@ surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs
 surfs' (DMeta x ma _As _B:env) xs = surfs' env xs
+surfs' (DGuard x a _A cs:env) xs = surfs' env xs
 
 isDeltaName :: Name -> [PName] -> Bool
 isDeltaName x xs = maybe False (flip elem xs) (name2pname x)
@@ -43,6 +44,9 @@ surfExp (Red x as) = Red x <$> surfExps as
 surfExp (Meta x as) = lookupMeta x >>= \case
   Just a -> surfExp =<< whnf (apps a as)
   Nothing -> Meta x <$> surfExps as
+surfExp (Guard x) = lookupGuard x >>= \case
+  Just a -> surfExp =<< whnf a
+  Nothing -> return $ Guard x
 surfExp (Var x) = return (Var x)
 
 surfExps :: Args -> TCM Args

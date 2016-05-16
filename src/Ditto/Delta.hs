@@ -20,6 +20,9 @@ deltaExpand (Meta x as) = lookupMeta x >>= \case
 deltaExpand (Var x) = lookupDef x >>= \case
   Just a -> deltaExpand a
   Nothing -> return $ Var x
+deltaExpand (Guard x) = lookupGuard x >>= \case
+  Just a -> deltaExpand a
+  Nothing -> return $ Guard x
 
 deltaExpands :: Args -> TCM Args
 deltaExpands = mapM $ \(i, a) -> (i,) <$> deltaExpand a 

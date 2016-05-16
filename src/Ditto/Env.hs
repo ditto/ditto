@@ -67,6 +67,23 @@ solveMeta x a = do
 
 ----------------------------------------------------------------------
 
+addGuard :: Exp -> Exp -> Prob -> TCM GName
+addGuard a _A p = do
+  x <- gensymGuard
+  addSig (DGuard x a _A (Just p))
+  return x
+
+updateGuard :: GName -> MProb -> TCM ()
+updateGuard x mp = do
+  env <- getEnv
+  case find (isGNamed x) env of
+    Just s@(DGuard _ a _A _) -> do
+      updateSig s (DGuard x a _A mp)
+    _ -> throwGenErr $
+      "Guard does not exist in the environment: " ++ show x
+
+----------------------------------------------------------------------
+
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
   env <- getEnv

@@ -35,6 +35,8 @@ funify' xs (Var x) a | x `elem` xs = return . Just $ [(x, a)]
 funify' xs a (Var x) | x `elem` xs = return . Just $ [(x, a)]
 funify' xs (Con x1 as1) (Con x2 as2) | x1 /= x2 = return Nothing
 funify' xs (Con x1 as1) (Con x2 as2) = funifies xs as1 as2
-funify' xs a1 a2 = conv a1 a2 >> return (Just [])
+funify' xs a1 a2 = conv a1 a2 >>= \case
+  Nothing -> return (Just [])
+  Just p -> throwProbErr p
 
 ----------------------------------------------------------------------

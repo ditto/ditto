@@ -46,6 +46,9 @@ initialR = DittoR
 
 ----------------------------------------------------------------------
 
+withinCtx :: Acts -> Tel -> TCM a -> TCM a
+withinCtx acts' ctx' = local (\ r -> r { acts = acts' , ctx = ctx' })
+
 extCtx :: Icit -> Name -> Exp -> TCM a -> TCM a
 extCtx i x _A = extCtxs [(i, x, _A)]
 
@@ -69,6 +72,24 @@ gensymEHint e x = uniqEName e x <$> gensym
 
 gensymMeta :: MKind -> TCM MName
 gensymMeta k = MName k <$> gensym
+
+gensymGuard :: TCM GName
+gensymGuard = GName <$> gensym
+
+----------------------------------------------------------------------
+
+mkProb1 :: Exp -> Exp -> TCM Prob
+mkProb1 a1 a2 = do
+  acts <- getActs
+  ctx <- getCtx
+  return $ Prob1 acts ctx a1 a2
+
+mkProbN :: Prob -> Args -> Args -> TCM Prob
+mkProbN p [] [] = return p
+mkProbN p as1 as2 = do
+  acts <- getActs
+  ctx <- getCtx
+  return $ ProbN p acts ctx as1 as2
 
 ----------------------------------------------------------------------
 
@@ -103,6 +124,23 @@ lookupMetaType :: MName -> TCM (Maybe (Tel, Exp))
 lookupMetaType x = do
   env <- getEnv
   return $ envMetaType =<< find (isMNamed x) env
+
+----------------------------------------------------------------------
+
+lookupGuard :: GName -> TCM (Maybe Exp)
+lookupGuard x = do
+  env <- getEnv
+  return $ envGuardBody =<< find (isGNamed x) env
+
+lookupGuardType :: GName -> TCM (Maybe Exp)
+lookupGuardType x = do
+  env <- getEnv
+  return $ envGuardType =<< find (isGNamed x) env
+
+lookupProb :: GName -> TCM (Maybe Prob)
+lookupProb x = do
+  env <- getEnv
+  return $ envGuardProb =<< find (isGNamed x) env
 
 ----------------------------------------------------------------------
 

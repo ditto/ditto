@@ -22,6 +22,9 @@ whnf (Var x) = lookupDef x >>= \case
 whnf (Meta x as) = lookupMeta x >>= \case
   Just a -> whnf (apps a as)
   Nothing -> return $ Meta x as
+whnf (Guard x) = lookupGuard x >>= \case
+  Just a -> whnf a
+  Nothing -> return $ Guard x
 whnf x = return x
 
 ----------------------------------------------------------------------

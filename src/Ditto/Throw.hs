@@ -8,6 +8,7 @@ module Ditto.Throw
   , throwCoverErr
   , throwReachErr
   , throwSplitErr
+  , throwProbErr
   ) where
 import Ditto.Syntax
 import Ditto.Monad
@@ -48,6 +49,13 @@ throwScopeErr = throwErr . EScope
 
 throwCaselessErr :: Name -> TCM a
 throwCaselessErr = throwErr . ECaseless
+
+----------------------------------------------------------------------
+
+throwProbErr :: Prob -> TCM a
+throwProbErr (Prob1 acts' ctx' a1 a2) =
+  withinCtx acts' ctx'(throwConvErr a1 a2)
+throwProbErr (ProbN p _ _ _ _) = throwProbErr p
 
 ----------------------------------------------------------------------
 

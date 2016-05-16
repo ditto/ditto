@@ -151,6 +151,7 @@ ppwExp ren w (Form _X _Is) = ppPrim ren w _X _Is
 ppwExp ren w (Con x as) = ppPrim ren w x as
 ppwExp ren w (Red x as) = ppPrim ren w x as
 ppwExp ren w (Meta x as) = ppMeta ren w x as
+ppwExp ren w (Guard x) = ppGuard ren w x
 ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
 ppInfer :: MKind -> Doc
@@ -165,6 +166,9 @@ ppPrim ren w x as = lefty w $ ppPName x <+> hcatmap1 (ppArg ren) as
 ppMeta :: Ren -> Wrap -> MName -> Args -> Doc
 ppMeta ren w x [] = ppMName x
 ppMeta ren w x as = lefty w $ ppMName x <+> hcatmap1 (ppArg ren) as
+
+ppGuard :: Ren -> Wrap -> GName -> Doc
+ppGuard ren w x = ppGName x
 
 ----------------------------------------------------------------------
 
@@ -323,6 +327,9 @@ ppPName (PName x) = text x
 
 ppMName :: MName -> Doc
 ppMName = text . show
+
+ppGName :: GName -> Doc
+ppGName = text . show
 
 ----------------------------------------------------------------------
 

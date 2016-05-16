@@ -176,8 +176,9 @@ inferExtBind i _A bnd_b = do
 check :: Exp -> Exp -> TCM Exp
 check a _A = duringCheck a _A $ do
   (a , _A') <- infer a
-  conv _A' _A
-  return a
+  conv _A' _A >>= \case
+    Just p -> throwProbErr p
+    Nothing -> return a
 
 infer :: Exp -> TCM (Exp, Exp)
 infer b@(viewSpine -> (f, as)) = duringInfer b $ do

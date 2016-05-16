@@ -7,6 +7,7 @@ import Ditto.Recheck
 import Ditto.Conv
 import Ditto.Whnf
 import Ditto.Monad
+import Ditto.Throw
 import Test.HUnit
 import Data.List
 import System.Directory
@@ -886,8 +887,13 @@ trunCheckProg xs = runPipelineV (checkProg xs >> recheckProg) id
 trunCheck :: Exp -> Exp -> Either String ()
 trunCheck a _A = runPipelineV (check a _A) (const ())
 
-trunConv :: Exp -> Exp -> Either String Exp
-trunConv a b = runPipelineV (conv a b) id
+trunConv :: Exp -> Exp -> Either String ()
+trunConv a b = runPipelineV (convWithErr a b) id
+
+convWithErr :: Exp -> Exp -> TCM ()
+convWithErr a b = maybe (return ())
+  (\p -> throwGenErr "Unification problem during conversion")
+  =<< conv a b
 
 trunWhnf :: Exp -> Either String Exp
 trunWhnf a = runPipelineV (whnf a) id

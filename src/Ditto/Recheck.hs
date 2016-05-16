@@ -42,6 +42,9 @@ reinfer :: Exp -> TCM Exp
 reinfer (Var x) = lookupType x >>= \case
     Just _A -> return _A
     Nothing -> throwScopeErr x
+reinfer (Guard x) = lookupGuardType x >>= \case
+    Just _A -> return _A
+    Nothing -> throwGenErr $ "Not a guard name: " ++ show x
 reinfer Type = return Type
 reinfer (Infer _) = throwGenErr "Core language does not reinfer expressions"
 reinfer (Pi i _A bnd_B) = do

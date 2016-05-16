@@ -62,6 +62,14 @@ name2pname _ = Nothing
 
 ----------------------------------------------------------------------
 
+newtype GName = GName Integer
+  deriving (Read, Eq)
+
+instance Show GName where
+  show (GName n) = "!" ++ show n
+
+----------------------------------------------------------------------
+
 data MName = MName MKind Integer
   deriving (Read, Eq)
 
@@ -100,7 +108,8 @@ data Exp =
     Type | Pi Icit Exp Bind | Lam Icit Exp Bind
   | Form PName Args | Con PName Args
   | Red PName Args | Meta MName Args
-  | Var Name | App Icit Exp Exp | Infer MKind
+  | Var Name | Guard GName
+  | App Icit Exp Exp | Infer MKind
   deriving (Show, Read, Eq)
 
 data Bind = Bind Name Exp
@@ -124,12 +133,20 @@ type Hole = (MName, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
+type MProb = Maybe Prob
+type Probs = [Prob]
+
+data Prob =
+    Prob1 Acts Tel Exp Exp
+  | ProbN Prob Acts Tel Args Args
+  deriving (Show, Read, Eq)
 
 data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
     Def Name (Maybe Exp) Exp
+  | DGuard GName Exp Exp MProb
   | DForm PName [ConSig] Tel
   | DRed PName [CheckedClause] Tel Exp
   | DMeta MName (Maybe Exp) Tel Exp
@@ -226,6 +243,7 @@ fv :: Exp -> [Name]
 fv (Var x) = [x]
 fv Type = []
 fv (Infer _) = []
+fv (Guard _) = []
 fv (Form _ is) = fvs is
 fv (Con _ as) = fvs as
 fv (Red _ as) = fvs as
@@ -278,6 +296,10 @@ isMNamed :: MName -> Sigma -> Bool
 isMNamed x (DMeta y _ _ _) = x == y
 isMNamed x _ = False
 
+isGNamed :: GName -> Sigma -> Bool
+isGNamed x (DGuard y _ _ _) = x == y
+isGNamed x _ = False
+
 isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
 isDef _ = False
@@ -323,6 +345,18 @@ envMetaBody _ = Nothing
 envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
+
+envGuardBody :: Sigma -> Maybe Exp
+envGuardBody (DGuard _ a _ Nothing) = Just a
+envGuardBody _ = Nothing
+
+envGuardType :: Sigma -> Maybe Exp
+envGuardType (DGuard _ _ _A _) = Just _A
+envGuardType _ = Nothing
+
+envGuardProb :: Sigma -> Maybe Prob
+envGuardProb (DGuard _ _ _ mp) = mp
+envGuardProb _ = Nothing
 
 conSig :: PName -> Sigma -> Maybe ConSig
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
