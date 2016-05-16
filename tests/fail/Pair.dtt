@@ -1,0 +1,30 @@
+data Pair (A : Type) (B (a : A) : Type) :: Type where
+| pair (a : A) (b : B a) : Pair A ((x : A) -> B a)
+end
+
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+mutual
+
+data U : Type where
+| Nat' : U
+| Pair' : (A : U) (B (a : El A) : U) : U
+end
+
+def El (A : U) : Type where
+| Nat' = Nat
+| (Pair' A B) = Pair (El A) ((a : El A) -> El (B a))
+end
+
+end
+
+def pair' {A : Type} {B (a : A) : Type} (a : A) (b : B a) : Pair A ((x : A) -> B a) where
+| a b = pair a b
+end
+
+def foo {B (n : Nat) : U} (n : Nat) (xs : El (B n)) : Pair Nat ((n : Nat) -> El (B n)) where
+| n xs = pair n xs
+end

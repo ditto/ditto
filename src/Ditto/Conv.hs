@@ -56,11 +56,9 @@ conv a b = duringConv a b $
     conv' a' b'
 
 conv' :: Exp -> Exp -> TCM Exp
-conv' (Var x) (Var y) | x == y = return (Var x)
+
 conv' Type Type = return Type
 conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
-conv' (App i1 f1 a1) (App i2 f2 a2) | i1 == i2 =
-  App i1 <$> conv f1 f2 <*> conv a1 a2
 conv' (Lam i1 _A1 bnd_b1) (Lam i2 _A2 bnd_b2) | i1 == i2 = do
   (x, b1, b2) <- unbind2 bnd_b1 bnd_b2
   b' <- extCtx i1 x _A1 (conv b1 b2)
@@ -74,27 +72,29 @@ conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
   Form x1 <$> convArgs _Is1 _Is2
 conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
   Con x1 <$> convArgs as1 as2
-conv' (Red x1 as1) (Red x2 as2) | x1 == x2 =
-  Red x1 <$> convArgs as1 as2
-
--- Solving Metavariables
-conv' a1@(Meta x1 as1) a2 = do
-  a2 <- metaExpand a2
-  millerPattern as1 a2 >>= \case
-   Just _As -> do
-     solveMeta x1 (lams _As a2)
-     return a2
-   Nothing -> case a2 of
-     Meta x2 as2 | x1 == x2 ->
-       Meta x1 <$> convArgs as1 as2
-     otherwise -> throwConvErr a1 a2
-conv' a1 a2@(Meta _ _) = conv' a2 a1
 
 -- Function Eta Expansion
 conv' f1@(Lam i _A bnd_b) f2 = do
   (x , _) <- unbind bnd_b
   conv' f1 (Lam i _A (Bind x (App i f2 (Var x))))
 conv' f1 f2@(Lam _ _ _) = conv' f2 f1
+
+-- Reducible terms / Spines
+
+conv' (viewSpine -> (Var x1, as1)) (viewSpine -> (Var x2, as2)) | x1 == x2 =
+  apps (Var x1) <$> convArgs as1 as2
+conv' (viewSpine -> (Red x1 as1, bs1)) (viewSpine -> (Red x2 as2, bs2)) | x1 == x2 =
+  apps <$> (Red x1 <$> convArgs as1 as2) <*> convArgs bs1 bs2
+
+-- Solving Metavariables
+conv' a1@(viewSpine -> (Meta x1 as1, bs1)) a2 = do
+  a2 <- metaExpand a2
+  millerPattern (as1 ++ bs1) a2 >>= \case
+   Just _As -> do
+     solveMeta x1 (lams _As a2)
+     return a2
+   Nothing -> throwConvErr a1 a2
+conv' a1 a2@(viewSpine -> (Meta _ _, _)) = conv' a2 a1
 
 conv' a b = throwConvErr a b
 
