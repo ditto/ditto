@@ -91,7 +91,7 @@ lookupConsFresh x = mapM freshCons =<< fromJust <$> lookupCons x
 
 embedPat :: Pat -> Exp
 embedPat (PVar x) = Var x
-embedPat (PCon x as) = Con x (embedPats as)
+embedPat (PCon x as) = apps (Var (pname2name x)) (embedPats as)
 embedPat (PInacc (Just a)) = a
 embedPat (PInacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 
