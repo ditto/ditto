@@ -1,0 +1,38 @@
+data Unit : Type where
+| tt : Unit
+end
+
+data Bool : Type where
+| true,false : Bool
+end
+
+def If (b : Bool) (ct,cf : Type) : Type where
+| true ct cf = ct
+| false ct cf = cf
+end
+
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+def CaseNat : Type where
+(P : (n : Nat) : Type)
+(cz : P zero)
+(cs (n : Nat) : P (suc n))
+(n : Nat) : P n
+end
+
+def caseNat : CaseNat where
+| P cz cs zero = cz
+| P cz cs (suc n) = cs n
+end
+
+def caseNat' (b : Bool) : If b CaseNat Unit where
+| true = caseNat
+| false = tt
+end
+
+def dynamicUnif (n : Nat) : Nat where
+caseNat' true * zero ((n : Nat) -> n)
+end
