@@ -54,7 +54,7 @@ throwCaselessErr = throwErr . ECaseless
 
 throwProbErr :: Prob -> TCM a
 throwProbErr (Prob1 acts' ctx' a1 a2) =
-  withinCtx acts' ctx'(throwConvErr a1 a2)
+  resetCtx acts' ctx'(throwConvErr a1 a2)
 throwProbErr (ProbN p _ _ _ _) = throwProbErr p
 
 ----------------------------------------------------------------------

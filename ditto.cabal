@@ -35,6 +35,7 @@ Library
                 , Ditto.Parse
                 , Ditto.Pretty
                 , Ditto.Recheck
+                , Ditto.Solve
                 , Ditto.Sub
                 , Ditto.Surf
                 , Ditto.Syntax
@@ -50,6 +51,7 @@ Library
                 , HUnit
                 , directory
                 , filepath
+                , containers
   Default-extensions:
                   LambdaCase
                 , TupleSections

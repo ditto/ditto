@@ -1,6 +1,7 @@
 module Ditto.Syntax where
 import Data.List
 import Data.Maybe
+import qualified Data.Map as Map
 
 ----------------------------------------------------------------------
 
@@ -19,12 +20,12 @@ data Icit = Expl | Impl
   deriving (Show, Read, Eq)
 
 data Essible = Acc | Inacc
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 ----------------------------------------------------------------------
 
 data Name = Name Essible String (Maybe Integer)
-  deriving (Read, Eq)
+  deriving (Read, Eq, Ord)
 
 instance Show Name where
   show (Name e x m) = prefix ++ x ++ suffix
@@ -48,7 +49,7 @@ isInacc _ = False
 ----------------------------------------------------------------------
 
 newtype PName = PName String
-  deriving (Read, Eq)
+  deriving (Read, Eq, Ord)
 
 instance Show PName where
   show (PName x) = "#" ++ x
@@ -63,7 +64,7 @@ name2pname _ = Nothing
 ----------------------------------------------------------------------
 
 newtype GName = GName Integer
-  deriving (Read, Eq)
+  deriving (Read, Eq, Ord)
 
 instance Show GName where
   show (GName n) = "!" ++ show n
@@ -71,7 +72,7 @@ instance Show GName where
 ----------------------------------------------------------------------
 
 data MName = MName MKind Integer
-  deriving (Read, Eq)
+  deriving (Read, Eq, Ord)
 
 instance Show MName where
   show (MName k n) = "?" ++ prefix k ++ show n
@@ -82,7 +83,7 @@ instance Show MName where
     prefix (MHole (Just nm)) = nm ++ "-"
 
 data MKind = MInfer | MHole (Maybe String)
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 ----------------------------------------------------------------------
 
@@ -134,7 +135,7 @@ type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type MProb = Maybe Prob
-type Probs = [Prob]
+type Probs = Map.Map GName Prob
 
 data Prob =
     Prob1 Acts Tel Exp Exp
@@ -146,7 +147,7 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
 
 data Sigma =
     Def Name (Maybe Exp) Exp
-  | DGuard GName Exp Exp MProb
+  | DGuard GName Exp Exp
   | DForm PName [ConSig] Tel
   | DRed PName [CheckedClause] Tel Exp
   | DMeta MName (Maybe Exp) Tel Exp
@@ -297,7 +298,7 @@ isMNamed x (DMeta y _ _ _) = x == y
 isMNamed x _ = False
 
 isGNamed :: GName -> Sigma -> Bool
-isGNamed x (DGuard y _ _ _) = x == y
+isGNamed x (DGuard y _ _) = x == y
 isGNamed x _ = False
 
 isDef :: Sigma -> Bool
@@ -347,16 +348,12 @@ envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
 envGuardBody :: Sigma -> Maybe Exp
-envGuardBody (DGuard _ a _ Nothing) = Just a
+envGuardBody (DGuard _ a _) = Just a
 envGuardBody _ = Nothing
 
 envGuardType :: Sigma -> Maybe Exp
-envGuardType (DGuard _ _ _A _) = Just _A
+envGuardType (DGuard _ _ _A) = Just _A
 envGuardType _ = Nothing
-
-envGuardProb :: Sigma -> Maybe Prob
-envGuardProb (DGuard _ _ _ mp) = mp
-envGuardProb _ = Nothing
 
 conSig :: PName -> Sigma -> Maybe ConSig
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of

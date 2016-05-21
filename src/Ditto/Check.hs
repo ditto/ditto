@@ -5,6 +5,7 @@ import Ditto.Env
 import Ditto.Sub
 import Ditto.Whnf
 import Ditto.Conv
+import Ditto.Solve
 import Ditto.Match
 import Ditto.Cover
 import Ditto.Surf
@@ -177,8 +178,13 @@ check :: Exp -> Exp -> TCM Exp
 check a _A = duringCheck a _A $ do
   (a , _A') <- infer a
   conv _A' _A >>= \case
-    Just p -> throwProbErr p
-    Nothing -> return a
+    Nothing -> do
+      solveProbs
+      return a
+    Just p -> do
+      a <- genGuard a _A p
+      solveProbs
+      return a
 
 infer :: Exp -> TCM (Exp, Exp)
 infer b@(viewSpine -> (f, as)) = duringInfer b $ do

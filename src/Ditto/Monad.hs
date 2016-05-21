@@ -5,11 +5,13 @@ import Control.Monad.Reader
 import Control.Monad.Except
 import Data.List
 import Data.Maybe
+import qualified Data.Map as Map
 
 ----------------------------------------------------------------------
 
 data DittoS = DittoS
   { env :: Env
+  , probs :: Probs
   , nameId :: Integer
   , verbosity :: Verbosity
   }
@@ -34,6 +36,7 @@ runTCM v =
 initialS :: DittoS
 initialS = DittoS
   { env = []
+  , probs = Map.empty
   , nameId = 0
   , verbosity = Normal
   }
@@ -46,8 +49,8 @@ initialR = DittoR
 
 ----------------------------------------------------------------------
 
-withinCtx :: Acts -> Tel -> TCM a -> TCM a
-withinCtx acts' ctx' = local (\ r -> r { acts = acts' , ctx = ctx' })
+resetCtx :: Acts -> Tel -> TCM a -> TCM a
+resetCtx acts' ctx' = local (\ r -> r { acts = acts' , ctx = ctx' })
 
 extCtx :: Icit -> Name -> Exp -> TCM a -> TCM a
 extCtx i x _A = extCtxs [(i, x, _A)]
@@ -128,19 +131,16 @@ lookupMetaType x = do
 ----------------------------------------------------------------------
 
 lookupGuard :: GName -> TCM (Maybe Exp)
-lookupGuard x = do
-  env <- getEnv
-  return $ envGuardBody =<< find (isGNamed x) env
+lookupGuard x = lookupProb x >>= \case
+  Just _ -> return Nothing
+  Nothing -> do
+    env <- getEnv
+    return $ envGuardBody =<< find (isGNamed x) env
 
 lookupGuardType :: GName -> TCM (Maybe Exp)
 lookupGuardType x = do
   env <- getEnv
   return $ envGuardType =<< find (isGNamed x) env
-
-lookupProb :: GName -> TCM (Maybe Prob)
-lookupProb x = do
-  env <- getEnv
-  return $ envGuardProb =<< find (isGNamed x) env
 
 ----------------------------------------------------------------------
 
@@ -204,6 +204,8 @@ getEnv = do
   DittoS {env = env} <- get
   return env
 
+----------------------------------------------------------------------
+
 getActs :: TCM Acts
 getActs = do
   DittoR {acts = acts} <- ask
@@ -218,5 +220,42 @@ setVerbosity :: Verbosity -> TCM ()
 setVerbosity v = do
   state@DittoS{} <- get
   put state { verbosity = v }
+
+----------------------------------------------------------------------
+
+getProbs :: TCM Probs
+getProbs = do
+  DittoS {probs = probs} <- get
+  return probs
+
+setProbs :: Probs -> TCM ()
+setProbs ps = do
+  state@DittoS{} <- get
+  put state { probs = ps }
+
+lookupProb :: GName -> TCM MProb
+lookupProb x = do
+  ps <- getProbs
+  return (Map.lookup x ps)
+
+deleteProb :: GName -> TCM ()
+deleteProb x = do
+  ps <- getProbs
+  setProbs (Map.delete x ps)
+
+insertProb :: GName -> Prob -> TCM ()
+insertProb x p = do
+  ps <- getProbs
+  setProbs (Map.insert x p ps)
+
+updateProb :: GName -> (Prob -> TCM MProb) -> TCM ()
+updateProb x f = lookupProb x >>= \case
+  Nothing -> return ()
+  Just p -> f p >>= \case
+    Nothing -> deleteProb x
+    Just p' -> insertProb x p'
+
+probGNames :: TCM [GName]
+probGNames = Map.keys <$> getProbs
 
 ----------------------------------------------------------------------

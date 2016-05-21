@@ -1,5 +1,5 @@
 data Pair (A : Type) (B (a : A) : Type) :: Type where
-| pair (a : A) (b : B a) : Pair A ((x : A) -> B a)
+| pair (a : A) (b : B a) : Pair A ((x : A) -> B x)
 end
 
 data Nat : Type where

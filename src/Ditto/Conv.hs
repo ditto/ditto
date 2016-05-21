@@ -47,7 +47,7 @@ alphas' dict as1 as2 = all
 
 ----------------------------------------------------------------------
 
-conv :: Exp -> Exp -> TCM (Maybe Prob)
+conv :: Exp -> Exp -> TCM MProb
 conv a b = duringConv a b $
   if alpha a b
   then return Nothing
@@ -56,7 +56,7 @@ conv a b = duringConv a b $
     b' <- whnf b
     conv' a' b'
 
-conv' :: Exp -> Exp -> TCM (Maybe Prob)
+conv' :: Exp -> Exp -> TCM MProb
 
 conv' Type Type = return Nothing
 conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
@@ -105,11 +105,11 @@ conv' a b = throwConvErr a b
 
 ----------------------------------------------------------------------
 
-convArg :: (Icit, Exp) -> (Icit, Exp) -> TCM (Maybe Prob)
+convArg :: (Icit, Exp) -> (Icit, Exp) -> TCM MProb
 convArg (i1, a1) (i2, a2) | i1 == i2 = conv a1 a2
 convArg (i1, a1) (i2, a2) = throwGenErr "One argument is explicit and the other is implicit"
 
-convArgs :: Args -> Args -> TCM (Maybe Prob)
+convArgs :: Args -> Args -> TCM MProb
 convArgs [] [] = return Nothing
 convArgs (a1:as1) (a2:as2) = convArg a1 a2 >>= \case
   Nothing -> convArgs as1 as2
