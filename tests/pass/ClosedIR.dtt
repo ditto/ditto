@@ -77,5 +77,27 @@ end
 
 end
 
+mutual
 
+data Path (A : `Type) (a : ToType A) : Type where
+| here {A : `Type} {a : ToType A} : Path A a
+| thereFun {A : `Type} {B (a : ToType A) : `Type}
+    {f (a : ToType A) : ToType (B a)}
+    (g (a : ToType A) : Path (B a) (f a))
+    : Path (`Fun A B) f
+| thereData {O : `Type} {D : `Desc (ToType O)}
+    {xs : Data' (ToDesc D) (ToDesc D)}
+    (i : Path' D D xs)
+    : Path (`Data D) (con xs)
+end
+
+data Path' {O : `Type} (R : `Desc (ToType O)) :: (D : `Desc (ToType O)) (xs : Data' (ToDesc R) (ToDesc D)) : Type where
+| thereArg1 {A : `Type} {D (a : ToType A) : `Desc (ToType O)}
+    {a : ToType A}
+    {xs : Data' (ToDesc R) (ToDesc (D a))}
+    (i : Path A a)
+    : Path' R (`Arg A D) (pair a xs)
+end
+
+end
 
