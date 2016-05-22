@@ -261,4 +261,7 @@ updateProb x f = lookupProb x >>= \case
 probGNames :: TCM [GName]
 probGNames = Map.keys <$> getProbs
 
+unsolvedProbs :: TCM [Prob]
+unsolvedProbs = Map.elems <$> getProbs
+
 ----------------------------------------------------------------------

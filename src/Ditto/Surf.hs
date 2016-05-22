@@ -66,6 +66,20 @@ surfHoles = mapM surfHole
 surfHole :: Hole -> TCM Hole
 surfHole (x, _As, _B) = (x,,) <$> surfTel _As <*> surfExp _B
 
+----------------------------------------------------------------------
+
+surfProbs :: [Prob] -> TCM [Prob]
+surfProbs = mapM surfProb
+
+surfProb :: Prob -> TCM Prob
+-- TODO surf Acts if we use them
+surfProb (Prob1 acts ctx a1 a2) = Prob1 acts <$> surfTel ctx <*> surfExp a1 <*> surfExp a2
+surfProb (ProbN p acts ctx as1 as2) =
+  ProbN <$> surfProb p <*> return acts <*> surfTel ctx <*> surfExps as1 <*> surfExps as2
+
+----------------------------------------------------------------------
+
+-- TODO ext ctx
 surfTel :: Tel -> TCM Tel
 surfTel = mapM (\(i, x, _A) -> (i,x,) <$> surfExp _A)
 

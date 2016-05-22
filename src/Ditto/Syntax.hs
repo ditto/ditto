@@ -172,7 +172,7 @@ data Err =
   | EConv Exp Exp
   | EScope Name
   | ECaseless Name
-  | EMetas Holes
+  | EUnsolved [Prob] Holes
   | ECover Tel PName Pats
   | EReach PName [Clause]
   | ESplit [CheckedClause]

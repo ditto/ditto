@@ -144,19 +144,20 @@ atomizePattern x@(PInacc _) = return x
 checkSolved :: Exp -> Exp -> TCM Exp
 checkSolved a _A = do
   a <- check a _A
-  checkMetas
+  ensureSolved
   return a
 
 checkExtsSolved :: Tel -> Exp -> Exp -> TCM Exp
 checkExtsSolved _As b _B = do
   b <- checkExts _As b _B
-  checkMetas
+  ensureSolved
   return b
 
-checkMetas :: TCM ()
-checkMetas = do
-  xs <- lookupUndefMetas
-  unless (null xs) (throwMetasErr xs)
+ensureSolved :: TCM ()
+ensureSolved = do
+  ps <- unsolvedProbs
+  hs <- lookupUndefMetas
+  unless (null ps && null hs) (throwUnsolvedErr ps hs)
 
 ----------------------------------------------------------------------
 

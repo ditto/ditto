@@ -1,0 +1,11 @@
+data Unit : Type where
+| tt : Unit
+end
+
+def foo {P (u : Unit) : Type} (u : Unit) (x : P tt) (y : P u) : Unit where
+| u x y = tt
+end
+
+def dynamicUnif {P (u : Unit) : Type} (u : Unit) (p : P u) : Unit where
+| u p = foo u tt p
+end

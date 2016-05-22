@@ -54,8 +54,8 @@ ppErr ren (EScope x) = text "Variable not in scope"
   <+> code (ppName ren x)
 ppErr ren (ECaseless x) = text "Variable is not caseless"
   <+> code (ppName ren x)
-ppErr ren (EMetas xs) = text "Unsolved metavariables" //
-  fromJust (ppHoles ren xs)
+ppErr ren (EUnsolved ps hs) = text "Unsolved metavariables and constraints" //
+  ppUnsolved ren ps hs
 ppErr ren (ECover _As x qs) = text "Uncovered clause"
   <+> code (ppPName x <+> vcat0 (ppPats VCore (telRen ren _As) qs))
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
@@ -131,6 +131,17 @@ ppHole ren (x, _As, _B) =
   (text label <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
   // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
   where label = if isHole x then "Hole" else "Meta"
+
+----------------------------------------------------------------------
+
+ppUnsolved :: Ren -> [Prob] -> Holes -> Doc
+ppUnsolved ren xs ys = vcat1 (map (ppProb ren) xs ++ map (ppHole ren) ys)
+
+ppProb :: Ren -> Prob -> Doc
+ppProb ren (Prob1 _ _As a1 a2) =
+  (ppExp (telRen ren _As) a1 <+> nconv <+> ppExp (telRen ren _As) a2)
+  // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
+ppProb ren (ProbN p _ _ _ _) = ppProb ren p
 
 ----------------------------------------------------------------------
 

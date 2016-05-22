@@ -17,7 +17,7 @@ data Nat : Type where
 end
 
 def CaseNat : Type where
-(P : (n : Nat) : Type)
+(P (n : Nat) : Type)
 (cz : P zero)
 (cs (n : Nat) : P (suc n))
 (n : Nat) : P n

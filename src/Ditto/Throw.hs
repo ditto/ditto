@@ -4,7 +4,7 @@ module Ditto.Throw
   , throwAtomErr
   , throwScopeErr
   , throwCaselessErr
-  , throwMetasErr
+  , throwUnsolvedErr
   , throwCoverErr
   , throwReachErr
   , throwSplitErr
@@ -24,9 +24,9 @@ throwConvErr a b = throwErr =<<
 throwAtomErr :: Exp -> TCM a
 throwAtomErr a = throwErr (EAtom a)
 
-throwMetasErr :: Holes -> TCM a
-throwMetasErr as = throwErr =<<
-  EMetas <$> surfHoles as
+throwUnsolvedErr :: [Prob] -> Holes -> TCM a
+throwUnsolvedErr ps hs = throwErr =<<
+  EUnsolved <$> surfProbs ps <*> surfHoles hs
 
 throwCoverErr :: Tel -> PName -> Pats -> TCM a
 throwCoverErr _As x ps = throwErr =<<
