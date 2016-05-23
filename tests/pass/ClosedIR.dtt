@@ -29,7 +29,7 @@ data Data {O : Type} (D : Desc O) :: Type where
 end
 
 def Data' {O : Type} (R,D : Desc O) : Type where
-| R (End i) = Unit
+| R (End o) = Unit
 | R (Arg A D) = Pair A ((a : *) -> Data' R (D a))
 | R (Rec A D) = Pair ((a : A) : Data R) ((f : *) -> Data' R (D ((a : A) -> fun R (f a))))
 end
@@ -39,7 +39,7 @@ def fun {O : Type} (D : Desc O) (x : Data D) : O where
 end
 
 def fun' {O : Type} (R,D : Desc O) (xs : Data' R D) : O where
-| R (End i) tt = i
+| R (End o) tt = o
 | R (Arg A D) (pair a xs) = fun' R (D a) xs
 | R (Rec A D) (pair f xs) = fun' R (D ((a : A) -> fun R (f a))) xs
 end
@@ -64,17 +64,28 @@ def ToType (A : `Type) : Type where
 end
 
 data `Desc (O : `Type) :: Type where
-| `End (i : ToType O) : `Desc O
+| `End (o : ToType O) : `Desc O
 | `Arg (A : `Type) (D (a : ToType A) : `Desc O) : `Desc O
-| `Rec (A : `Type) (D (i (a : ToType A) : ToType O) : `Desc O) : `Desc O
+| `Rec (A : `Type) (D (o (a : ToType A) : ToType O) : `Desc O) : `Desc O
 end
 
 def ToDesc {O : `Type} (D : `Desc O) : Desc (ToType O) where
-| (`End i) = End i
+| (`End o) = End o
 | (`Arg A D) = Arg (ToType A) ((a : *) -> ToDesc (D a))
 | (`Rec A D) = Rec (ToType A) ((o : *) -> ToDesc (D o))
 end
 
+end
+
+def DataArg {O : `Type} {A : `Type} (R : `Desc O) (D (a : ToType A) : `Desc O) (a : ToType A) : Type where
+| R D a = Data' (ToDesc R) (ToDesc (D a))
+end
+
+def DataRec {O : `Type} {A : `Type} (R : `Desc O)
+(D (o (a : ToType A) : ToType O) : `Desc O)
+(f (a : ToType A) : Data (ToDesc R))
+: Type where
+| R D f = Data' (ToDesc R) (ToDesc (D ((a : *) -> fun (ToDesc R) (f a)))) 
 end
 
 mutual
@@ -93,15 +104,21 @@ end
 
 data Path' {O : `Type} (R : `Desc O) :: (D : `Desc O) (xs : Data' (ToDesc R) (ToDesc D)) : Type where
 | thereArg1 {A : `Type} {D (a : ToType A) : `Desc O}
-  {a : ToType A}
-  {xs : Data' (ToDesc R) (ToDesc (D a))}
+  {a : ToType A} {xs : DataArg R D a}
   (i : Path A a)
   : Path' R (`Arg A D) (pair a xs)
 | thereArg2 {A : `Type} {D (a : ToType A) : `Desc O}
-  {a : ToType A}
-  {xs : Data' (ToDesc R) (ToDesc (D a))}
+  {a : ToType A} {xs : DataArg R D a}
   (i : Path' R (D a) xs)
   : Path' R (`Arg A D) (pair a xs)
+| thereRec1 {A : `Type} {D (o (a : ToType A) : ToType O) : `Desc O}
+  {f (a : ToType A) : Data (ToDesc R)} {xs : DataRec R D f}
+  (g (a : ToType A) : Path (`Data R) (f a))
+  : Path' R (`Rec A D) (pair f xs)
+| thereRec2 {A : `Type} {D (o (a : ToType A) : ToType O) : `Desc O}
+  {f (a : ToType A) : Data (ToDesc R)} {xs : DataRec R D f}
+  (i : Path' R * xs)
+  : Path' R (`Rec A D) (pair f xs)
 end
 
 end
