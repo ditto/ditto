@@ -133,8 +133,12 @@ ppHolesM ren xs = Just $ vcatmap1 (ppHole ren) xs
 ppHole :: Ren -> Hole -> Doc
 ppHole ren (x, acts, ctx, _A) =
   (text label <+> ppMName x <+> oft <+> ppExp (telRen ren ctx) _A)
-  // dashes <> softappl (ppCtx ren) ctx <> softappl (ppActs ren) acts
-  where label = if isHole x then "Hole" else "Meta"
+  // dashes <> bottom
+  where
+  label = if isHole x then "Hole" else "Meta"
+  bottom = if isHole x
+    then softappl (ppCtx ren) ctx
+    else softappl (ppCtx ren) ctx <> softappl (ppActs ren) acts
 
 ----------------------------------------------------------------------
 
