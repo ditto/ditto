@@ -157,8 +157,7 @@ data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
   deriving (Show, Read, Eq)
 
 data Act =
-    AInfer Exp
-  | ACheck Exp Exp
+    ACheck Exp Exp
   | AConv Exp Exp
   | ACover PName Pats
   | ADef Name

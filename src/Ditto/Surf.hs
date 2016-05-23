@@ -78,7 +78,6 @@ surfAct :: Act -> TCM Act
 surfAct (ACheck a _A) = ACheck a <$> surfExp _A
 surfAct (AConv a1 a2) = AConv <$> surfExp a1 <*> surfExp a2
 surfAct (ACover x ps) = ACover x <$> surfPats ps
-surfAct x@(AInfer _) = return x
 surfAct x@(ADef _) = return x
 surfAct x@(AData _) = return x
 surfAct x@(ACon _) = return x

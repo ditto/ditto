@@ -187,7 +187,7 @@ check a _A = during (ACheck a _A) $ do
       return a
 
 infer :: Exp -> TCM (Exp, Exp)
-infer b@(viewSpine -> (f, as)) = during (AInfer b) $ do
+infer b@(viewSpine -> (f, as)) = do
   (f, _AB) <- inferAtom f
   (as, _B) <- checkArgs as =<< whnf _AB
   return (apps f as, _B)
