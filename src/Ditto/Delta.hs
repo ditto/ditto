@@ -8,8 +8,8 @@ import Ditto.Sub
 deltaExpand :: Exp -> TCM Exp
 deltaExpand Type = return Type
 deltaExpand (Infer m) = return (Infer m)
-deltaExpand (Pi i _A _B) = Pi i <$> deltaExpand _A <*> deltaExpandExtBind i _A _B
-deltaExpand (Lam i _A b) = Lam i <$> deltaExpand _A <*> deltaExpandExtBind i _A b
+deltaExpand (Pi i _A _B) = Pi i <$> deltaExpand _A <*> deltaExpandBind i _A _B
+deltaExpand (Lam i _A b) = Lam i <$> deltaExpand _A <*> deltaExpandBind i _A b
 deltaExpand (App i f a) = App i <$> deltaExpand f <*> deltaExpand a
 deltaExpand (Form x as) = Form x <$> deltaExpands as
 deltaExpand (Con x as) = Con x <$> deltaExpands as
@@ -27,8 +27,8 @@ deltaExpand (Guard x) = lookupGuard x >>= \case
 deltaExpands :: Args -> TCM Args
 deltaExpands = mapM $ \(i, a) -> (i,) <$> deltaExpand a 
 
-deltaExpandExtBind :: Icit -> Exp -> Bind -> TCM Bind
-deltaExpandExtBind i _A bnd_b = do
+deltaExpandBind :: Icit -> Exp -> Bind -> TCM Bind
+deltaExpandBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
   Bind x <$> deltaExpand b
 

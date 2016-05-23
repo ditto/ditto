@@ -33,28 +33,31 @@ isDeltaName x xs = maybe False (flip elem xs) (name2pname x)
 metaExpand = surfExp
 
 surfExp :: Exp -> TCM Exp
-surfExp (Pi i _A _B) = Pi i <$> surfExp _A <*> surfExpExtBind i _A _B
+surfExp Type = return Type
+surfExp (Infer m) = Infer <$> return m
+surfExp (Pi i _A _B) = Pi i <$> surfExp _A <*> surfExpBind i _A _B
+surfExp (Lam i _A b) = Lam i <$> surfExp _A <*> surfExpBind i _A b
+surfExp (App i f a) = surfExp f >>= \case
+  Lam _ _ bnd_b -> do
+    (x, b) <- unbind bnd_b
+    surfExp =<< sub1 (x , a) b
+  f -> App i f <$> surfExp a
 surfExp (Form x as) = Form x <$> surfExps as
 surfExp (Con x as) = Con x <$> surfExps as
-surfExp (viewSpine -> (Meta x as1, as2)) = lookupMeta x >>= \case
-  Just a -> surfExp =<< whnf (apps a (as1 ++ as2))
-  Nothing -> apps <$> (Meta x <$> surfExps as1) <*> surfExps as2
-surfExp (viewSpine -> (Guard x, as)) = lookupGuard x >>= \case
-  Just a -> surfExp =<< whnf (apps a as)
-  Nothing -> apps (Guard x) <$> surfExps as
-surfExp (viewSpine -> (Red x as1, as2)) =
-  apps <$> (Red x <$> surfExps as1) <*> surfExps as2
-surfExp (viewSpine -> (Var x, as)) =
-  apps (Var x) <$> surfExps as
-surfExp (viewSpine -> (Lam i _A b, as)) =
-  apps <$> (Lam i <$> surfExp _A <*> surfExpExtBind i _A b) <*> surfExps as
-surfExp a = return a
+surfExp (Red x as) = Red x <$> surfExps as
+surfExp (Meta x as) = lookupMeta x >>= \case
+  Just a -> surfExp (apps a as)
+  Nothing -> Meta x <$> surfExps as
+surfExp (Guard x) = lookupGuard x >>= \case
+  Just a -> surfExp a
+  Nothing -> return $ Guard x
+surfExp (Var x) = return (Var x)
 
 surfExps :: Args -> TCM Args
 surfExps = mapM (\(i, a) -> (i,) <$> surfExp a)
 
-surfExpExtBind :: Icit -> Exp -> Bind -> TCM Bind
-surfExpExtBind i _A bnd_b = do
+surfExpBind :: Icit -> Exp -> Bind -> TCM Bind
+surfExpBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
   Bind x <$> surfExp b
 
