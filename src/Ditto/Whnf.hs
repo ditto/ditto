@@ -70,13 +70,4 @@ buildCon _X (x, _A) = do
     Form _Y _Is -> error "Constructor type does not match datatype"
     otherwise -> error "Constructor return type is not a type former"
 
-whnfHole :: Hole -> TCM Hole
-whnfHole (x, _As, _B) = do
-  _As <- mapM (\(i, x, _A) -> (i,x,) <$> whnf _A) _As
-  _B <- whnf _B
-  return (x, _As, _B)
-
-whnfHoles :: Holes -> TCM Holes
-whnfHoles = mapM whnfHole
-
 ----------------------------------------------------------------------

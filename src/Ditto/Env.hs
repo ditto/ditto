@@ -41,36 +41,38 @@ updateDef x a = do
 
 genMetaPi :: Tel -> Icit -> TCM Exp
 genMetaPi _As i = do
-  _X <- addMeta MInfer _As Type
+  acts <- getActs
+  _X <- addMeta MInfer acts _As Type
   let _A = Meta _X (varArgs _As)
   x <- gensymInacc
   let _Bs = snoc _As (i, x, _A)
-  _Y <- addMeta MInfer _Bs Type
+  _Y <- addMeta MInfer acts _Bs Type
   let _B = Meta _Y (varArgs _Bs)
   return (Pi i _A (Bind x _B))
 
 genMeta :: MKind -> TCM (Exp, Exp)
 genMeta m = do
+  acts <- getActs
   _As <- getCtx
-  _X <- addMeta MInfer _As Type
+  _X <- addMeta MInfer acts _As Type
   let _B = Meta _X (varArgs _As)
-  x <- addMeta m _As _B
+  x <- addMeta m acts _As _B
   let b = Meta x (varArgs _As)
   return (b, _B)
 
-addMeta :: MKind -> Tel -> Exp -> TCM MName
-addMeta k _As _B = do
+addMeta :: MKind -> Acts -> Tel -> Exp -> TCM MName
+addMeta k acts ctx _A = do
   x <- gensymMeta k
-  addSig (DMeta x Nothing _As _B)
+  addSig (DMeta x Nothing acts ctx _A)
   return x
 
 solveMeta :: MName -> Exp -> TCM ()
 solveMeta x a = do
   env <- getEnv
   case find (isMNamed x) env of
-    Just s@(DMeta _ Nothing _As _B) -> do
-      updateSig s (DMeta x (Just a) _As _B)
-    Just s@(DMeta _ _ _ _) -> throwGenErr $
+    Just s@(DMeta _ Nothing acts ctx _A) -> do
+      updateSig s (DMeta x (Just a) acts ctx _A)
+    Just s@(DMeta _ _ _ _ _) -> throwGenErr $
       "Metavariable is already defined: " ++ show x
     _ -> throwGenErr $
       "Metavariable does not exist in the environment: " ++ show x

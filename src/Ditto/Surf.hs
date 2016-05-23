@@ -22,7 +22,7 @@ surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
 surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs
-surfs' (DMeta x ma _As _B:env) xs = surfs' env xs
+surfs' (DMeta x ma acts _As _B:env) xs = surfs' env xs
 surfs' (DGuard x a _A:env) xs = surfs' env xs
 
 isDeltaName :: Name -> [PName] -> Bool
@@ -67,7 +67,7 @@ surfHoles :: Holes -> TCM Holes
 surfHoles = mapM surfHole
 
 surfHole :: Hole -> TCM Hole
-surfHole (x, _As, _B) = (x,,) <$> surfTel _As <*> surfExp _B
+surfHole (x, acts, ctx, _A) = (x,,,) <$> surfActs acts <*> surfTel ctx <*> surfExp _A
 
 ----------------------------------------------------------------------
 

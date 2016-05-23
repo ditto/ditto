@@ -130,7 +130,7 @@ type Clause = (Pats, RHS)
 type CheckedClause = (Tel, Pats, RHS)
 type ConSig = (PName, Tel, Args)
 type Pats = [(Icit, Pat)]
-type Hole = (MName, Tel, Exp)
+type Hole = (MName, Acts, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
@@ -150,7 +150,7 @@ data Sigma =
   | DGuard GName Exp Exp
   | DForm PName [ConSig] Tel
   | DRed PName [CheckedClause] Tel Exp
-  | DMeta MName (Maybe Exp) Tel Exp
+  | DMeta MName (Maybe Exp) Acts Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
@@ -294,7 +294,7 @@ conName :: ConSig -> PName
 conName (x, _, _) = x
 
 isMNamed :: MName -> Sigma -> Bool
-isMNamed x (DMeta y _ _ _) = x == y
+isMNamed x (DMeta y _ _ _ _) = x == y
 isMNamed x _ = False
 
 isGNamed :: GName -> Sigma -> Bool
@@ -306,7 +306,7 @@ isDef (Def _ _ _) = True
 isDef _ = False
 
 isMeta :: Sigma -> Bool
-isMeta (DMeta _ _ _ _) = True
+isMeta (DMeta _ _ _ _ _) = True
 isMeta _ = False
 
 filterDefs :: Env -> [(Name, Maybe Exp, Exp)]
@@ -332,19 +332,19 @@ isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
 
 envUndefMeta :: Sigma -> Maybe Hole
-envUndefMeta (DMeta x Nothing _As _B) | not (isHole x) = Just (x, _As, _B)
+envUndefMeta (DMeta x Nothing acts ctx _A) | not (isHole x) = Just (x, acts, ctx, _A)
 envUndefMeta _ = Nothing
 
 envHole :: Sigma -> Maybe Hole
-envHole (DMeta x ma _As _B) | isHole x = Just (x, _As, _B)
+envHole (DMeta x ma acts ctx _A) | isHole x = Just (x, acts, ctx, _A)
 envHole _ = Nothing
 
 envMetaBody :: Sigma -> Maybe Exp
-envMetaBody (DMeta _ (Just a) _ _) = Just a
+envMetaBody (DMeta _ (Just a) _ _ _) = Just a
 envMetaBody _ = Nothing
 
 envMetaType :: Sigma -> Maybe (Tel, Exp)
-envMetaType (DMeta _ _ _As _B) = Just (_As, _B)
+envMetaType (DMeta _ _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
 
 envGuardBody :: Sigma -> Maybe Exp
