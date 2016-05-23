@@ -25,7 +25,7 @@ throwAtomErr :: Exp -> TCM a
 throwAtomErr a = throwErr (EAtom a)
 
 throwUnsolvedErr :: [Prob] -> Holes -> TCM a
-throwUnsolvedErr ps hs = throwErr =<<
+throwUnsolvedErr ps hs = resetCtx [] [] $ throwErr =<<
   EUnsolved <$> surfProbs ps <*> surfHoles hs
 
 throwCoverErr :: Tel -> PName -> Pats -> TCM a
