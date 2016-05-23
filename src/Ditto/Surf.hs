@@ -71,14 +71,28 @@ surfHole (x, _As, _B) = (x,,) <$> surfTel _As <*> surfExp _B
 
 ----------------------------------------------------------------------
 
+surfActs :: Acts -> TCM Acts
+surfActs = mapM (\(_As, a) -> (,) <$> surfTel _As <*> surfAct a)
+
+surfAct :: Act -> TCM Act
+surfAct (ACheck a _A) = ACheck a <$> surfExp _A
+surfAct (AConv a1 a2) = AConv <$> surfExp a1 <*> surfExp a2
+surfAct (ACover x ps) = ACover x <$> surfPats ps
+surfAct x@(AInfer _) = return x
+surfAct x@(ADef _) = return x
+surfAct x@(AData _) = return x
+surfAct x@(ACon _) = return x
+surfAct x@(ADefn _) = return x
+
+----------------------------------------------------------------------
+
 surfProbs :: [Prob] -> TCM [Prob]
 surfProbs = mapM surfProb
 
 surfProb :: Prob -> TCM Prob
--- TODO surf Acts if we use them
-surfProb (Prob1 acts ctx a1 a2) = Prob1 acts <$> surfTel ctx <*> surfExp a1 <*> surfExp a2
+surfProb (Prob1 acts ctx a1 a2) = Prob1 <$> surfActs acts <*> surfTel ctx <*> surfExp a1 <*> surfExp a2
 surfProb (ProbN p acts ctx as1 as2) =
-  ProbN <$> surfProb p <*> return acts <*> surfTel ctx <*> surfExps as1 <*> surfExps as2
+  ProbN <$> surfProb p <*> surfActs acts <*> surfTel ctx <*> surfExps as1 <*> surfExps as2
 
 ----------------------------------------------------------------------
 

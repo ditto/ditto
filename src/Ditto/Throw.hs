@@ -63,7 +63,7 @@ throwErr :: Err -> TCM a
 throwErr err = do
   env <- getEnv
   prog <- surfs env
-  acts <- getActs
+  acts <- surfActs =<< getActs
   ctx <- surfTel =<< getCtx
   throwError (defNames env, prog, acts, ctx, err)
 

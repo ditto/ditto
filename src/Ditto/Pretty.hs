@@ -66,39 +66,44 @@ ppErr ren (ESplit cs) = text "Clauses after split" //
 ppCtxErr :: Verbosity -> [Name] -> Prog -> Acts -> Tel -> Err -> Doc
 ppCtxErr verb (idRen -> ren) env acts ctx err = vcatmaybes
   [ Just (ppErr (telRen ren ctx) err)
-  , ppActs ren acts
-  , ppCtx ren ctx
-  , ppEnvVerb verb ren env
+  , ppActsM ren acts
+  , ppCtxM ren ctx
+  , ppEnvVerbM verb ren env
   ]
 
 ----------------------------------------------------------------------
 
-ppCtx :: Ren -> Tel -> Maybe Doc
-ppCtx ren [] = Nothing
-ppCtx ren xs = Just $ sec "Context" // vcat0 (ppCtxBinds ren xs)
+ppCtxM :: Ren -> Tel -> Maybe Doc
+ppCtxM ren [] = Nothing
+ppCtxM ren xs = Just $ sec "Context" // ppCtx ren xs
 
-ppEnvVerb :: Verbosity -> Ren -> Prog -> Maybe Doc
-ppEnvVerb Normal ren env = Nothing
-ppEnvVerb Verbose ren env = ppEnv ren env
+ppCtx :: Ren -> Tel -> Doc
+ppCtx ren xs = vcat0 (ppCtxBinds ren xs)
 
-ppEnv :: Ren -> Prog -> Maybe Doc
-ppEnv ren [] = Nothing
-ppEnv ren xs = Just $ sec "Environment" // vcatmap1 (ppStmt ren) (forget xs)
+ppEnvVerbM :: Verbosity -> Ren -> Prog -> Maybe Doc
+ppEnvVerbM Normal ren env = Nothing
+ppEnvVerbM Verbose ren env = ppEnvM ren env
+
+ppEnvM :: Ren -> Prog -> Maybe Doc
+ppEnvM ren [] = Nothing
+ppEnvM ren xs = Just $ sec "Environment" // vcatmap1 (ppStmt ren) (forget xs)
   where
   forget :: Prog -> [Stmt]
   forget [] = []
   forget (Left d:ds) = d : forget ds
   forget (Right ds:es) = ds ++ forget es
 
-
 sec :: String -> Doc
 sec str = textc str // dashes
 
 ----------------------------------------------------------------------
 
-ppActs :: Ren -> Acts -> Maybe Doc
-ppActs ren [] = Nothing
-ppActs ren xs = Just $ vcatmap0 (\(ctx, act) -> ppAct (telRen ren ctx) act) xs
+ppActsM :: Ren -> Acts -> Maybe Doc
+ppActsM ren [] = Nothing
+ppActsM ren xs = Just $ ppActs ren xs
+
+ppActs :: Ren -> Acts -> Doc
+ppActs ren xs = vcatmap0 (\(ctx, act) -> ppAct (telRen ren ctx) act) xs
 
 ppAct :: Ren -> Act -> Doc
 ppAct ren (ADef x) = while "checking definition" $ ppName ren x
@@ -119,17 +124,17 @@ while str x = text "...while" <+> text str <+> code x
 ppCtxHoles :: Verbosity -> [Name] -> Prog -> Holes -> Doc
 ppCtxHoles verb (idRen -> ren) env xs = vcatmaybes [holes, envVerb]
   where
-  holes = ppHoles ren xs
-  envVerb = ppEnvVerb verb ren env
+  holes = ppHolesM ren xs
+  envVerb = ppEnvVerbM verb ren env
 
-ppHoles :: Ren -> Holes -> Maybe Doc
-ppHoles ren [] = Nothing
-ppHoles ren xs = Just $ vcatmap1 (ppHole ren) xs
+ppHolesM :: Ren -> Holes -> Maybe Doc
+ppHolesM ren [] = Nothing
+ppHolesM ren xs = Just $ vcatmap1 (ppHole ren) xs
 
 ppHole :: Ren -> Hole -> Doc
 ppHole ren (x, _As, _B) =
   (text label <+> ppMName x <+> oft <+> ppExp (telRen ren _As) _B)
-  // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
+  // dashes <> softappl (ppCtx ren) _As
   where label = if isHole x then "Hole" else "Meta"
 
 ----------------------------------------------------------------------
@@ -138,9 +143,9 @@ ppUnsolved :: Ren -> [Prob] -> Holes -> Doc
 ppUnsolved ren xs ys = vcat1 (map (ppProb ren) xs ++ map (ppHole ren) ys)
 
 ppProb :: Ren -> Prob -> Doc
-ppProb ren (Prob1 _ _As a1 a2) =
-  (ppExp (telRen ren _As) a1 <+> nconv <+> ppExp (telRen ren _As) a2)
-  // dashes <> softappl (vcat0 . ppCtxBinds ren) _As
+ppProb ren (Prob1 acts ctx a1 a2) =
+  (ppExp (telRen ren ctx) a1 <+> nconv <+> ppExp (telRen ren ctx) a2)
+  // dashes <> softappl (ppCtx ren) ctx <> softappl (ppActs ren) acts
 ppProb ren (ProbN p _ _ _ _) = ppProb ren p
 
 ----------------------------------------------------------------------

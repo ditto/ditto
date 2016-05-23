@@ -48,8 +48,10 @@ alphas' dict as1 as2 = all
 ----------------------------------------------------------------------
 
 conv :: Exp -> Exp -> TCM MProb
-conv a b = duringConv a b $
-  if alpha a b
+conv a b = duringConv a b (convActless a b)
+
+convActless :: Exp -> Exp -> TCM MProb
+convActless a b = if alpha a b
   then return Nothing
   else do
     a' <- whnf a
