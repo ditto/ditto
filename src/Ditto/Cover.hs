@@ -6,7 +6,6 @@ import Ditto.Whnf
 import Ditto.Sub
 import Ditto.Funify
 import Ditto.Throw
-import Ditto.During
 import Data.List
 import Data.Maybe
 import Control.Monad.Except
@@ -86,7 +85,7 @@ cover nm cs _As = do
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
-cover' nm cs _As qs = duringCover nm qs $ case matchClauses cs qs of
+cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of

@@ -60,6 +60,13 @@ extCtxs _As = local (\ r -> r { ctx = ctx r ++ _As })
 
 ----------------------------------------------------------------------
 
+during :: Act -> TCM a -> TCM a
+during x m = do
+  ctx <- getCtx
+  local (\ r -> r { acts = (ctx, x):acts r }) m
+
+----------------------------------------------------------------------
+
 gensym :: TCM Integer
 gensym = do
   state@DittoS {nameId = nameId} <- get

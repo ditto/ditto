@@ -10,7 +10,6 @@ import Ditto.Match
 import Ditto.Cover
 import Ditto.Surf
 import Ditto.Throw
-import Ditto.During
 import Ditto.Pretty
 import Data.Maybe
 import Data.List
@@ -50,30 +49,30 @@ checkStmt (Right ds) = do
   mapM_ (checkBod . toBod) ds
 
 checkSig :: Sig -> TCM ()
-checkSig (GDef x _A) = duringDef x $ do
+checkSig (GDef x _A) = during (ADef x) $ do
   _A <- checkSolved _A Type
   addDef x Nothing _A
-checkSig (GData x _A) = duringData x $ do
+checkSig (GData x _A) = during (AData x) $ do
   _A <- checkSolved _A Type
   (tel, end) <- splitTel _A
   case end of
     Type -> do
       addForm x tel
     otherwise -> throwGenErr "Datatype former does not end in Type"
-checkSig (GDefn x _A) = duringDefn x $ do
+checkSig (GDefn x _A) = during (ADefn x) $ do
   _A <- checkSolved _A Type
   (_As, _B) <- splitTel _A
   addRedType x _As _B
 
 checkBod :: Bod -> TCM ()
-checkBod (BDef x a) = duringDef x $ do
+checkBod (BDef x a) = during (ADef x) $ do
   _A <- fromJust <$> lookupType x
   a  <- checkSolved a _A
   updateDef x a
-checkBod (BData x cs) = duringData x $ do
-  cs <- mapM (\ (x, _A') -> (x,) <$> duringCon x (checkSolved _A' Type)) cs
+checkBod (BData x cs) = during (AData x) $ do
+  cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' Type)) cs
   mapM_ (\c -> addCon =<< buildCon x c) cs
-checkBod (BDefn x cs) = duringDefn x $ do
+checkBod (BDefn x cs) = during (ADefn x) $ do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
   (_As, _B) <- fromJust <$> lookupRedType x
@@ -176,7 +175,7 @@ inferExtBind i _A bnd_b = do
 ----------------------------------------------------------------------
 
 check :: Exp -> Exp -> TCM Exp
-check a _A = duringCheck a _A $ do
+check a _A = during (ACheck a _A) $ do
   (a , _A') <- infer a
   conv _A' _A >>= \case
     Nothing -> do
@@ -188,7 +187,7 @@ check a _A = duringCheck a _A $ do
       return a
 
 infer :: Exp -> TCM (Exp, Exp)
-infer b@(viewSpine -> (f, as)) = duringInfer b $ do
+infer b@(viewSpine -> (f, as)) = during (AInfer b) $ do
   (f, _AB) <- inferAtom f
   (as, _B) <- checkArgs as =<< whnf _AB
   return (apps f as, _B)

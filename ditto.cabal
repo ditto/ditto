@@ -27,7 +27,6 @@ Library
                 , Ditto.Conv
                 , Ditto.Cover
                 , Ditto.Delta
-                , Ditto.During
                 , Ditto.Env
                 , Ditto.Funify
                 , Ditto.Match

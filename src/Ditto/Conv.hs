@@ -6,7 +6,6 @@ import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
 import Ditto.Throw
-import Ditto.During
 import Data.List
 
 ----------------------------------------------------------------------
@@ -48,7 +47,7 @@ alphas' dict as1 as2 = all
 ----------------------------------------------------------------------
 
 conv :: Exp -> Exp -> TCM MProb
-conv a b = duringConv a b (convActless a b)
+conv a b = during (AConv a b) (convActless a b)
 
 convActless :: Exp -> Exp -> TCM MProb
 convActless a b = if alpha a b
