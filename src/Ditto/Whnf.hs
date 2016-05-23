@@ -7,12 +7,11 @@ import Data.Maybe
 ----------------------------------------------------------------------
 
 whnf :: Exp -> TCM Exp
-whnf (App i1 f a) = do
-  whnf f >>= \case
-    Lam i2 _A xb | i1 == i2 -> do
-      (x, b) <- unbind xb
-      whnf =<< sub1 (x , a) b
-    _ -> return $ App i1 f a
+whnf (App i1 f a) = whnf f >>= \case
+  Lam i2 _A xb | i1 == i2 -> do
+    (x, b) <- unbind xb
+    whnf =<< sub1 (x , a) b
+  _ -> return $ App i1 f a
 whnf (Red x as) = do
   cs <- fromJust <$> lookupRedClauses x
   betaRed x (map (\(_, ps, rhs) -> (ps, rhs)) cs) as
@@ -59,14 +58,14 @@ splitTel :: Exp -> TCM (Tel , Exp)
 splitTel _T = whnf _T >>= \case
   Pi i _A bnd_B -> do
     (x, _B) <- unbind bnd_B
-    (rest, end) <- extCtx i x _A (splitTel _B)
+    (rest, end) <- splitTel _B
     return ((i, x, _A) : rest, end)
   _A -> return ([], _A)
 
 buildCon :: PName -> (PName, Exp) -> TCM (PName, Tel, PName, Args)
 buildCon _X (x, _A) = do
   (tel, end) <- splitTel _A
-  extCtxs tel (whnf end) >>= \case
+  extCtxs tel $ whnf end >>= \case
     Form _Y _Is | _X == _Y -> return (x , tel, _Y, _Is)
     Form _Y _Is -> error "Constructor type does not match datatype"
     otherwise -> error "Constructor return type is not a type former"

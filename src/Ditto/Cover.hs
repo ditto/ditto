@@ -26,7 +26,7 @@ splitAtName _As x = (_As1, _A, tail _As2) where
 
 --          Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
-splitVar _As x _B _Cs = extCtxs _As (whnf _B) >>= \case
+splitVar _As x _B _Cs = whnf _B >>= \case
   Form _X js -> do
     _Bs <- lookupConsFresh _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs

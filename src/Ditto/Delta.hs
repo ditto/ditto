@@ -30,6 +30,6 @@ deltaExpands = mapM $ \(i, a) -> (i,) <$> deltaExpand a
 deltaExpandExtBind :: Icit -> Exp -> Bind -> TCM Bind
 deltaExpandExtBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
-  Bind x <$> extCtx i x _A (deltaExpand b)
+  Bind x <$> deltaExpand b
 
 ----------------------------------------------------------------------

@@ -172,11 +172,9 @@ lookupHoles = do
 ----------------------------------------------------------------------
 
 lookupDef :: Name -> TCM (Maybe Exp)
-lookupDef x = lookupCtx x >>= \case
-  Just _ -> return Nothing
-  Nothing -> do
-    s <- lookupSigma x
-    return $ envDefBody =<< s
+lookupDef x = do
+  s <- lookupSigma x
+  return $ envDefBody =<< s
 
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = lookupCtx x >>= \case

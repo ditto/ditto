@@ -56,7 +56,7 @@ surfExps = mapM (\(i, a) -> (i,) <$> surfExp a)
 surfExpExtBind :: Icit -> Exp -> Bind -> TCM Bind
 surfExpExtBind i _A bnd_b = do
   (x, b) <- unbind bnd_b
-  Bind x <$> extCtx i x _A (surfExp b)
+  Bind x <$> surfExp b
 
 ----------------------------------------------------------------------
 
@@ -79,7 +79,6 @@ surfProb (ProbN p acts ctx as1 as2) =
 
 ----------------------------------------------------------------------
 
--- TODO ext ctx
 surfTel :: Tel -> TCM Tel
 surfTel = mapM (\(i, x, _A) -> (i,x,) <$> surfExp _A)
 
