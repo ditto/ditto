@@ -51,7 +51,7 @@ mutual
 data `Type : Type where
 | `Bot,`Unit,`Bool : `Type
 | `Pair,`Fun (A : `Type) (B (a : ToType A) : `Type) : `Type
-| `Data {O : `Type} (D : `Desc (ToType O)) : `Type
+| `Data {O : `Type} (D : `Desc O) : `Type
 end
 
 def ToType (A : `Type) : Type where
@@ -63,15 +63,15 @@ def ToType (A : `Type) : Type where
 | (`Data D) = Data (ToDesc D)
 end
 
-data `Desc (O : Type) :: Type where
-| `End (i : O) : `Desc O
+data `Desc (O : `Type) :: Type where
+| `End (i : ToType O) : `Desc O
 | `Arg (A : `Type) (D (a : ToType A) : `Desc O) : `Desc O
-| `Rec (A : `Type) (D (i (a : ToType A) : O) : `Desc O) : `Desc O
+| `Rec (A : `Type) (D (i (a : ToType A) : ToType O) : `Desc O) : `Desc O
 end
 
-def ToDesc {O : Type} (D : `Desc O) : Desc O where
+def ToDesc {O : `Type} (D : `Desc O) : Desc (ToType O) where
 | (`End i) = End i
-| (`Arg A D) = Arg (ToType A) ((a : ToType A) -> ToDesc (D a))
+| (`Arg A D) = Arg (ToType A) ((a : *) -> ToDesc (D a))
 | (`Rec A D) = Rec (ToType A) ((o : *) -> ToDesc (D o))
 end
 
@@ -82,21 +82,26 @@ mutual
 data Path (A : `Type) (a : ToType A) : Type where
 | here {A : `Type} {a : ToType A} : Path A a
 | thereFun {A : `Type} {B (a : ToType A) : `Type}
-    {f (a : ToType A) : ToType (B a)}
-    (g (a : ToType A) : Path (B a) (f a))
-    : Path (`Fun A B) f
-| thereData {O : `Type} {D : `Desc (ToType O)}
-    {xs : Data' (ToDesc D) (ToDesc D)}
-    (i : Path' D D xs)
-    : Path (`Data D) (con xs)
+  {f (a : ToType A) : ToType (B a)}
+  (g (a : ToType A) : Path (B a) (f a))
+  : Path (`Fun A B) f
+| thereData {O : `Type} {D : `Desc O}
+  {xs : Data' (ToDesc D) (ToDesc D)}
+  (i : Path' D D xs)
+  : Path (`Data D) (con xs)
 end
 
-data Path' {O : `Type} (R : `Desc (ToType O)) :: (D : `Desc (ToType O)) (xs : Data' (ToDesc R) (ToDesc D)) : Type where
-| thereArg1 {A : `Type} {D (a : ToType A) : `Desc (ToType O)}
-    {a : ToType A}
-    {xs : Data' (ToDesc R) (ToDesc (D a))}
-    (i : Path A a)
-    : Path' R (`Arg A D) (pair a xs)
+data Path' {O : `Type} (R : `Desc O) :: (D : `Desc O) (xs : Data' (ToDesc R) (ToDesc D)) : Type where
+| thereArg1 {A : `Type} {D (a : ToType A) : `Desc O}
+  {a : ToType A}
+  {xs : Data' (ToDesc R) (ToDesc (D a))}
+  (i : Path A a)
+  : Path' R (`Arg A D) (pair a xs)
+| thereArg2 {A : `Type} {D (a : ToType A) : `Desc O}
+  {a : ToType A}
+  {xs : Data' (ToDesc R) (ToDesc (D a))}
+  (i : Path' R (D a) xs)
+  : Path' R (`Arg A D) (pair a xs)
 end
 
 end
