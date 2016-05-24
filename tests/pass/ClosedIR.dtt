@@ -93,7 +93,7 @@ data Path' {O : `Type} (R : `Desc O) :: (D : `Desc O) (xs : Data' (ToDesc R) (To
 | thereArg1 {A,D,a,xs : *}
   (i : Path A a)
   : Path' R (`Arg A D) (pair a xs)
-| thereArg2 {A,D : *} {a : ToType A} {xs : *}
+| thereArg2 {A,D,a,xs : *}
   (i : Path' R (D a) xs)
   : Path' R (`Arg A D) (pair a xs)
 | thereRec1 {A,D,f,xs : *}

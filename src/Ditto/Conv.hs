@@ -92,13 +92,17 @@ conv' a1@(viewSpine -> (Guard x1, bs1)) a2 = Just <$> mkProb1 a1 a2
 conv' a1 a2@(viewSpine -> (Guard _, _)) = conv' a2 a1
 
 -- Solving Metavariables
-conv' a1@(viewSpine -> (Meta x1 as1, bs1)) a2 = do
+conv' (viewSpine -> (Meta x1 as1, bs1)) a2 = do
+  as1 <- metaExpands as1
+  as2 <- metaExpands bs1
   a2 <- metaExpand a2
+
   millerPattern x1 (as1 ++ bs1) a2 >>= \case
    Just _As -> do
      solveMeta x1 (lams _As a2)
      return Nothing
-   Nothing -> Just <$> mkProb1 a1 a2
+   Nothing -> let a1 = apps (Meta x1 as1) bs1
+     in Just <$> mkProb1 a1 a2
      
 conv' a1 a2@(viewSpine -> (Meta _ _, _)) = conv' a2 a1
 
