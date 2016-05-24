@@ -91,7 +91,7 @@ end
 mutual
 
 data Path (A : `Type) (a : ToType A) : Type where
-| here {A : `Type} {a : ToType A} : Path A a
+| here (A : `Type) (a : ToType A) : Path A a
 | thereFun {A : `Type} {B (a : ToType A) : `Type}
   {f (a : ToType A) : ToType (B a)}
   (g (a : ToType A) : Path (B a) (f a))
@@ -123,3 +123,36 @@ end
 
 end
 
+mutual
+
+def Lookup {A : `Type} {a : ToType A} (i : Path A a) : Type where
+| (here A a) = ToType A
+| (thereFun g) = (a : *) : Lookup (g a)
+| (thereData i) = Lookup' i
+end
+
+def Lookup' {O : `Type} {R,D : `Desc O} {xs : Data' (ToDesc R) (ToDesc D)} (i : Path' R D xs) : Type where
+| (thereArg1 i) = Lookup i
+| (thereArg2 i) = Lookup' i
+| (thereRec1 g) = (a : *) : Lookup (g a)
+| (thereRec2 i) = Lookup' i
+end
+
+end
+
+mutual
+
+def lookup {A : `Type} {a : ToType A} (i : Path A a) : Lookup i where
+| (here A a) = a
+| (thereFun g) = (a : *) -> lookup (g a)
+| (thereData i) = lookup' i
+end
+
+def lookup' {O : `Type} {R,D : `Desc O} {xs : Data' (ToDesc R) (ToDesc D)} (i : Path' R D xs) : Lookup' i where
+| (thereArg1 i) = lookup i
+| (thereArg2 i) = lookup' i
+| (thereRec1 g) = (a : *) -> lookup (g a)
+| (thereRec2 i) = lookup' i
+end
+
+end
