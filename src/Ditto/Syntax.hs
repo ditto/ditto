@@ -136,6 +136,7 @@ type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type MProb = Maybe Prob
 type Probs = Map.Map GName Prob
+type Flex = Either MName GName
 
 data Prob =
     Prob1 Acts Tel Exp Exp
@@ -274,6 +275,27 @@ fvPat :: Pat -> [Name]
 fvPat (PVar x) = [x]
 fvPat (PInacc _) = []
 fvPat (PCon _ ps) = fvPats ps
+
+----------------------------------------------------------------------
+
+mv :: Exp -> [Flex]
+mv (Var _) = []
+mv Type = []
+mv (Infer _) = []
+mv (Guard x) = [Right x]
+mv (Form _ is) = mvs is
+mv (Con _ as) = mvs as
+mv (Red _ as) = mvs as
+mv (Meta x as) = Left x : mvs as
+mv (Pi _ _A _B) = mv _A ++ mvBind _B
+mv (Lam _ _A b) = mv _A ++ mvBind b
+mv (App _ a b) = mv a ++ mv b
+
+mvs :: Args -> [Flex]
+mvs as = concatMap mv (map snd as)
+
+mvBind :: Bind -> [Flex]
+mvBind (Bind _ b) = mv b
 
 ----------------------------------------------------------------------
 

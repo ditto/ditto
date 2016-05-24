@@ -94,7 +94,7 @@ conv' a1 a2@(viewSpine -> (Guard _, _)) = conv' a2 a1
 -- Solving Metavariables
 conv' a1@(viewSpine -> (Meta x1 as1, bs1)) a2 = do
   a2 <- metaExpand a2
-  millerPattern (as1 ++ bs1) a2 >>= \case
+  millerPattern x1 (as1 ++ bs1) a2 >>= \case
    Just _As -> do
      solveMeta x1 (lams _As a2)
      return Nothing
@@ -119,13 +119,20 @@ convArgs as1 as2 = throwGenErr "Converting arguments of differing lengths"
 
 ----------------------------------------------------------------------
 
-millerPattern :: Args -> Exp -> TCM (Maybe Tel)
-millerPattern as a = (sequence <$> mapM varName as) >>= \case
-  Just _As | linearNames _As -> solInScope _As a
+millerPattern :: MName -> Args -> Exp -> TCM (Maybe Tel)
+millerPattern x as a = (sequence <$> mapM varName as) >>= \case
+  Just _As | linearNames _As && flexInScope x a -> solInScope _As a
   otherwise -> return Nothing
 
 linearNames :: Tel -> Bool
 linearNames _As = length (names _As) == length (nub (names _As))
+
+createdAt :: Flex -> Integer
+createdAt (Left (MName _ n)) = n
+createdAt (Right (GName n)) = n
+
+flexInScope :: MName -> Exp -> Bool
+flexInScope (Left -> x) (mv -> ys) = all (\y -> createdAt y < createdAt x) ys
 
 solInScope :: Tel -> Exp -> TCM (Maybe Tel)
 solInScope _As a = do
