@@ -4,6 +4,7 @@ import Ditto.Monad
 import Ditto.Sub
 import Ditto.Whnf
 import Ditto.Delta
+import Ditto.Surf
 import Ditto.Conv
 import Ditto.Throw
 import Control.Monad.State
@@ -13,8 +14,8 @@ import Control.Monad.State
 recheckDef :: (Name, Maybe Exp, Exp) -> TCM ()
 recheckDef (x, Nothing, _A) = return ()
 recheckDef (x, Just a, _A) = do
-  _A' <- whnf =<< deltaExpand _A
-  a' <- whnf =<< deltaExpand a
+  _A' <- whnf =<< deltaExpand =<< metaExpand _A
+  a' <- whnf =<< deltaExpand =<< metaExpand a
   recheck a' _A'
 
 recheckProg :: TCM ()
@@ -42,11 +43,7 @@ reinfer :: Exp -> TCM Exp
 reinfer (Var x) = lookupType x >>= \case
     Just _A -> return _A
     Nothing -> throwScopeErr x
-reinfer (Guard x) = lookupGuardType x >>= \case
-    Just _A -> return _A
-    Nothing -> throwGenErr $ "Not a guard name: " ++ show x
 reinfer Type = return Type
-reinfer (Infer _) = throwGenErr "Core language does not reinfer expressions"
 reinfer (Pi i _A bnd_B) = do
   recheck _A Type
   (x, _B) <- unbind bnd_B
@@ -72,17 +69,13 @@ reinfer (Red x as) = lookupPSigma x >>= \case
     foldM_ recheckAndAdd [] (zip as _As)
     sub _B (mkSub _As as)
   otherwise -> throwGenErr $ "Not a reduction name: " ++ show x
-reinfer (Meta x as) = lookupMetaType x >>= \case
-  Just (_As, _B) -> do
-    foldM_ recheckAndAdd [] (zip as _As)
-    sub _B (mkSub _As as)
-  Nothing -> throwGenErr $ "Not a metavariable name: " ++ show x
 reinfer (App i1 f a) = reinfer f >>= whnf >>= \case
   Pi i2 _A bnd_B | i1 == i2 -> do
     recheck a _A
     (x, _B) <- unbind bnd_B
     sub1 (x, a) _B
   otherwise -> throwGenErr "Function does not have Pi type"
+reinfer x = throwGenErr "Reinfer of a non-core term"
 
 recheckAndAdd :: Sub -> ((Icit, Exp), (Icit, Name, Exp)) -> TCM Sub
 recheckAndAdd s ((i1, a) , (i2, x, _A)) | i1 == i2 = do
