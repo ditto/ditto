@@ -46,6 +46,13 @@ alphas' dict as1 as2 = all
 
 ----------------------------------------------------------------------
 
+convStatic :: a -> Exp -> Exp -> TCM a
+convStatic ret a1 a2 = conv a1 a2 >>= \case
+  Nothing -> return ret
+  Just p -> throwProbErr p
+
+----------------------------------------------------------------------
+
 conv :: Exp -> Exp -> TCM MProb
 conv a b = during (AConv a b) (convActless a b)
 

@@ -36,7 +36,7 @@ recheckExt i x _A b _B = extCtx i x _A (recheck b _B)
 recheck :: Exp -> Exp -> TCM ()
 recheck a _A = do
   _A' <- reinfer a
-  conv _A _A'
+  convStatic () _A _A'
   return ()
 
 reinfer :: Exp -> TCM Exp
