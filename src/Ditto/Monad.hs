@@ -267,6 +267,6 @@ probGNames :: TCM [GName]
 probGNames = Map.keys <$> getProbs
 
 unsolvedProbs :: TCM [Prob]
-unsolvedProbs = Map.elems <$> getProbs
+unsolvedProbs = nub <$> Map.elems <$> getProbs
 
 ----------------------------------------------------------------------
