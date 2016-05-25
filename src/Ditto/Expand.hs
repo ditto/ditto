@@ -8,8 +8,6 @@ module Ditto.Expand
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
-import Ditto.Whnf
-import Data.Maybe
 
 ----------------------------------------------------------------------
 
