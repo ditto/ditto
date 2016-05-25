@@ -26,8 +26,8 @@ Library
                 , Ditto.Cli
                 , Ditto.Conv
                 , Ditto.Cover
-                , Ditto.Delta
                 , Ditto.Env
+                , Ditto.Expand
                 , Ditto.Funify
                 , Ditto.Match
                 , Ditto.Monad

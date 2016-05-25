@@ -2,7 +2,7 @@ module Ditto.Surf where
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
-import Ditto.Whnf
+import Ditto.Expand
 import Data.Maybe
 
 ----------------------------------------------------------------------
@@ -30,37 +30,9 @@ isDeltaName x xs = maybe False (flip elem xs) (name2pname x)
 
 ----------------------------------------------------------------------
 
-metaExpand = surfExp
-metaExpands = surfExps
-
-surfExp :: Exp -> TCM Exp
-surfExp Type = return Type
-surfExp (Infer m) = Infer <$> return m
-surfExp (Pi i _A _B) = Pi i <$> surfExp _A <*> surfExpBind i _A _B
-surfExp (Lam i _A b) = Lam i <$> surfExp _A <*> surfExpBind i _A b
-surfExp (App i f a) = surfExp f >>= \case
-  Lam _ _ bnd_b -> do
-    (x, b) <- unbind bnd_b
-    surfExp =<< sub1 (x , a) b
-  f -> App i f <$> surfExp a
-surfExp (Form x as) = Form x <$> surfExps as
-surfExp (Con x as) = Con x <$> surfExps as
-surfExp (Red x as) = Red x <$> surfExps as
-surfExp (Meta x as) = lookupMeta x >>= \case
-  Just a -> surfExp (apps a as)
-  Nothing -> Meta x <$> surfExps as
-surfExp (Guard x) = lookupGuard x >>= \case
-  Just a -> surfExp a
-  Nothing -> return $ Guard x
-surfExp (Var x) = return (Var x)
-
-surfExps :: Args -> TCM Args
-surfExps = mapM (\(i, a) -> (i,) <$> surfExp a)
-
-surfExpBind :: Icit -> Exp -> Bind -> TCM Bind
-surfExpBind i _A bnd_b = do
-  (x, b) <- unbind bnd_b
-  Bind x <$> surfExp b
+surfExp = expand metaForm
+surfExps = expands metaForm
+surfExpBind = expandBind metaForm
 
 ----------------------------------------------------------------------
 

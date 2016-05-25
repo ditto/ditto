@@ -3,7 +3,7 @@ import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Whnf
-import Ditto.Delta
+import Ditto.Expand
 import Ditto.Surf
 import Ditto.Conv
 import Ditto.Throw
@@ -14,8 +14,8 @@ import Control.Monad.State
 recheckDef :: (Name, Maybe Exp, Exp) -> TCM ()
 recheckDef (x, Nothing, _A) = return ()
 recheckDef (x, Just a, _A) = do
-  _A' <- whnf =<< deltaExpand =<< metaExpand _A
-  a' <- whnf =<< deltaExpand =<< metaExpand a
+  _A' <- whnf =<< expand deltaForm _A
+  a' <- whnf =<< expand deltaForm a
   recheck a' _A'
 
 recheckProg :: TCM ()

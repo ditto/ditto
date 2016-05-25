@@ -1,7 +1,7 @@
 module Ditto.Conv where
 import Ditto.Syntax
 import Ditto.Whnf
-import Ditto.Surf
+import Ditto.Expand
 import Ditto.Monad
 import Ditto.Sub
 import Ditto.Env
@@ -100,16 +100,16 @@ conv' a1 a2@(viewSpine -> (Guard _, _)) = conv' a2 a1
 
 -- Solving Metavariables
 conv' (viewSpine -> (Meta x1 as1, bs1)) a2 = do
-  as1 <- metaExpands as1
-  as2 <- metaExpands bs1
-  a2 <- metaExpand a2
+  as1 <- expands metaForm as1
+  as2 <- expands metaForm bs1
+  a2 <- expand metaForm a2
 
   millerPattern x1 (as1 ++ bs1) a2 >>= \case
-   Just _As -> do
-     solveMeta x1 (lams _As a2)
-     return Nothing
-   Nothing -> let a1 = apps (Meta x1 as1) bs1
-     in Just <$> mkProb1 a1 a2
+    Just _As -> do
+      solveMeta x1 (lams _As a2)
+      return Nothing
+    Nothing -> let a1 = apps (Meta x1 as1) bs1
+      in Just <$> mkProb1 a1 a2
      
 conv' a1 a2@(viewSpine -> (Meta _ _, _)) = conv' a2 a1
 
