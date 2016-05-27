@@ -1,0 +1,15 @@
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+data Foo (n : Nat) : Type where
+| nil {n : Nat} : Foo n
+| cons {n : Nat} (x : Foo n) : Foo (suc n)
+end
+
+def last (n : Nat) (x : Foo n) : Nat where
+| n nil = n
+| (suc n) (cons x) = last n x
+end
+

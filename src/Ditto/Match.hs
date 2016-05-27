@@ -2,6 +2,7 @@ module Ditto.Match where
 import Ditto.Syntax
 import Ditto.Monad
 import Ditto.Throw
+import Ditto.Sub
 import Ditto.Whnf
 import Data.List
 import Control.Monad
@@ -15,7 +16,7 @@ data Cover = CMatch PSub RHS | CSplit Name | CMiss
 
 munion :: Match -> Match -> Match
 munion (MSolve xs) (MSolve ys) = MSolve (xs ++ ys)
-munion (MStuck xs) (MStuck ys) = MStuck (xs ++ ys)
+munion (MStuck xs) (MStuck ys) = MStuck (xs `union` ys)
 munion MClash _ = MClash
 munion _ MClash = MClash
 munion (MStuck xs) _ = MStuck xs
@@ -29,7 +30,14 @@ match1 (PInacc _) _ = return $ MSolve []
 match1 (PCon x ps) (PCon y qs) | x == y = match ps qs
 match1 (PCon x _) (PCon y _) = return MClash
 match1 (PCon x ps) (PVar y) = return $ MStuck [y]
-match1 (PCon x ps) (PInacc _) = return $ MStuck []
+match1 (PCon x ps) (PInacc (Just a)) = matchInacc x ps a
+match1 (PCon x ps) (PInacc Nothing) = throwGenErr "Undefined inaccessible in covering"
+
+matchInacc :: PName -> Pats -> Exp -> TCM Match
+matchInacc x ps a = whnf a >>= \case
+  Con y as -> match1 (PCon x ps) (PCon y (injectExps as))
+  (viewSpine -> (Var y, as)) -> return $ MStuck [y]
+  _ -> throwGenErr "Ill-formed match"
 
 match :: Pats -> Pats -> TCM Match
 match [] [] = return $ MSolve []

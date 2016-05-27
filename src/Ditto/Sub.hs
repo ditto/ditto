@@ -103,7 +103,13 @@ embedPSub :: PSub -> Sub
 embedPSub = map (\(x, p) -> (x, embedPat p))
 
 injectSub :: Sub -> PSub
-injectSub = map (\(x, a) -> (x, PInacc (Just a)))
+injectSub = map (\(x, a) -> (x, injectExp a))
+
+injectExp :: Exp -> Pat
+injectExp = PInacc . Just
+
+injectExps :: Args -> Pats
+injectExps = map (\(i,a) -> (i, injectExp a))
 
 ----------------------------------------------------------------------
 
