@@ -1,6 +1,10 @@
 module Ditto.Match where
 import Ditto.Syntax
+import Ditto.Monad
+import Ditto.Throw
+import Ditto.Whnf
 import Data.List
+import Control.Monad
 
 ----------------------------------------------------------------------
 
@@ -19,21 +23,21 @@ munion _ (MStuck ys) = MStuck ys
 
 ----------------------------------------------------------------------
 
-match1 :: Pat -> Pat -> Match
-match1 (PVar x) p = MSolve [(x, p)]
-match1 (PInacc _) _ = MSolve []
+match1 :: Pat -> Pat -> TCM Match
+match1 (PVar x) p = return $ MSolve [(x, p)]
+match1 (PInacc _) _ = return $ MSolve []
 match1 (PCon x ps) (PCon y qs) | x == y = match ps qs
-match1 (PCon x _) (PCon y _) = MClash
-match1 (PCon x ps) (PVar y) = MStuck [y]
-match1 (PCon x ps) (PInacc _) = MStuck []
+match1 (PCon x _) (PCon y _) = return MClash
+match1 (PCon x ps) (PVar y) = return $ MStuck [y]
+match1 (PCon x ps) (PInacc _) = return $ MStuck []
 
-match :: Pats -> Pats -> Match
-match [] [] = MSolve []
-match ((i1, p):ps) ((i2, q):qs) | i1 == i2 = match1 p q `munion` match ps qs
+match :: Pats -> Pats -> TCM Match
+match [] [] = return $ MSolve []
+match ((i1, p):ps) ((i2, q):qs) | i1 == i2 = munion <$> match1 p q <*> match ps qs
 match ps@((Expl, _):_) ((Impl, _):qs) = match ps qs
 match []               ((Impl, _):qs) = match [] qs
-match ((i1, p):ps) ((i2, q):qs) | i1 /= i2 = error "Implicit and explicit patterns mismatch"
-match _ _ = error "matching pattern clauses of different lengths"
+match ((i1, p):ps) ((i2, q):qs) | i1 /= i2 = throwGenErr "Implicit and explicit patterns mismatch"
+match _ _ = throwGenErr "Matching pattern clauses of different lengths"
 
 ----------------------------------------------------------------------
 
@@ -44,14 +48,14 @@ cunion _ y = y
 
 ----------------------------------------------------------------------
 
-matchClause :: Clause -> Pats -> Cover
-matchClause (ps, rhs) qs = case match ps qs of
-  MSolve rs -> CMatch rs rhs
-  MStuck xs -> CSplit (head xs)
-  MClash -> CMiss
+matchClause :: Clause -> Pats -> TCM Cover
+matchClause (ps, rhs) qs = match ps qs >>= \case
+  MSolve rs -> return $ CMatch rs rhs
+  MStuck xs -> return $ CSplit (head xs)
+  MClash -> return CMiss
 
-matchClauses :: [Clause] -> Pats -> Cover
-matchClauses cs qs = foldl (\ acc c -> acc `cunion` matchClause c qs) CMiss cs
+matchClauses :: [Clause] -> Pats -> TCM Cover
+matchClauses cs qs = foldM (\ acc c -> cunion acc <$> matchClause c qs) CMiss cs
 
 ----------------------------------------------------------------------
 
@@ -59,19 +63,19 @@ isCovered :: Cover -> Bool
 isCovered (CMatch _ _) = True
 isCovered _ = False
 
-reachable :: [Clause] -> [Clause] -> Pats -> [Clause]
-reachable prev [] qs = []
-reachable prev (c:cs) qs = if prevUnreached && currReached then c:rec else rec
-  where
-  rec = reachable (snoc prev c) cs qs
-  prevUnreached = not . isCovered . matchClauses prev $ qs
-  currReached = isCovered (matchClause c qs)
+reachable :: [Clause] -> [Clause] -> Pats -> TCM [Clause]
+reachable prev [] qs = return []
+reachable prev (c:cs) qs = do
+  prevUnreached <- not . isCovered <$> matchClauses prev qs
+  currReached <- isCovered <$> matchClause c qs
+  if prevUnreached && currReached then (c:) <$> rec else rec
+  where rec = reachable (snoc prev c) cs qs
 
-reachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
-reachableClauses cs cs' = nub $ concatMap (reachable [] cs) qss
+reachableClauses :: [Clause] -> [CheckedClause] -> TCM [Clause]
+reachableClauses cs cs' = nub . concat <$> mapM (reachable [] cs) qss
   where qss = map (\(_, qs, _) -> qs) cs'
 
-unreachableClauses :: [Clause] -> [CheckedClause] -> [Clause]
-unreachableClauses cs cs' = cs \\ reachableClauses cs cs'
+unreachableClauses :: [Clause] -> [CheckedClause] -> TCM [Clause]
+unreachableClauses cs cs' = (cs \\) <$> reachableClauses cs cs'
 
 ----------------------------------------------------------------------

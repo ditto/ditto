@@ -85,7 +85,7 @@ cover nm cs _As = do
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
-cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
+cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of
@@ -106,7 +106,7 @@ cover' nm cs _As qs = during (ACover nm qs) $ case matchClauses cs qs of
 ----------------------------------------------------------------------
 
 splitClauseGoal :: Pats -> Tel -> Pats -> TCM CheckedClause
-splitClauseGoal ps _As qs = case match ps qs of
+splitClauseGoal ps _As qs = match ps qs >>= \case
   MSolve rs -> do
     (_As, qs, _) <- accPSub rs _As qs
     return (_As, qs, MapsTo hole)

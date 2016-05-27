@@ -77,7 +77,7 @@ checkBod (BDefn x cs) = during (ADefn x) $ do
   checkLinearClauses x cs
   (_As, _B) <- fromJust <$> lookupRedType x
   cs' <- cover x cs _As
-  let unreached = unreachableClauses cs cs'
+  unreached <- unreachableClauses cs cs'
   unless (null unreached) $
     throwReachErr x unreached
   addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
