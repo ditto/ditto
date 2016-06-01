@@ -127,6 +127,7 @@ type Ren = [(Name, Name)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
 type Clause = (Pats, RHS)
+type CheckedClauses = [CheckedClause]
 type CheckedClause = (Tel, Pats, RHS)
 type ConSig = (PName, Tel, Args)
 type Pats = [(Icit, Pat)]
@@ -150,7 +151,7 @@ data Sigma =
     Def Name (Maybe Exp) Exp
   | DGuard GName Exp Exp
   | DForm PName [ConSig] Tel
-  | DRed PName [CheckedClause] Tel Exp
+  | DRed PName CheckedClauses Tel Exp
   | DMeta MName (Maybe Exp) Acts Tel Exp
   deriving (Show, Read, Eq)
 
@@ -175,7 +176,7 @@ data Err =
   | EUnsolved [Prob] Holes
   | ECover Tel PName Pats
   | EReach PName [Clause]
-  | ESplit [CheckedClause]
+  | ESplit CheckedClauses
   | EAtom Exp
   deriving (Show, Read, Eq)
 
@@ -390,7 +391,7 @@ redType :: Sigma -> Maybe (Tel, Exp)
 redType (DRed _ _ _As _B) = Just (_As, _B)
 redType _ = Nothing
 
-redClauses :: Sigma -> Maybe [CheckedClause]
+redClauses :: Sigma -> Maybe CheckedClauses
 redClauses (DRed _ cs _ _) = Just cs
 redClauses _ = Nothing
 

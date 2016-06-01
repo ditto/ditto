@@ -32,7 +32,7 @@ throwCoverErr :: Tel -> PName -> Pats -> TCM a
 throwCoverErr _As x ps = throwErr =<<
   ECover <$> surfTel _As <*> return x <*> surfPats ps
 
-throwSplitErr :: [CheckedClause] -> TCM a
+throwSplitErr :: CheckedClauses -> TCM a
 throwSplitErr cs = throwErr =<<
   ESplit <$> surfClauses cs
 

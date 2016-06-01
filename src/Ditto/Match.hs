@@ -79,11 +79,11 @@ reachable prev (c:cs) qs = do
   if prevUnreached && currReached then (c:) <$> rec else rec
   where rec = reachable (snoc prev c) cs qs
 
-reachableClauses :: [Clause] -> [CheckedClause] -> TCM [Clause]
+reachableClauses :: [Clause] -> CheckedClauses -> TCM [Clause]
 reachableClauses cs cs' = nub . concat <$> mapM (reachable [] cs) qss
   where qss = map (\(_, qs, _) -> qs) cs'
 
-unreachableClauses :: [Clause] -> [CheckedClause] -> TCM [Clause]
+unreachableClauses :: [Clause] -> CheckedClauses -> TCM [Clause]
 unreachableClauses cs cs' = (cs \\) <$> reachableClauses cs cs'
 
 ----------------------------------------------------------------------

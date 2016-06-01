@@ -73,7 +73,7 @@ surfTel = mapM (\(i, x, _A) -> (i,x,) <$> surfExp _A)
 
 ----------------------------------------------------------------------
 
-surfClauses :: [CheckedClause] -> TCM [CheckedClause]
+surfClauses :: CheckedClauses -> TCM CheckedClauses
 surfClauses = mapM surfClause
 
 surfClause :: CheckedClause -> TCM CheckedClause

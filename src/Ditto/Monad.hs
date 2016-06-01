@@ -121,7 +121,7 @@ lookupRedType x = do
   env <- getEnv
   return $ redType =<< find (isPNamed x) env
 
-lookupRedClauses :: PName -> TCM (Maybe [CheckedClause])
+lookupRedClauses :: PName -> TCM (Maybe CheckedClauses)
 lookupRedClauses x = do
   env <- getEnv
   return $ redClauses =<< find (isPNamed x) env

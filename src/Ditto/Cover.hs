@@ -78,13 +78,13 @@ accPSub rs _As qs = do
 
 ----------------------------------------------------------------------
 
-cover :: PName -> [Clause] -> Tel -> TCM [CheckedClause]
+cover :: PName -> [Clause] -> Tel -> TCM CheckedClauses
 cover nm cs _As = do
   (_As', _) <- freshTel Inacc _As
   cover' nm cs _As' (pvarPats _As')
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
-cover' :: PName -> [Clause] -> Tel -> Pats -> TCM [CheckedClause]
+cover' :: PName -> [Clause] -> Tel -> Pats -> TCM CheckedClauses
 cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
@@ -112,7 +112,7 @@ splitClauseGoal ps _As qs = match ps qs >>= \case
     return (_As, qs, MapsTo hole)
   _ -> throwGenErr "Split clause did not match original clause"
 
-splitClause :: Name -> Tel -> Pats -> TCM [CheckedClause]
+splitClause :: Name -> Tel -> Pats -> TCM CheckedClauses
 splitClause x _As ps = do
   unless (x `elem` names _As) $
     extCtxs _As (throwScopeErr x)
