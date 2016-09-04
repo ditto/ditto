@@ -174,7 +174,6 @@ data Err =
   | EScope Name
   | ECaseless Name
   | EUnsolved [Prob] Holes
-  | ECover Tel PName Pats
   | EReach PName [Clause]
   | ESplit CheckedClauses
   | EAtom Exp

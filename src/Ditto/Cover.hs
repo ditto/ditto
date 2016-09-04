@@ -81,7 +81,7 @@ accPSub rs _As qs = do
 cover :: PName -> [Clause] -> Tel -> TCM CheckedClauses
 cover nm cs _As = do
   (_As', _) <- freshTel Inacc _As
-  cover' nm cs _As' (pvarPats _As')
+  extCtxs _As' $ cover' nm cs _As' (pvarPats _As')
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
 cover' :: PName -> [Clause] -> Tel -> Pats -> TCM CheckedClauses
@@ -101,7 +101,7 @@ cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
   CSplit x -> do
     rss <- split _As x
     concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
-  CMiss -> throwCoverErr _As nm qs
+  CMiss -> throwGenErr "Uncovered clause"
 
 ----------------------------------------------------------------------
 

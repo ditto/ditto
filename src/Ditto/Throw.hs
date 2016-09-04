@@ -5,7 +5,6 @@ module Ditto.Throw
   , throwScopeErr
   , throwCaselessErr
   , throwUnsolvedErr
-  , throwCoverErr
   , throwReachErr
   , throwSplitErr
   , throwProbErr
@@ -27,10 +26,6 @@ throwAtomErr a = throwErr (EAtom a)
 throwUnsolvedErr :: [Prob] -> Holes -> TCM a
 throwUnsolvedErr ps hs = resetCtx [] [] $ throwErr =<<
   EUnsolved <$> surfProbs ps <*> surfHoles hs
-
-throwCoverErr :: Tel -> PName -> Pats -> TCM a
-throwCoverErr _As x ps = throwErr =<<
-  ECover <$> surfTel _As <*> return x <*> surfPats ps
 
 throwSplitErr :: CheckedClauses -> TCM a
 throwSplitErr cs = throwErr =<<

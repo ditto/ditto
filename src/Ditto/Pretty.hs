@@ -56,8 +56,6 @@ ppErr ren (ECaseless x) = text "Variable is not caseless"
   <+> code (ppName ren x)
 ppErr ren (EUnsolved ps hs) = text "Unsolved metavariables and constraints" //
   ppUnsolved ren ps hs
-ppErr ren (ECover _As x qs) = text "Uncovered clause"
-  <+> code (ppPName x <+> vcat0 (ppPats VCore (telRen ren _As) qs))
 ppErr ren (EReach x xs) = text "Unreachable clauses" //
   vcatmap0 (ppRed' ren x) xs
 ppErr ren (ESplit cs) = text "Clauses after split" //
