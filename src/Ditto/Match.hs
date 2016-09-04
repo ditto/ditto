@@ -10,7 +10,7 @@ import Control.Monad
 ----------------------------------------------------------------------
 
 data Match = MSolve PSub | MStuck [Name] | MClash
-data Cover = CMatch PSub RHS | CSplit Name | CMiss
+data Cover = CMatch PSub RHS | CSplit [Name] | CMiss
 
 ----------------------------------------------------------------------
 
@@ -59,7 +59,7 @@ cunion _ y = y
 matchClause :: Clause -> Pats -> TCM Cover
 matchClause (ps, rhs) qs = match ps qs >>= \case
   MSolve rs -> return $ CMatch rs rhs
-  MStuck xs -> return $ CSplit (head xs)
+  MStuck xs -> return $ CSplit xs
   MClash -> return CMiss
 
 matchClauses :: [Clause] -> Pats -> TCM Cover

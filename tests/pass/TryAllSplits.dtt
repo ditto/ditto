@@ -1,0 +1,28 @@
+data Bool : Type where
+| tt : Bool
+| ff : Bool
+end
+
+data Nat : Type where
+| zero : Nat
+| suc (n : Nat) : Nat
+end
+
+data IsTrue (B : Bool) : Type where
+| Yeap : IsTrue tt
+end
+
+def Foo (b : Bool) : Type where
+| tt = Bool
+| ff = (b : Bool) : Bool
+end
+
+def splitPastInacc (b : Bool) (F : Foo b) (I : IsTrue b) : Bool where
+| * tt Yeap = tt
+| * ff Yeap = tt
+end
+
+def splitPastMatch (b : Bool) (F : Foo b) (I : IsTrue b) : Bool where
+| tt tt Yeap = tt
+| tt ff Yeap = tt
+end

@@ -98,7 +98,7 @@ cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
       MapsTo a -> do
         a <- subRHS a
         return [(_As, qs, MapsTo a)]
-  CSplit x -> do
+  CSplit xs -> flip anyM xs $ \x -> do
     rss <- split _As x
     concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
   CMiss -> throwGenErr "Uncovered clause"

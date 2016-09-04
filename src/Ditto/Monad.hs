@@ -33,6 +33,13 @@ runTCM v =
 
 ----------------------------------------------------------------------
 
+anyM :: MonadError e m => (a -> m b) -> [a] -> m b
+anyM f (x:[]) = f x
+anyM f (x:xs) = catchError (f x) (const (anyM f xs))
+anyM f [] = error "anyM applied to empty list"
+
+----------------------------------------------------------------------
+
 initialS :: DittoS
 initialS = DittoS
   { env = []
