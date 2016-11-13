@@ -22,6 +22,7 @@ metaForm = [XBeta, XMeta, XGuard]
 
 expand :: Form -> Exp -> TCM Exp
 expand form Type = return Type
+expand form TYPE = return TYPE
 expand form (Infer m) = Infer <$> return m
 expand form (Pi i _A _B) = Pi i <$> expand form _A <*> expandBind form i _A _B
 expand form (Lam i _A b) = Lam i <$> expand form _A <*> expandBind form i _A b

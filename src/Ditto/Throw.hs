@@ -2,6 +2,7 @@ module Ditto.Throw
   ( throwGenErr
   , throwConvErr
   , throwAtomErr
+  , throwTypeErr
   , throwScopeErr
   , throwCaselessErr
   , throwUnsolvedErr
@@ -22,6 +23,9 @@ throwConvErr a b = throwErr =<<
 
 throwAtomErr :: Exp -> TCM a
 throwAtomErr a = throwErr (EAtom a)
+
+throwTypeErr :: TCM a
+throwTypeErr = throwErr EType
 
 throwUnsolvedErr :: [Prob] -> Holes -> TCM a
 throwUnsolvedErr ps hs = resetCtx [] [] $ throwErr =<<

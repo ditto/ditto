@@ -106,7 +106,7 @@ data Bod =
   deriving (Show, Read, Eq)
 
 data Exp =
-    Type | Pi Icit Exp Bind | Lam Icit Exp Bind
+    Type | TYPE| Pi Icit Exp Bind | Lam Icit Exp Bind
   | Form PName Args | Con PName Args
   | Red PName Args | Meta MName Args
   | Var Name | Guard GName
@@ -177,6 +177,7 @@ data Err =
   | EReach PName [Clause]
   | ESplit CheckedClauses
   | EAtom Exp
+  | EType -- TYPE has no type
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------
@@ -243,6 +244,7 @@ viewSpine x = (x, [])
 fv :: Exp -> [Name]
 fv (Var x) = [x]
 fv Type = []
+fv TYPE = []
 fv (Infer _) = []
 fv (Guard _) = []
 fv (Form _ is) = fvs is
@@ -281,6 +283,7 @@ fvPat (PCon _ ps) = fvPats ps
 mv :: Exp -> [Flex]
 mv (Var _) = []
 mv Type = []
+mv TYPE = []
 mv (Infer _) = []
 mv (Guard x) = [Right x]
 mv (Form _ is) = mvs is

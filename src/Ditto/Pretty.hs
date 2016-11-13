@@ -160,6 +160,7 @@ ppArg ren (Impl, a) = braces (ppExp ren a)
 
 ppwExp :: Ren -> Wrap -> Exp -> Doc
 ppwExp ren w Type = text "Type"
+ppwExp ren w TYPE = text "TYPE"
 ppwExp ren w (Infer m) = ppInfer m
 ppwExp ren w (Var x) = ppName ren x
 ppwExp ren w x@(Pi _ _ _) = righty w (ppPis ren x)

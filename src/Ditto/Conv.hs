@@ -15,6 +15,9 @@ alpha a b = alpha' [] a b
 
 alpha' :: Ren -> Exp -> Exp -> Bool
 alpha' dict Type Type = True
+alpha' dict TYPE Type = True -- These destroy the distinction btw Type and TYPE
+alpha' dict TYPE TYPE = True --
+alpha' dict Type TYPE = True --
 alpha' dict (Infer _) (Infer _) = False
 alpha' dict (Form x1 as1) (Form x2 as2) =
   x1 == x2 && alphas' dict as1 as2
@@ -110,7 +113,7 @@ conv' (viewSpine -> (Meta x1 as1, bs1)) a2 = do
       return Nothing
     Nothing -> let a1 = apps (Meta x1 as1) bs1
       in Just <$> mkProb1 a1 a2
-     
+
 conv' a1 a2@(viewSpine -> (Meta _ _, _)) = conv' a2 a1
 
 conv' a b = throwConvErr a b

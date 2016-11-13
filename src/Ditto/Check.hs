@@ -215,7 +215,8 @@ inferAtom :: Exp -> TCM (Exp, Exp)
 inferAtom (Var x) = lookupType x >>= \case
   Just _A -> return (Var x, _A)
   Nothing -> throwScopeErr x
-inferAtom Type = return (Type, Type)
+inferAtom Type = return (Type, TYPE)
+inferAtom TYPE = throwTypeErr
 inferAtom (Infer m) = genMeta m
 inferAtom (Pi i _A bnd_B) = do
   _A <- check _A Type
