@@ -16,6 +16,7 @@ stripComments :: String -> String
 stripComments = unlines . map (takeWhile (/= '#')) . lines
 
 keyType = symbol "Type"
+keyProp = symbol "type"
 keyData = symbol "data"
 keyMutual = symbol "mutual"
 keyDef = symbol "def"
@@ -23,7 +24,7 @@ keyWhere = symbol "where"
 keyEnd = symbol "end"
 
 keywords = choice
-  [keyType, keyData, keyDef, keyWhere, keyEnd]
+  [keyType, keyProp, keyData, keyDef, keyWhere, keyEnd]
 
 symAscribe = symbol ":"
 symKind = symbol "::"
@@ -184,6 +185,7 @@ parseAtom :: Parser Exp
 parseAtom = choice [
     parens parseExp
   , parseType
+  , parseProp
   , parseInfer
   , parseHole
   , parseVar
@@ -193,6 +195,9 @@ parseAtom = choice [
 
 parseType :: Parser Exp
 parseType = try $ keyType >> return Type
+
+parseProp :: Parser Exp
+parseProp = try $ keyProp >> return Type
 
 parseInfer :: Parser Exp
 parseInfer = try $ symInfer >> return (Infer MInfer)
