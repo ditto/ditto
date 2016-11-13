@@ -17,7 +17,7 @@
 
 (define-generic-mode 'ditto-mode
   '("#") ;; comments
-  '("mutual" "data" "def" "where" "end" "|" "Type" "type") ;; keywords
+  '("mutual" "data" "def" "where" "end" "|" "Type" "TYPE") ;; keywords
   '()
   '("\\.dtt$") ;; file extension
   (list 'ditto-bind-keys) ;; other functions to call
