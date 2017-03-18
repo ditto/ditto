@@ -1,0 +1,141 @@
+######################################################################
+
+data Nat : Type where
+| zero
+| suc (n : Nat)
+end
+
+data Nat : Type where
+| < zero >
+| < suc (n : Nat) >
+end
+
+######################################################################
+
+data Fin (n : Nat) : Type where
+| here {n : Nat} > (suc n)
+| there {n : Nat} (i : Fin n) > (suc n)
+end
+
+data Fin (n : Nat) : Type where
+| (suc n) < here
+| (suc n) < there (i : Fin n)
+end
+
+######################################################################
+
+data List (A : Type) : Type where
+| A < nil
+| A < cons (x : A) (xs : List A)
+end
+
+data List (A : Type) : Type1 where
+| nil {A : Type} > A
+| cons {A : Type} (x : A) (xs : List A) > A
+end
+
+######################################################################
+
+data Vec (A : Type) (n : Nat) : Type where
+| A < nil > zero
+| A < cons {n : Nat} (x : A) (xs : Vec A n) > (suc n)
+end
+
+data Vec (A : Type) (n : Nat) : Type where
+| A zero < nil
+| A (suc n) < cons (x : A) (xs : Vec A n)
+end
+
+######################################################################
+
+data Id (A : Type) (x y : A) : Type where
+| A x < refl > x
+end
+
+######################################################################
+
+data Poly : Type1 where
+| Id
+| Const (A : Type)
+| Prod Sum (P Q : Poly)
+end
+
+def Func (X P : Poly) : Type  where
+| X Id = Func X X
+| X (Const A) = A
+| X (Prod P Q) = Pair (Func X P) (Func X Q)
+| X (Sum P Q) = Sum (Func X P) (Func X Q)
+end
+
+# mutual
+
+# def Func (X P : Poly) : Type  where
+# | X Id = Fix X
+# | X (Const A) = A
+# | X (Prod P Q) = Pair (Func X P) (Func X Q)
+# | X (Sum P Q) = Sum (Func X P) (Func X Q)
+# end
+
+# data Fix (P : Poly) : Type  where
+# | P < init (xs : Func P P)
+# end
+
+# end
+
+def Func (X : Type) (P : Poly) : Type  where
+| X Id = X
+| X (Const A) = A
+| X (Prod P Q) = Pair (Func X P) (Func X Q)
+| X (Sum P Q) = Sum (Func X P) (Func X Q)
+end
+
+data Fix (P : Poly) : Type  where
+| P < init (xs : Func (Fix P) P)
+end
+
+mutual
+
+data Tp : Type where
+| `Bool
+| `Pi (A : Tp) (B : (a : El A ) : Tp)
+end
+
+def El (A : Tp) : Type where
+| `Bool = Bool
+| (`Pi A B) = (a : El A) : El (B a)
+end
+
+end
+
+data Data (X P : Poly) : Type  where
+| X Id < rec (x : Data X X)
+| X (Const A) < arg (a : A)
+| X (Prod P Q) < pair (p : Data X P) (q : Data X Q)
+| X (Sum P Q) < left (p : Data X P)
+| X (Sum P Q) < right (q : Data X Q)
+end
+
+def Fix (P : Poly) : Type where
+Data P P
+end
+
+######################################################################
+
+def ListP (A : Type) : Poly where
+| A = Sum (Const Unit) (Prod (Const A) Id)
+end
+
+def List (A : Type) : Type where
+| A = Data (ListP A) (ListP A)
+end
+
+def nil {A : Type} : List A where
+left (arg tt)
+end
+
+def cons {A : Type} (x : A) (xs : List A) : List A where
+| x xs = right (pair (arg x) (rec xs))
+end
+
+######################################################################
+
