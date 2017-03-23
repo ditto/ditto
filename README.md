@@ -8,19 +8,19 @@ Ditto is a super kawaii dependently typed language for you!
 
 * Open universe of types.
 * Dependent pattern matching.
- * Searches all possible coverings.
- * Enhanced catch-all clauses (novel).
+  * Searches all possible coverings.
+  * Enhanced catch-all clauses (novel).
 * Implicit arguments.
- * Miller-pattern unification.
- * Constraint postponement.
+  * Miller-pattern unification.
+  * Constraint postponement.
 * Mutual definitions.
- * Functions.
- * Induction-recursion.
- * Induction-induction.
+  * Functions.
+  * Induction-recursion.
+  * Induction-induction.
 * Eta-equality for functions.
 * Interactivity via command-line interface.
- * Holes.
- * Case splitting.
+  * Holes.
+  * Case splitting.
 * Tracking user vs machine-introduced variables.
 
 ## Development
