@@ -86,7 +86,7 @@ parseDefn = try $ do
   keyEnd
   return $ SDefn x _A cs
 
-parseClause :: Parser Clause
+parseClause :: Parser SClause
 parseClause = try $ do
   symChoice
   ps <- many parsePattern
@@ -151,7 +151,7 @@ parseParams = try $ do
   symKind
   return _As
 
-parseCon :: Parser Cons
+parseCon :: Parser SCons
 parseCon = try $ do
   symChoice
   xs <- commaSep parsePName

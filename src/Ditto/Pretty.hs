@@ -274,17 +274,17 @@ ppPrimType ren x _A = ppPName x <+> ppExpType ren _A
 ppCon :: Ren -> (PName, Exp) -> Doc
 ppCon ren (x, _A) = bar <+> ppPrimType ren x _A
 
-ppDataBod :: Ren -> Cons -> Doc
+ppDataBod :: Ren -> SCons -> Doc
 ppDataBod ren [] = end
 ppDataBod ren cs = vcatmap0 (ppCon ren) cs // end
 
 ----------------------------------------------------------------------
 
-ppRedBod :: Ren -> [Clause] -> Doc
+ppRedBod :: Ren -> SClauses -> Doc
 ppRedBod ren [] = end
 ppRedBod ren cs = vcatmap0 (ppClause ren) cs // end
 
-ppClause :: Ren -> Clause -> Doc
+ppClause :: Ren -> SClause -> Doc
 ppClause ren (ps, rhs) = bar
   <+> hcat1 (ppPats VCore ren' ps)
   <@> ppRHS ren' rhs
@@ -318,7 +318,7 @@ ppStmt ren (SDef x a _A) = def
 ppRed :: Ren -> PName -> CheckedClause -> Doc
 ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
-ppRed' :: Ren -> PName -> Clause -> Doc
+ppRed' :: Ren -> PName -> SClause -> Doc
 ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats VCore ren ps) <@> ppRHS ren rhs
 
 ppRHS :: Ren -> RHS -> Doc

@@ -33,7 +33,7 @@ throwSplitErr cs = throwErr =<<
 
 ----------------------------------------------------------------------
 
-throwReachErr :: PName -> [Clause] -> TCM a
+throwReachErr :: PName -> SClauses -> TCM a
 throwReachErr x cs = throwErr (RReach x cs)
 
 throwGenErr :: String -> TCM a

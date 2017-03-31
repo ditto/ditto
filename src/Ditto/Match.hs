@@ -56,13 +56,13 @@ cunion _ y = y
 
 ----------------------------------------------------------------------
 
-matchClause :: Clause -> Pats -> TCM Cover
+matchClause :: SClause -> Pats -> TCM Cover
 matchClause (ps, rhs) qs = match ps qs >>= \case
   MSolve rs -> return $ CMatch rs rhs
   MStuck xs -> return $ CSplit xs
   MClash -> return CMiss
 
-matchClauses :: [Clause] -> Pats -> TCM Cover
+matchClauses :: SClauses -> Pats -> TCM Cover
 matchClauses cs qs = foldM (\ acc c -> cunion acc <$> matchClause c qs) CMiss cs
 
 ----------------------------------------------------------------------
@@ -71,7 +71,7 @@ isCovered :: Cover -> Bool
 isCovered (CMatch _ _) = True
 isCovered _ = False
 
-reachable :: [Clause] -> [Clause] -> Pats -> TCM [Clause]
+reachable :: SClauses -> SClauses -> Pats -> TCM SClauses
 reachable prev [] qs = return []
 reachable prev (c:cs) qs = do
   prevUnreached <- not . isCovered <$> matchClauses prev qs
@@ -79,11 +79,11 @@ reachable prev (c:cs) qs = do
   if prevUnreached && currReached then (c:) <$> rec else rec
   where rec = reachable (snoc prev c) cs qs
 
-reachableClauses :: [Clause] -> CheckedClauses -> TCM [Clause]
+reachableClauses :: SClauses -> CheckedClauses -> TCM SClauses
 reachableClauses cs cs' = nub . concat <$> mapM (reachable [] cs) qss
   where qss = map (\(_, qs, _) -> qs) cs'
 
-unreachableClauses :: [Clause] -> CheckedClauses -> TCM [Clause]
+unreachableClauses :: SClauses -> CheckedClauses -> TCM SClauses
 unreachableClauses cs cs' = (cs \\) <$> reachableClauses cs cs'
 
 ----------------------------------------------------------------------

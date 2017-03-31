@@ -89,8 +89,8 @@ data MKind = MInfer | MHole (Maybe String)
 
 data Stmt =
     SDef Name Exp Exp
-  | SData PName Exp Cons
-  | SDefn PName Exp [Clause]
+  | SData PName Exp SCons
+  | SDefn PName Exp SClauses
   deriving (Show, Read, Eq)
 
 data Sig =
@@ -101,8 +101,8 @@ data Sig =
 
 data Bod =
     BDef Name Exp
-  | BData PName Cons
-  | BDefn PName [Clause]
+  | BData PName SCons
+  | BDefn PName SClauses
   deriving (Show, Read, Eq)
 
 data Exp =
@@ -118,7 +118,7 @@ data Bind = Bind Name Exp
 
 type Prog = [MStmt]
 type MStmt = Either Stmt [Stmt]
-type Cons = [(PName, Exp)]
+type SCons = [(PName, Exp)]
 type Arg = (Icit, Exp)
 type Args = [Arg]
 type Env = [Sigma]
@@ -126,7 +126,8 @@ type Tel = [(Icit, Name, Exp)]
 type Ren = [(Name, Name)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
-type Clause = (Pats, RHS)
+type SClause = (Pats, RHS)
+type SClauses = [SClause]
 type CheckedClauses = [CheckedClause]
 type CheckedClause = (Tel, Pats, RHS)
 type ConSig = (PName, Tel, Args)
@@ -174,7 +175,7 @@ data Err =
   | RScope Name
   | RCaseless Name
   | RUnsolved [Prob] Holes
-  | RReach PName [Clause]
+  | RReach PName SClauses
   | RSplit CheckedClauses
   | RAtom Exp
   deriving (Show, Read, Eq)
@@ -211,7 +212,7 @@ pis = flip $ foldr $ \ (i, x, _A) _B -> EPi i _A (Bind x _B)
 ipis :: Tel -> Exp -> Exp
 ipis as = pis (map (\(_,x,a) -> (Impl,x,a)) as)
 
-paramCons :: Tel -> Cons -> Cons
+paramCons :: Tel -> SCons -> SCons
 paramCons _As = map (\(x, _A) -> (x, ipis _As _A))
 
 lams :: Tel -> Exp -> Exp

@@ -28,7 +28,7 @@ whnf x = return x
 
 ----------------------------------------------------------------------
 
-betaRed :: PName -> [Clause] -> Args -> TCM Exp
+betaRed :: PName -> SClauses -> Args -> TCM Exp
 betaRed x [] as = return $ ERed x as
 betaRed x ((ps, rhs):cs) as = matchExps ps as >>= \case
   Just xs -> case rhs of

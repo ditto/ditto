@@ -96,10 +96,10 @@ checkRHS _Delta lhs (Split x) _ _ = do
 
 ----------------------------------------------------------------------
 
-checkLinearClauses :: PName -> [Clause] -> TCM ()
+checkLinearClauses :: PName -> SClauses -> TCM ()
 checkLinearClauses x = mapM_ (checkLinearClause x)
 
-checkLinearClause :: PName -> Clause -> TCM ()
+checkLinearClause :: PName -> SClause -> TCM ()
 checkLinearClause x (ps, rhs) =
   unless (null xs) $ throwGenErr $ unlines
     ["Nonlinear occurrence of variables in patterns."
@@ -123,7 +123,7 @@ patternVars (PCon _ ps) = patternsVars ps
 
 ----------------------------------------------------------------------
 
-atomizeClauses :: [Clause] -> TCM [Clause]
+atomizeClauses :: SClauses -> TCM SClauses
 atomizeClauses = mapM (\(ps, rhs) -> (,rhs) <$> atomizePatterns ps)
 
 atomizePatterns :: Pats -> TCM Pats
