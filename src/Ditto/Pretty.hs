@@ -45,20 +45,20 @@ accRen = map (\(x, y) -> (x, toAcc y))
 ----------------------------------------------------------------------
 
 ppErr :: Ren -> Err -> Doc
-ppErr ren (EGen err) = text err
-ppErr ren (EConv a b) = text "Terms not convertible"
+ppErr ren (RGen err) = text err
+ppErr ren (RConv a b) = text "Terms not convertible"
  <+> code (ppExp ren a <+> nconv <+> ppExp ren b)
-ppErr ren (EAtom a) = text "Inferring non-atomic term"
+ppErr ren (RAtom a) = text "Inferring non-atomic term"
  <+> code (ppExp ren a)
-ppErr ren (EScope x) = text "Variable not in scope"
+ppErr ren (RScope x) = text "Variable not in scope"
   <+> code (ppName ren x)
-ppErr ren (ECaseless x) = text "Variable is not caseless"
+ppErr ren (RCaseless x) = text "Variable is not caseless"
   <+> code (ppName ren x)
-ppErr ren (EUnsolved ps hs) = text "Unsolved metavariables and constraints" //
+ppErr ren (RUnsolved ps hs) = text "Unsolved metavariables and constraints" //
   ppUnsolved ren ps hs
-ppErr ren (EReach x xs) = text "Unreachable clauses" //
+ppErr ren (RReach x xs) = text "Unreachable clauses" //
   vcatmap0 (ppRed' ren x) xs
-ppErr ren (ESplit cs) = text "Clauses after split" //
+ppErr ren (RSplit cs) = text "Clauses after split" //
   vcatmap0 (ppSplitting ren) cs
 
 ppCtxErr :: Verbosity -> [Name] -> Prog -> Acts -> Tel -> Err -> Doc

@@ -169,14 +169,14 @@ data Act =
   deriving (Show, Read, Eq)
 
 data Err =
-    EGen String
-  | EConv Exp Exp
-  | EScope Name
-  | ECaseless Name
-  | EUnsolved [Prob] Holes
-  | EReach PName [Clause]
-  | ESplit CheckedClauses
-  | EAtom Exp
+    RGen String
+  | RConv Exp Exp
+  | RScope Name
+  | RCaseless Name
+  | RUnsolved [Prob] Holes
+  | RReach PName [Clause]
+  | RSplit CheckedClauses
+  | RAtom Exp
   deriving (Show, Read, Eq)
 
 ----------------------------------------------------------------------

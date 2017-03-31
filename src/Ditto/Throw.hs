@@ -18,32 +18,32 @@ import Control.Monad.Except
 
 throwConvErr :: Exp -> Exp -> TCM a
 throwConvErr a b = throwErr =<<
-  EConv <$> surfExp a <*> surfExp b
+  RConv <$> surfExp a <*> surfExp b
 
 throwAtomErr :: Exp -> TCM a
-throwAtomErr a = throwErr (EAtom a)
+throwAtomErr a = throwErr (RAtom a)
 
 throwUnsolvedErr :: [Prob] -> Holes -> TCM a
 throwUnsolvedErr ps hs = resetCtx [] [] $ throwErr =<<
-  EUnsolved <$> surfProbs ps <*> surfHoles hs
+  RUnsolved <$> surfProbs ps <*> surfHoles hs
 
 throwSplitErr :: CheckedClauses -> TCM a
 throwSplitErr cs = throwErr =<<
-  ESplit <$> surfClauses cs
+  RSplit <$> surfClauses cs
 
 ----------------------------------------------------------------------
 
 throwReachErr :: PName -> [Clause] -> TCM a
-throwReachErr x cs = throwErr (EReach x cs)
+throwReachErr x cs = throwErr (RReach x cs)
 
 throwGenErr :: String -> TCM a
-throwGenErr = throwErr . EGen
+throwGenErr = throwErr . RGen
 
 throwScopeErr :: Name -> TCM a
-throwScopeErr = throwErr . EScope
+throwScopeErr = throwErr . RScope
 
 throwCaselessErr :: Name -> TCM a
-throwCaselessErr = throwErr . ECaseless
+throwCaselessErr = throwErr . RCaseless
 
 ----------------------------------------------------------------------
 
