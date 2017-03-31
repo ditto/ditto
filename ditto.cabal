@@ -1,27 +1,27 @@
-Name:           ditto
-Version:        0.1.0.0
-License:        GPL-3
-License-file:   LICENSE
-Author:         Larry Diehl, Francisco Ferreira
-Maintainer:     larrytheliquid@gmail.com
-Homepage:       https://github.com/ditto/ditto
-Bug-reports:    https://github.com/ditto/ditto/issues
+name:           ditto
+version:        0.1.0.0
+license:        GPL-3
+license-file:   LICENSE
+author:         Larry Diehl, Francisco Ferreira
+maintainer:     larrytheliquid@gmail.com
+homepage:       https://github.com/ditto/ditto
+bug-reports:    https://github.com/ditto/ditto/issues
 
-Stability:      Alpha
-Category:       Dependent Types
-Synopsis:       A Super Kawaii Programming Language with Dependent Types
-Description:    Please see README.md
-Cabal-Version:  >= 1.10
+stability:      Alpha
+category:       Dependent Types
+synopsis:       A Super Kawaii Programming Language with Dependent Types
+description:    Please see README.md
+cabal-version:  >= 1.10
 
-Build-type:     Simple
+build-type:     Simple
 
 source-repository head
   type:     git
   location: git@github.com:ditto/ditto.git
 
-Library
+library
   hs-source-dirs: src
-  Exposed-modules:
+  exposed-modules:
                   Ditto.Check
                 , Ditto.Cli
                 , Ditto.Conv
@@ -42,7 +42,7 @@ Library
                 , Ditto.Test
                 , Ditto.Whnf
 
-  Build-depends:  base >=4 && <5
+  build-depends:  base >=4 && <5
                 , parsec
                 , mtl
                 , wl-pprint
@@ -51,7 +51,7 @@ Library
                 , directory
                 , filepath
                 , containers
-  Default-extensions:
+  default-extensions:
                   LambdaCase
                 , TupleSections
                 , ViewPatterns
@@ -60,14 +60,24 @@ Library
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   default-language: Haskell2010
 
-Executable dtt
-  Main-is:        Main.hs
+executable dtt
+  main-is:        Main.hs
   hs-source-dirs: src/main
 
-  Build-depends:  base >=4 && <5
-                , ditto
+  build-depends:  ditto
+                , base >=4 && <5
 
   ghc-prof-options: -fprof-auto
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N
   default-language: Haskell2010
 
+test-suite ditto-tests
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      src/main
+  main-is:             Test.hs
+  build-depends:  ditto
+                , base >=4 && <5
+                , HUnit
+                , directory
+                , filepath
+  default-language:    Haskell2010

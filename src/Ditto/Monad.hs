@@ -215,9 +215,7 @@ getCtx = do
   return ctx
 
 getEnv :: TCM Env
-getEnv = do
-  DittoS {env = env} <- get
-  return env
+getEnv = env <$> get
 
 ----------------------------------------------------------------------
 

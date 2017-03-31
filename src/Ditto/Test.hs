@@ -784,17 +784,6 @@ runIntegrationTests directory = do
   putStrLn "Integration tests:"
   runTestTT =<< integrationTests directory
 
-runTests :: IO Counts
-runTests = do
-  args <- getArgs
-  if null args
-  then runUnitTests
-  else do
-    runUnitTests
-    runIntegrationTests (head args)
-
-main = runTests >> return ()
-
 ----------------------------------------------------------------------
 
 asProg :: String -> Prog

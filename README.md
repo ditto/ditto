@@ -27,7 +27,7 @@ Ditto is a super kawaii dependently typed language for you!
 
 * Make sure you have [Stack](https://github.com/commercialhaskell/stack#how-to-install) installed.
 * Build the project with `stack build`.
-* Run the tests with `stack runghc src/Ditto/Test.hs`.
+* Run the tests with `stack test`.
 * Work interactively with `stack ghci`.
 * Run the current version of the binary with `stack exec -- dtt -t PATH/TO/Foo.dtt`.
 
