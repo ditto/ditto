@@ -106,11 +106,11 @@ data Bod =
   deriving (Show, Read, Eq)
 
 data Exp =
-    Type | Pi Icit Exp Bind | Lam Icit Exp Bind
-  | Form PName Args | Con PName Args
-  | Red PName Args | Meta MName Args
-  | Var Name | Guard GName
-  | App Icit Exp Exp | Infer MKind
+    EType | EPi Icit Exp Bind | ELam Icit Exp Bind
+  | EForm PName Args | ECon PName Args
+  | ERed PName Args | EMeta MName Args
+  | EVar Name | EGuard GName
+  | EApp Icit Exp Exp | EInfer MKind
   deriving (Show, Read, Eq)
 
 data Bind = Bind Name Exp
@@ -200,13 +200,13 @@ lookupTel :: Name -> Tel -> Maybe Exp
 lookupTel x = lookup x . map (\(_,x,a) -> (x, a))
 
 varArgs :: Tel -> Args
-varArgs = map $ \(i,x,_) -> (i, Var x)
+varArgs = map $ \(i,x,_) -> (i, EVar x)
 
 pvarPats :: Tel -> Pats
 pvarPats = map (\(i, x, _) -> (i, PVar x))
 
 pis :: Tel -> Exp -> Exp
-pis = flip $ foldr $ \ (i, x, _A) _B -> Pi i _A (Bind x _B)
+pis = flip $ foldr $ \ (i, x, _A) _B -> EPi i _A (Bind x _B)
 
 ipis :: Tel -> Exp -> Exp
 ipis as = pis (map (\(_,x,a) -> (Impl,x,a)) as)
@@ -215,43 +215,43 @@ paramCons :: Tel -> Cons -> Cons
 paramCons _As = map (\(x, _A) -> (x, ipis _As _A))
 
 lams :: Tel -> Exp -> Exp
-lams = flip $ foldr $ \ (i, x , _A) _B -> Lam i _A (Bind x _B)
+lams = flip $ foldr $ \ (i, x , _A) _B -> ELam i _A (Bind x _B)
 
 apps :: Exp -> Args -> Exp
-apps = foldl $ \ f (i, a) -> App i f a
+apps = foldl $ \ f (i, a) -> EApp i f a
 
 hole :: Exp
-hole = Infer (MHole Nothing)
+hole = EInfer (MHole Nothing)
 
 ----------------------------------------------------------------------
 
 formType :: Tel -> Exp
-formType _Is = pis _Is Type
+formType _Is = pis _Is EType
 
 conType :: Tel -> PName -> Args -> Exp
-conType _As _X _Is = pis _As (Form _X _Is)
+conType _As _X _Is = pis _As (EForm _X _Is)
 
 ----------------------------------------------------------------------
 
 viewSpine :: Exp -> (Exp, Args)
-viewSpine (App i f a) = (g, snoc as (i, a))
+viewSpine (EApp i f a) = (g, snoc as (i, a))
   where (g, as) = viewSpine f
 viewSpine x = (x, [])
 
 ----------------------------------------------------------------------
 
 fv :: Exp -> [Name]
-fv (Var x) = [x]
-fv Type = []
-fv (Infer _) = []
-fv (Guard _) = []
-fv (Form _ is) = fvs is
-fv (Con _ as) = fvs as
-fv (Red _ as) = fvs as
-fv (Meta _ as) = fvs as
-fv (Pi _ _A _B) = fv _A ++ fvBind _B
-fv (Lam _ _A b) = fv _A ++ fvBind b
-fv (App _ a b) = fv a ++ fv b
+fv (EVar x) = [x]
+fv EType = []
+fv (EInfer _) = []
+fv (EGuard _) = []
+fv (EForm _ is) = fvs is
+fv (ECon _ as) = fvs as
+fv (ERed _ as) = fvs as
+fv (EMeta _ as) = fvs as
+fv (EPi _ _A _B) = fv _A ++ fvBind _B
+fv (ELam _ _A b) = fv _A ++ fvBind b
+fv (EApp _ a b) = fv a ++ fv b
 
 fvs :: Args -> [Name]
 fvs as = concatMap fv (map snd as)
@@ -279,17 +279,17 @@ fvPat (PCon _ ps) = fvPats ps
 ----------------------------------------------------------------------
 
 mv :: Exp -> [Flex]
-mv (Var _) = []
-mv Type = []
-mv (Infer _) = []
-mv (Guard x) = [Right x]
-mv (Form _ is) = mvs is
-mv (Con _ as) = mvs as
-mv (Red _ as) = mvs as
-mv (Meta x as) = Left x : mvs as
-mv (Pi _ _A _B) = mv _A ++ mvBind _B
-mv (Lam _ _A b) = mv _A ++ mvBind b
-mv (App _ a b) = mv a ++ mv b
+mv (EVar _) = []
+mv EType = []
+mv (EInfer _) = []
+mv (EGuard x) = [Right x]
+mv (EForm _ is) = mvs is
+mv (ECon _ as) = mvs as
+mv (ERed _ as) = mvs as
+mv (EMeta x as) = Left x : mvs as
+mv (EPi _ _A _B) = mv _A ++ mvBind _B
+mv (ELam _ _A b) = mv _A ++ mvBind b
+mv (EApp _ a b) = mv a ++ mv b
 
 mvs :: Args -> [Flex]
 mvs as = concatMap mv (map snd as)

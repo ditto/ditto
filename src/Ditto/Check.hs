@@ -50,17 +50,17 @@ checkStmt (Right ds) = do
 
 checkSig :: Sig -> TCM ()
 checkSig (GDef x _A) = during (ADef x) $ do
-  _A <- checkSolved _A Type
+  _A <- checkSolved _A EType
   addDef x Nothing _A
 checkSig (GData x _A) = during (AData x) $ do
-  _A <- checkSolved _A Type
+  _A <- checkSolved _A EType
   (tel, end) <- splitTel _A
   case end of
-    Type -> do
+    EType -> do
       addForm x tel
     otherwise -> throwGenErr "Datatype former does not end in Type"
 checkSig (GDefn x _A) = during (ADefn x) $ do
-  _A <- checkSolved _A Type
+  _A <- checkSolved _A EType
   (_As, _B) <- splitTel _A
   addRedType x _As _B
 
@@ -70,7 +70,7 @@ checkBod (BDef x a) = during (ADef x) $ do
   a  <- checkSolved a _A
   updateDef x a
 checkBod (BData x cs) = during (AData x) $ do
-  cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' Type)) cs
+  cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' EType)) cs
   mapM_ (\c -> addCon =<< buildCon x c) cs
 checkBod (BDefn x cs) = during (ADefn x) $ do
   cs <- atomizeClauses cs
@@ -193,16 +193,16 @@ infer b@(viewSpine -> (f, as)) = do
   return (apps f as, _B)
 
 checkArgs :: Args -> Exp -> TCM (Args, Exp)
-checkArgs as@((Expl, _):_) _AB@(Pi Impl _ _) =
-  checkArgs ((Impl, Infer MInfer):as) _AB
-checkArgs [] _AB@(Pi Impl _ _) =
-  checkArgs [(Impl, Infer MInfer)] _AB
-checkArgs ((i1, a):as) (Pi i2 _A bnd_B) | i1 == i2 = do
+checkArgs as@((Expl, _):_) _AB@(EPi Impl _ _) =
+  checkArgs ((Impl, EInfer MInfer):as) _AB
+checkArgs [] _AB@(EPi Impl _ _) =
+  checkArgs [(Impl, EInfer MInfer)] _AB
+checkArgs ((i1, a):as) (EPi i2 _A bnd_B) | i1 == i2 = do
   a <- check a _A
   (x, _B) <- unbind bnd_B
   (as, _B) <- checkArgs as =<< whnf =<< sub1 (x, a) _B
   return ((i1, a):as, _B)
-checkArgs as@((i, _):_) _M@(Meta _X _) = do
+checkArgs as@((i, _):_) _M@(EMeta _X _) = do
   (_As, _) <- fromJust <$> lookupMetaType _X
   _AB <- genMetaPi _As i
   conv _M _AB
@@ -212,20 +212,20 @@ checkArgs ((i1, a):as) _B =
 checkArgs [] _B = return ([], _B)
 
 inferAtom :: Exp -> TCM (Exp, Exp)
-inferAtom (Var x) = lookupType x >>= \case
-  Just _A -> return (Var x, _A)
+inferAtom (EVar x) = lookupType x >>= \case
+  Just _A -> return (EVar x, _A)
   Nothing -> throwScopeErr x
-inferAtom Type = return (Type, Type)
-inferAtom (Infer m) = genMeta m
-inferAtom (Pi i _A bnd_B) = do
-  _A <- check _A Type
+inferAtom EType = return (EType, EType)
+inferAtom (EInfer m) = genMeta m
+inferAtom (EPi i _A bnd_B) = do
+  _A <- check _A EType
   (x, _B) <- unbind bnd_B
-  _B <- checkExt i x _A _B Type
-  return (Pi i _A (Bind x _B), Type)
-inferAtom (Lam i _A b) = do
-  _A <- check _A Type
+  _B <- checkExt i x _A _B EType
+  return (EPi i _A (Bind x _B), EType)
+inferAtom (ELam i _A b) = do
+  _A <- check _A EType
   (b , _B) <- inferExtBind i _A b
-  return (Lam i _A b, Pi i _A _B)
+  return (ELam i _A b, EPi i _A _B)
 inferAtom x = throwAtomErr x
 
 ----------------------------------------------------------------------

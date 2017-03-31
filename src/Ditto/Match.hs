@@ -35,8 +35,8 @@ match1 (PCon x ps) (PInacc Nothing) = throwGenErr "Undefined inaccessible in cov
 
 matchInacc :: PName -> Pats -> Exp -> TCM Match
 matchInacc x ps a = whnf a >>= \case
-  Con y as -> match1 (PCon x ps) (PCon y (injectExps as))
-  (viewSpine -> (Var y, as)) -> return $ MStuck [y]
+  ECon y as -> match1 (PCon x ps) (PCon y (injectExps as))
+  (viewSpine -> (EVar y, as)) -> return $ MStuck [y]
   _ -> throwGenErr "Ill-formed match"
 
 match :: Pats -> Pats -> TCM Match

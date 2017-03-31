@@ -21,27 +21,27 @@ metaForm = [XBeta, XMeta, XGuard]
 ----------------------------------------------------------------------
 
 expand :: Form -> Exp -> TCM Exp
-expand form Type = return Type
-expand form (Infer m) = Infer <$> return m
-expand form (Pi i _A _B) = Pi i <$> expand form _A <*> expandBind form i _A _B
-expand form (Lam i _A b) = Lam i <$> expand form _A <*> expandBind form i _A b
-expand form (App i f a) = expand form f >>= \case
-  Lam _ _ bnd_b | elem XBeta form -> do
+expand form EType = return EType
+expand form (EInfer m) = EInfer <$> return m
+expand form (EPi i _A _B) = EPi i <$> expand form _A <*> expandBind form i _A _B
+expand form (ELam i _A b) = ELam i <$> expand form _A <*> expandBind form i _A b
+expand form (EApp i f a) = expand form f >>= \case
+  ELam _ _ bnd_b | elem XBeta form -> do
     (x, b) <- unbind bnd_b
     expand form =<< sub1 (x , a) b
-  f -> App i f <$> expand form a
-expand form (Form x as) = Form x <$> expands form as
-expand form (Con x as) = Con x <$> expands form as
-expand form (Red x as) = Red x <$> expands form as
-expand form (Meta x as) = eleM XMeta form (lookupMeta x) >>= \case
+  f -> EApp i f <$> expand form a
+expand form (EForm x as) = EForm x <$> expands form as
+expand form (ECon x as) = ECon x <$> expands form as
+expand form (ERed x as) = ERed x <$> expands form as
+expand form (EMeta x as) = eleM XMeta form (lookupMeta x) >>= \case
   Just a -> expand form (apps a as)
-  Nothing -> Meta x <$> expands form as
-expand form (Guard x) = eleM XGuard form (lookupGuard x) >>= \case
+  Nothing -> EMeta x <$> expands form as
+expand form (EGuard x) = eleM XGuard form (lookupGuard x) >>= \case
   Just a -> expand form a
-  Nothing -> return (Guard x)
-expand form (Var x) = eleM XDelta form (lookupDef x) >>= \case
+  Nothing -> return (EGuard x)
+expand form (EVar x) = eleM XDelta form (lookupDef x) >>= \case
   Just a -> expand form a
-  Nothing -> return (Var x)
+  Nothing -> return (EVar x)
 
 expands :: Form -> Args -> TCM Args
 expands form = mapM (\(i, a) -> (i,) <$> expand form a)

@@ -159,17 +159,17 @@ ppArg ren (Expl, a) = ppwExp ren Wrap a
 ppArg ren (Impl, a) = braces (ppExp ren a)
 
 ppwExp :: Ren -> Wrap -> Exp -> Doc
-ppwExp ren w Type = text "Type"
-ppwExp ren w (Infer m) = ppInfer m
-ppwExp ren w (Var x) = ppName ren x
-ppwExp ren w x@(Pi _ _ _) = righty w (ppPis ren x)
-ppwExp ren w x@(Lam _ _ _) = righty w (ppLams ren x)
-ppwExp ren w (Form _X _Is) = ppPrim ren w _X _Is
-ppwExp ren w (Con x as) = ppPrim ren w x as
-ppwExp ren w (Red x as) = ppPrim ren w x as
-ppwExp ren w (Meta x as) = ppMeta ren w x as
-ppwExp ren w (Guard x) = ppGuard ren w x
-ppwExp ren w (App i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
+ppwExp ren w EType = text "Type"
+ppwExp ren w (EInfer m) = ppInfer m
+ppwExp ren w (EVar x) = ppName ren x
+ppwExp ren w x@(EPi _ _ _) = righty w (ppPis ren x)
+ppwExp ren w x@(ELam _ _ _) = righty w (ppLams ren x)
+ppwExp ren w (EForm _X _Is) = ppPrim ren w _X _Is
+ppwExp ren w (ECon x as) = ppPrim ren w x as
+ppwExp ren w (ERed x as) = ppPrim ren w x as
+ppwExp ren w (EMeta x as) = ppMeta ren w x as
+ppwExp ren w (EGuard x) = ppGuard ren w x
+ppwExp ren w (EApp i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 
 ppInfer :: MKind -> Doc
 ppInfer MInfer = forced
@@ -190,17 +190,17 @@ ppGuard ren w x = ppGName x
 ----------------------------------------------------------------------
 
 ppExpType :: Ren -> Exp -> Doc
-ppExpType ren _A@(Pi _ _ _) = ppExp ren _A
+ppExpType ren _A@(EPi _ _ _) = ppExp ren _A
 ppExpType ren _A = oft <+> ppExp ren _A
 
 ----------------------------------------------------------------------
 
 ppPis :: Ren -> Exp -> Doc
-ppPis ren (Pi i _A (Bind x _B)) = ppTelBind ren (i, x, _A) <@> ppPis (extRen ren x) _B
+ppPis ren (EPi i _A (Bind x _B)) = ppTelBind ren (i, x, _A) <@> ppPis (extRen ren x) _B
 ppPis ren _B = oft <+> ppExp ren _B
 
 ppLams :: Ren -> Exp -> Doc
-ppLams ren (Lam i _A (Bind x b)) = ppTelBind ren (i, x, _A) <@> ppLams (extRen ren x) b
+ppLams ren (ELam i _A (Bind x b)) = ppTelBind ren (i, x, _A) <@> ppLams (extRen ren x) b
 ppLams ren b = arr <+> ppExp ren b
 
 ----------------------------------------------------------------------

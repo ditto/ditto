@@ -192,10 +192,10 @@ parseAtom = choice [
 ----------------------------------------------------------------------
 
 parseType :: Parser Exp
-parseType = try $ keyType >> return Type
+parseType = try $ keyType >> return EType
 
 parseInfer :: Parser Exp
-parseInfer = try $ symInfer >> return (Infer MInfer)
+parseInfer = try $ symInfer >> return (EInfer MInfer)
 
 parseHole :: Parser Exp
 parseHole = parseNamedHole <|> parseAnonHole
@@ -204,15 +204,15 @@ parseNamedHole :: Parser Exp
 parseNamedHole = try $ do
   string strHole
   nm <- parseIdent
-  return . Infer . MHole . Just $ nm
+  return . EInfer . MHole . Just $ nm
 
 parseAnonHole :: Parser Exp
 parseAnonHole = try $ do
   symHole
-  return . Infer . MHole $ Nothing
+  return . EInfer . MHole $ Nothing
 
 parseVar :: Parser Exp
-parseVar = try $ Var <$> parseName
+parseVar = try $ EVar <$> parseName
 
 parsePName :: Parser PName
 parsePName = PName <$> parseIdent

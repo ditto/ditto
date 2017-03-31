@@ -42,22 +42,22 @@ updateDef x a = do
 genMetaPi :: Tel -> Icit -> TCM Exp
 genMetaPi _As i = do
   acts <- getActs
-  _X <- addMeta MInfer acts _As Type
-  let _A = Meta _X (varArgs _As)
+  _X <- addMeta MInfer acts _As EType
+  let _A = EMeta _X (varArgs _As)
   x <- gensymInacc
   let _Bs = snoc _As (i, x, _A)
-  _Y <- addMeta MInfer acts _Bs Type
-  let _B = Meta _Y (varArgs _Bs)
-  return (Pi i _A (Bind x _B))
+  _Y <- addMeta MInfer acts _Bs EType
+  let _B = EMeta _Y (varArgs _Bs)
+  return (EPi i _A (Bind x _B))
 
 genMeta :: MKind -> TCM (Exp, Exp)
 genMeta m = do
   acts <- getActs
   _As <- getCtx
-  _X <- addMeta MInfer acts _As Type
-  let _B = Meta _X (varArgs _As)
+  _X <- addMeta MInfer acts _As EType
+  let _B = EMeta _X (varArgs _As)
   x <- addMeta m acts _As _B
-  let b = Meta x (varArgs _As)
+  let b = EMeta x (varArgs _As)
   return (b, _B)
 
 addMeta :: MKind -> Acts -> Tel -> Exp -> TCM MName
@@ -85,7 +85,7 @@ genGuard a _A p = do
   x <- gensymGuard
   insertProb x p
   addSig (DGuard x (lams _As a) (pis _As _A))
-  return $ apps (Guard x) (varArgs _As)
+  return $ apps (EGuard x) (varArgs _As)
 
 ----------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ addForm x _Is = do
   when (any (isPNamed x) env) $ throwGenErr
     $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x [] _Is)
-  addDef (pname2name x) (Just (lams _Is (Form x (varArgs _Is)))) (formType _Is)
+  addDef (pname2name x) (Just (lams _Is (EForm x (varArgs _Is)))) (formType _Is)
 
 addCon :: (PName, Tel, PName, Args) -> TCM ()
 addCon (x, _As, _X, _Is) = do
@@ -105,7 +105,7 @@ addCon (x, _As, _X, _Is) = do
   case find (isPNamed _X) env of
       Just s@(DForm _ cs _Js) -> do
         updateSig s (DForm _X (snoc cs (x, _As, _Is)) _Js)
-        addDef (pname2name x) (Just (lams _As (Con x (varArgs _As)))) (conType _As _X _Is)
+        addDef (pname2name x) (Just (lams _As (ECon x (varArgs _As)))) (conType _As _X _Is)
       _ -> throwGenErr $
         "Datatype does not exist in the environment: " ++ show _X
 
@@ -115,7 +115,7 @@ addRedType x _As _B = do
   when (any (isPNamed x) env) $ throwGenErr
     $ "Reduction name already exists in the environment: " ++ show x
   addSig (DRed x [] _As _B)
-  addDef (pname2name x) (Just (lams _As (Red x (varArgs _As)))) (pis _As _B)
+  addDef (pname2name x) (Just (lams _As (ERed x (varArgs _As)))) (pis _As _B)
 
 addRedClauses :: PName -> CheckedClauses -> TCM ()
 addRedClauses x cs = do

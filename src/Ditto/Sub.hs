@@ -15,7 +15,7 @@ fvCtx a = flip intersect (fv a) <$> (names <$> getCtx)
 freshen :: Name -> Exp -> TCM (Name, Exp)
 freshen x a = do
   x' <- gensymHint x
-  a' <- sub1 (x, Var x') a
+  a' <- sub1 (x, EVar x') a
   return (x', a')
 
 unbind :: Bind -> TCM (Name, Exp)
@@ -24,8 +24,8 @@ unbind (Bind x a) = freshen x a
 freshen2 :: Name -> Exp -> Name -> Exp -> TCM (Name, Exp, Exp)
 freshen2 x a y b = do
   z <- gensymHint x
-  a' <- sub1 (x, Var z) a
-  b' <- sub1 (y, Var z) b
+  a' <- sub1 (x, EVar z) a
+  b' <- sub1 (y, EVar z) b
   return (z, a', b')
 
 unbind2 :: Bind -> Bind -> TCM (Name, Exp, Exp)
@@ -34,18 +34,18 @@ unbind2 (Bind x a) (Bind y b) = freshen2 x a y b
 ----------------------------------------------------------------------
 
 sub1 :: (Name , Exp) -> Exp -> TCM Exp
-sub1 xa (Form y is) = Form y <$> subs1 xa is
-sub1 xa (Con y as) = Con y <$> subs1 xa as
-sub1 xa (Red y as) = Red y <$> subs1 xa as
-sub1 xa (Meta y as) = Meta y <$> subs1 xa as
-sub1 xa (Guard y) = return $ Guard y
-sub1 (x, a) (Var y) | x == y = return a
-sub1 xa (Var y) = return $ Var y
-sub1 xa Type = return Type
-sub1 xa (Infer m) = return $ Infer m
-sub1 xa (Lam i _A b) = Lam i <$> sub1 xa _A <*> sub1Bind xa b
-sub1 xa (Pi i _A _B) = Pi i <$> sub1 xa _A <*> sub1Bind xa _B
-sub1 xa (App i f b) = App i <$> sub1 xa f <*> sub1 xa b
+sub1 xa (EForm y is) = EForm y <$> subs1 xa is
+sub1 xa (ECon y as) = ECon y <$> subs1 xa as
+sub1 xa (ERed y as) = ERed y <$> subs1 xa as
+sub1 xa (EMeta y as) = EMeta y <$> subs1 xa as
+sub1 xa (EGuard y) = return $ EGuard y
+sub1 (x, a) (EVar y) | x == y = return a
+sub1 xa (EVar y) = return $ EVar y
+sub1 xa EType = return EType
+sub1 xa (EInfer m) = return $ EInfer m
+sub1 xa (ELam i _A b) = ELam i <$> sub1 xa _A <*> sub1Bind xa b
+sub1 xa (EPi i _A _B) = EPi i <$> sub1 xa _A <*> sub1Bind xa _B
+sub1 xa (EApp i f b) = EApp i <$> sub1 xa f <*> sub1 xa b
 
 subs1 :: (Name , Exp) -> Args -> TCM Args
 subs1 xa = mapM (\(i, a) -> (i,) <$> sub1 xa a)
@@ -63,9 +63,9 @@ subTel1 xa = mapM (\(i, y, _A) -> (i,y,) <$> sub1 xa _A)
 renTel1 :: (Name, Name) -> Tel -> TCM Tel
 renTel1 (x, x') [] = return []
 renTel1 (x, x') ((i, y, _A):ys) | x == y = do
-  ((i, x', _A):) <$> subTel1 (x, Var x') ys
+  ((i, x', _A):) <$> subTel1 (x, EVar x') ys
 renTel1 (x, x') ((i, y, _A):ys) = do
-  _A <- sub1 (x, Var x') _A
+  _A <- sub1 (x, EVar x') _A
   ((i, y, _A):) <$> renTel1 (x, x') ys
 
 ----------------------------------------------------------------------
@@ -74,8 +74,8 @@ freshTel :: Essible -> Tel -> TCM (Tel, Sub)
 freshTel e [] = return ([], [])
 freshTel e ((i, x, _A):_As) = do
   x' <- gensymEHint e x
-  (_As', xs) <- freshTel e =<< subTel1 (x, Var x') _As
-  return ((i, x', _A):_As', (x, Var x'):xs)
+  (_As', xs) <- freshTel e =<< subTel1 (x, EVar x') _As
+  return ((i, x', _A):_As', (x, EVar x'):xs)
 
 ----------------------------------------------------------------------
 
@@ -91,8 +91,8 @@ lookupConsFresh x = mapM freshCons =<< fromJust <$> lookupCons x
 ----------------------------------------------------------------------
 
 embedPat :: Pat -> Exp
-embedPat (PVar x) = Var x
-embedPat (PCon x as) = apps (Var (pname2name x)) (embedPats as)
+embedPat (PVar x) = EVar x
+embedPat (PCon x as) = apps (EVar (pname2name x)) (embedPats as)
 embedPat (PInacc (Just a)) = a
 embedPat (PInacc Nothing) = error "Inferred inaccessible cannot be embedded as a term"
 
@@ -114,7 +114,7 @@ injectExps = map (\(i,a) -> (i, injectExp a))
 ----------------------------------------------------------------------
 
 ren2sub :: Ren -> Sub
-ren2sub = map (\(x, y) -> (x, Var y))
+ren2sub = map (\(x, y) -> (x, EVar y))
 
 ren2psub :: Ren -> PSub
 ren2psub = map (\(x, y) -> (x, PVar y))

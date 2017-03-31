@@ -40,37 +40,37 @@ recheck a _A = do
   return ()
 
 reinfer :: Exp -> TCM Exp
-reinfer (Var x) = lookupType x >>= \case
+reinfer (EVar x) = lookupType x >>= \case
     Just _A -> return _A
     Nothing -> throwScopeErr x
-reinfer Type = return Type
-reinfer (Pi i _A bnd_B) = do
-  recheck _A Type
+reinfer EType = return EType
+reinfer (EPi i _A bnd_B) = do
+  recheck _A EType
   (x, _B) <- unbind bnd_B
-  recheckExt i x _A _B Type
-  return Type
-reinfer (Lam i _A b) = do
-  recheck _A Type
-  Pi i _A <$> reinferExtBind i _A b
-reinfer (Form x is) = lookupPSigma x >>= \case
+  recheckExt i x _A _B EType
+  return EType
+reinfer (ELam i _A b) = do
+  recheck _A EType
+  EPi i _A <$> reinferExtBind i _A b
+reinfer (EForm x is) = lookupPSigma x >>= \case
   Just (DForm _X _ _Is) -> do
     foldM_ recheckAndAdd [] (zip is _Is)
-    return Type
+    return EType
   otherwise -> throwGenErr $ "Not a type former name: " ++ show x
-reinfer (Con x as) = lookupCon x >>= \case
+reinfer (ECon x as) = lookupCon x >>= \case
   Just (_X, _As, is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as
     is' <- subs is s
-    return $ Form _X is'
+    return $ EForm _X is'
   otherwise -> throwGenErr $ "Not a constructor name: " ++ show x
-reinfer (Red x as) = lookupPSigma x >>= \case
+reinfer (ERed x as) = lookupPSigma x >>= \case
   Just (DRed y cs _As _B) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     sub _B (mkSub _As as)
   otherwise -> throwGenErr $ "Not a reduction name: " ++ show x
-reinfer (App i1 f a) = reinfer f >>= whnf >>= \case
-  Pi i2 _A bnd_B | i1 == i2 -> do
+reinfer (EApp i1 f a) = reinfer f >>= whnf >>= \case
+  EPi i2 _A bnd_B | i1 == i2 -> do
     recheck a _A
     (x, _B) <- unbind bnd_B
     sub1 (x, a) _B

@@ -741,8 +741,8 @@ prettyTests = "Pretty tests" ~:
 
 parseTests :: Test
 parseTests = "Parse tests" ~:
-  [ testParse "Type" (Just Type)
-  , testParse "A" (Just (Var (s2n Acc "A")))
+  [ testParse "Type" (Just EType)
+  , testParse "A" (Just (EVar (s2n Acc "A")))
   , testParse "F x y z" Nothing
   , testParseFails "(x : where) (y : B) : Type"
   , testParseFails "(Type : A) (y : B) : Type"

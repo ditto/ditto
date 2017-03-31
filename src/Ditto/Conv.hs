@@ -14,28 +14,28 @@ alpha :: Exp -> Exp -> Bool
 alpha a b = alpha' [] a b
 
 alpha' :: Ren -> Exp -> Exp -> Bool
-alpha' dict Type Type = True
-alpha' dict (Infer _) (Infer _) = False
-alpha' dict (Form x1 as1) (Form x2 as2) =
+alpha' dict EType EType = True
+alpha' dict (EInfer _) (EInfer _) = False
+alpha' dict (EForm x1 as1) (EForm x2 as2) =
   x1 == x2 && alphas' dict as1 as2
-alpha' dict (Con x1 as1) (Con x2 as2) =
+alpha' dict (ECon x1 as1) (ECon x2 as2) =
   x1 == x2 && alphas' dict as1 as2
-alpha' dict (Red x1 as1) (Red x2 as2) =
+alpha' dict (ERed x1 as1) (ERed x2 as2) =
   x1 == x2 && alphas' dict as1 as2
-alpha' dict (Meta x1 as1) (Meta x2 as2) =
+alpha' dict (EMeta x1 as1) (EMeta x2 as2) =
   x1 == x2 && alphas' dict as1 as2
-alpha' dict (Guard x1) (Guard x2) = x1 == x2
-alpha' dict (Var x) (Var y) =
+alpha' dict (EGuard x1) (EGuard x2) = x1 == x2
+alpha' dict (EVar x) (EVar y) =
   case lookup x dict of
     Nothing -> x == y
     Just x' -> x' == y
-alpha' dict (Lam i1 _A1 (Bind x a1)) (Lam i2 _A2 (Bind y a2)) =
+alpha' dict (ELam i1 _A1 (Bind x a1)) (ELam i2 _A2 (Bind y a2)) =
   i1 == i2 && alpha' dict' _A1 _A2 && alpha' dict' a1 a2
     where dict' = (x, y) : dict
-alpha' dict (Pi i1 _A1 (Bind x _B1)) (Pi i2 _A2 (Bind y _B2)) =
+alpha' dict (EPi i1 _A1 (Bind x _B1)) (EPi i2 _A2 (Bind y _B2)) =
   i1 == i2 && alpha' dict' _A1 _A2 && alpha' dict' _B1 _B2
     where dict' = (x, y) : dict
-alpha' dict (App i1 f1 a1) (App i2 f2 a2) =
+alpha' dict (EApp i1 f1 a1) (EApp i2 f2 a2) =
   i1 == i2 && alpha' dict f1 f2 && alpha' dict a1 a2
 alpha' dict _ _ = False
 
@@ -66,40 +66,40 @@ convActless a b = if alpha a b
 
 conv' :: Exp -> Exp -> TCM MProb
 
-conv' Type Type = return Nothing
-conv' (Infer _) (Infer _) = throwGenErr "Unelaborated metavariables are unique"
-conv' (Lam i1 _A1 bnd_b1) (Lam i2 _A2 bnd_b2) | i1 == i2 = do
+conv' EType EType = return Nothing
+conv' (EInfer _) (EInfer _) = throwGenErr "Unelaborated metavariables are unique"
+conv' (ELam i1 _A1 bnd_b1) (ELam i2 _A2 bnd_b2) | i1 == i2 = do
   (x, b1, b2) <- unbind2 bnd_b1 bnd_b2
   extCtx i1 x _A1 (conv b1 b2)
-conv' (Pi i1 _A1 bnd_B1) (Pi i2 _A2 bnd_B2) | i1 == i2 = do
+conv' (EPi i1 _A1 bnd_B1) (EPi i2 _A2 bnd_B2) | i1 == i2 = do
   (x, _B1, _B2) <- unbind2 bnd_B1 bnd_B2
   conv _A1 _A2 >>= \case
     Nothing -> extCtx i1 x _A1 (conv _B1 _B2)
     Just p -> extCtx i1 x _A1 (Just <$> mkProbN p (f _B1) (f _B2))
   where f a = [(Expl, a)]
-conv' (Form x1 _Is1) (Form x2 _Is2) | x1 == x2 =
+conv' (EForm x1 _Is1) (EForm x2 _Is2) | x1 == x2 =
   convArgs _Is1 _Is2
-conv' (Con x1 as1) (Con x2 as2) | x1 == x2 =
+conv' (ECon x1 as1) (ECon x2 as2) | x1 == x2 =
   convArgs as1 as2
 
 -- Function Eta Expansion
-conv' f1@(Lam i _A bnd_b) f2 = do
+conv' f1@(ELam i _A bnd_b) f2 = do
   (x , _) <- unbind bnd_b
-  conv' f1 (Lam i _A (Bind x (App i f2 (Var x))))
-conv' f1 f2@(Lam _ _ _) = conv' f2 f1
+  conv' f1 (ELam i _A (Bind x (EApp i f2 (EVar x))))
+conv' f1 f2@(ELam _ _ _) = conv' f2 f1
 
 -- Reducible terms / Spines
 
-conv' (viewSpine -> (Var x1, as1)) (viewSpine -> (Var x2, as2)) | x1 == x2 =
+conv' (viewSpine -> (EVar x1, as1)) (viewSpine -> (EVar x2, as2)) | x1 == x2 =
   convArgs as1 as2
-conv' (viewSpine -> (Red x1 as1, bs1)) (viewSpine -> (Red x2 as2, bs2)) | x1 == x2 =
+conv' (viewSpine -> (ERed x1 as1, bs1)) (viewSpine -> (ERed x2 as2, bs2)) | x1 == x2 =
   convArgs (as1 ++ bs1) (as2 ++ bs2)
 
-conv' a1@(viewSpine -> (Guard x1, bs1)) a2 = Just <$> mkProb1 a1 a2
-conv' a1 a2@(viewSpine -> (Guard _, _)) = conv' a2 a1
+conv' a1@(viewSpine -> (EGuard x1, bs1)) a2 = Just <$> mkProb1 a1 a2
+conv' a1 a2@(viewSpine -> (EGuard _, _)) = conv' a2 a1
 
 -- Solving Metavariables
-conv' (viewSpine -> (Meta x1 as1, bs1)) a2 = do
+conv' (viewSpine -> (EMeta x1 as1, bs1)) a2 = do
   as1 <- expands metaForm as1
   as2 <- expands metaForm bs1
   a2 <- expand metaForm a2
@@ -108,10 +108,10 @@ conv' (viewSpine -> (Meta x1 as1, bs1)) a2 = do
     Just _As -> do
       solveMeta x1 (lams _As a2)
       return Nothing
-    Nothing -> let a1 = apps (Meta x1 as1) bs1
+    Nothing -> let a1 = apps (EMeta x1 as1) bs1
       in Just <$> mkProb1 a1 a2
      
-conv' a1 a2@(viewSpine -> (Meta _ _, _)) = conv' a2 a1
+conv' a1 a2@(viewSpine -> (EMeta _ _, _)) = conv' a2 a1
 
 conv' a b = throwConvErr a b
 
@@ -153,7 +153,7 @@ solInScope _As a = do
   else return Nothing
 
 varName :: (Icit, Exp) -> TCM (Maybe (Icit, Name, Exp))
-varName (i, Var x) = lookupCtx x >>= \case
+varName (i, EVar x) = lookupCtx x >>= \case
   Just _A -> return $ Just (i, x, _A)
   Nothing -> return Nothing
 varName _ = return Nothing

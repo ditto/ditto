@@ -26,7 +26,7 @@ splitAtName _As x = (_As1, _A, tail _As2) where
 --          Γ₁,    (x    :   A),  Γ₂  →      [Δ ⊢ δ']
 splitVar :: Tel -> Name -> Exp -> Tel -> TCM [(Tel, PSub)]
 splitVar _As x _B _Cs = whnf _B >>= \case
-  Form _X js -> do
+  EForm _X js -> do
     _Bs <- lookupConsFresh _X
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
@@ -65,7 +65,7 @@ accPatNames ((_, _):xs) = accPatNames xs
 
 accPatName :: Pat -> Maybe Name
 accPatName (PVar x) = Just x
-accPatName (PInacc (Just (Var x))) = Just x
+accPatName (PInacc (Just (EVar x))) = Just x
 accPatName _ = Nothing
 
 accPSub :: PSub -> Tel -> Pats -> TCM (Tel, Pats, Exp -> TCM Exp)
@@ -89,11 +89,11 @@ cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of
-      Caseless x -> subRHS (Var x) >>= \case
-        Var x -> return [(_As, qs, Caseless x)]
+      Caseless x -> subRHS (EVar x) >>= \case
+        EVar x -> return [(_As, qs, Caseless x)]
         _ -> throwGenErr "Non-renaming in caseless clause"
-      Split x -> subRHS (Var x) >>= \case
-        Var x -> return [(_As, qs, Split x)]
+      Split x -> subRHS (EVar x) >>= \case
+        EVar x -> return [(_As, qs, Split x)]
         _ -> throwGenErr "Non-renaming in splitting clause"
       MapsTo a -> do
         a <- subRHS a

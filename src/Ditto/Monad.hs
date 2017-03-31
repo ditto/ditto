@@ -237,13 +237,11 @@ setVerbosity v = do
 ----------------------------------------------------------------------
 
 getProbs :: TCM Probs
-getProbs = do
-  DittoS {probs = probs} <- get
-  return probs
+getProbs = probs <$> get
 
 setProbs :: Probs -> TCM ()
 setProbs ps = do
-  state@DittoS{} <- get
+  state <- get
   put state { probs = ps }
 
 lookupProb :: GName -> TCM MProb
