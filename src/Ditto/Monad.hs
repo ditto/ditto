@@ -113,12 +113,12 @@ mkProbN p as1 as2 = do
 
 ----------------------------------------------------------------------
 
-lookupCon :: PName -> TCM (Maybe (ConSig))
+lookupCon :: PName -> TCM (Maybe Con)
 lookupCon x = do
   env <- getEnv
   return $ conSig x =<< find (isPNamed x) env
 
-lookupCons :: PName -> TCM (Maybe [ConSig])
+lookupCons :: PName -> TCM (Maybe Cons)
 lookupCons x = do
   env <- getEnv
   return $ conSigs =<< find (isPNamed x) env
@@ -128,7 +128,7 @@ lookupRedType x = do
   env <- getEnv
   return $ redType =<< find (isPNamed x) env
 
-lookupRedClauses :: PName -> TCM (Maybe CheckedClauses)
+lookupRedClauses :: PName -> TCM (Maybe Clauses)
 lookupRedClauses x = do
   env <- getEnv
   return $ redClauses =<< find (isPNamed x) env

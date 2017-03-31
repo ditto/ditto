@@ -128,18 +128,19 @@ type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
 type SClause = (Pats, RHS)
 type SClauses = [SClause]
-type CheckedClauses = [CheckedClause]
-type CheckedClause = (Tel, Pats, RHS)
-type ConSig = (PName, Tel, Args)
+type Clauses = [Clause]
+type Clause = (Tel, Pats, RHS)
+type Cons = [Con]
+type Con = (PName, Tel, Args)
 type Pats = [(Icit, Pat)]
 type Hole = (MName, Acts, Tel, Exp)
 type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
-type MProb = Maybe Prob
-type Probs = Map.Map GName Prob
 type Flex = Either MName GName
 
+type MProb = Maybe Prob
+type Probs = Map.Map GName Prob
 data Prob =
     Prob1 Acts Tel Exp Exp
   | ProbN Prob Acts Tel Args Args
@@ -151,8 +152,8 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
 data Sigma =
     Def Name (Maybe Exp) Exp
   | DGuard GName Exp Exp
-  | DForm PName [ConSig] Tel
-  | DRed PName CheckedClauses Tel Exp
+  | DForm PName Cons Tel
+  | DRed PName Clauses Tel Exp
   | DMeta MName (Maybe Exp) Acts Tel Exp
   deriving (Show, Read, Eq)
 
@@ -176,7 +177,7 @@ data Err =
   | RCaseless Name
   | RUnsolved [Prob] Holes
   | RReach PName SClauses
-  | RSplit CheckedClauses
+  | RSplit Clauses
   | RAtom Exp
   deriving (Show, Read, Eq)
 
@@ -309,10 +310,10 @@ isPNamed x (DForm y (conNames -> ys) _) = x == y || any (x==) ys
 isPNamed x (DRed y _ _ _) = x == y
 isPNamed x _ = False
 
-conNames :: [ConSig] -> [PName]
+conNames :: Cons -> [PName]
 conNames = map conName
 
-conName :: ConSig -> PName
+conName :: Con -> PName
 conName (x, _, _) = x
 
 isMNamed :: MName -> Sigma -> Bool
@@ -377,13 +378,13 @@ envGuardType :: Sigma -> Maybe Exp
 envGuardType (DGuard _ _ _A) = Just _A
 envGuardType _ = Nothing
 
-conSig :: PName -> Sigma -> Maybe ConSig
+conSig :: PName -> Sigma -> Maybe Con
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
   Just (x, _As, is) -> Just (_X, _As, is)
   Nothing -> Nothing
 conSig x _ = Nothing
 
-conSigs :: Sigma -> Maybe [ConSig]
+conSigs :: Sigma -> Maybe Cons
 conSigs (DForm _ cs _) = Just cs
 conSigs _ = Nothing
 
@@ -391,7 +392,7 @@ redType :: Sigma -> Maybe (Tel, Exp)
 redType (DRed _ _ _As _B) = Just (_As, _B)
 redType _ = Nothing
 
-redClauses :: Sigma -> Maybe CheckedClauses
+redClauses :: Sigma -> Maybe Clauses
 redClauses (DRed _ cs _ _) = Just cs
 redClauses _ = Nothing
 

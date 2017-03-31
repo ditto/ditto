@@ -117,7 +117,7 @@ addRedType x _As _B = do
   addSig (DRed x [] _As _B)
   addDef (pname2name x) (Just (lams _As (ERed x (varArgs _As)))) (pis _As _B)
 
-addRedClauses :: PName -> CheckedClauses -> TCM ()
+addRedClauses :: PName -> Clauses -> TCM ()
 addRedClauses x cs = do
   env <- getEnv
   case find (isPNamed x) env of

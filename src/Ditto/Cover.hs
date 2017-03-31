@@ -31,7 +31,7 @@ splitVar _As x _B _Cs = whnf _B >>= \case
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
-splitCon :: Tel -> Name -> ConSig -> Args -> Tel -> TCM (Maybe (Tel, PSub))
+splitCon :: Tel -> Name -> Con -> Args -> Tel -> TCM (Maybe (Tel, PSub))
 splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>= \case
   Nothing -> return Nothing
   Just (injectSub -> qs) -> do
@@ -78,13 +78,13 @@ accPSub rs _As qs = do
 
 ----------------------------------------------------------------------
 
-cover :: PName -> SClauses -> Tel -> TCM CheckedClauses
+cover :: PName -> SClauses -> Tel -> TCM Clauses
 cover nm cs _As = do
   (_As', _) <- freshTel Inacc _As
   extCtxs _As' $ cover' nm cs _As' (pvarPats _As')
 
 --                 [σ = rhs]   Δ       δ   →  [Δ' ⊢ δ[δ'] = rhs']
-cover' :: PName -> SClauses -> Tel -> Pats -> TCM CheckedClauses
+cover' :: PName -> SClauses -> Tel -> Pats -> TCM Clauses
 cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
   CMatch rs rhs -> do
     (_As, qs, subRHS) <- accPSub rs _As qs
@@ -105,14 +105,14 @@ cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
 
 ----------------------------------------------------------------------
 
-splitClauseGoal :: Pats -> Tel -> Pats -> TCM CheckedClause
+splitClauseGoal :: Pats -> Tel -> Pats -> TCM Clause
 splitClauseGoal ps _As qs = match ps qs >>= \case
   MSolve rs -> do
     (_As, qs, _) <- accPSub rs _As qs
     return (_As, qs, MapsTo hole)
   _ -> throwGenErr "Split clause did not match original clause"
 
-splitClause :: Name -> Tel -> Pats -> TCM CheckedClauses
+splitClause :: Name -> Tel -> Pats -> TCM Clauses
 splitClause x _As ps = do
   unless (x `elem` names _As) $
     extCtxs _As (throwScopeErr x)

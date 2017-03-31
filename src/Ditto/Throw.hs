@@ -27,7 +27,7 @@ throwUnsolvedErr :: [Prob] -> Holes -> TCM a
 throwUnsolvedErr ps hs = resetCtx [] [] $ throwErr =<<
   RUnsolved <$> surfProbs ps <*> surfHoles hs
 
-throwSplitErr :: CheckedClauses -> TCM a
+throwSplitErr :: Clauses -> TCM a
 throwSplitErr cs = throwErr =<<
   RSplit <$> surfClauses cs
 
