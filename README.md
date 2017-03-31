@@ -1,6 +1,17 @@
 # Ditto
 
-Ditto is a super kawaii dependently typed language for you!
+Ditto is a dependently typed language for _research_.
+This means emphazing a small and straightfoward implementation
+over performance, and type checking code over running code.
+However, Ditto is a high-level language, rather
+than a core language. 
+
+By focusing on a simple implementation, it is easy to
+extend Ditto with experimental type system features.
+By focusing on high-level language features,
+it is possible to write non-trivial programs,
+without verbose encodings that appear when programming
+in a core language.
 
 ![Ditto](http://cdn.bulbagarden.net/upload/7/72/Ditty.png)
 
