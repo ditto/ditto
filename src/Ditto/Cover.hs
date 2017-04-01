@@ -90,14 +90,14 @@ cover' nm cs _As qs = during (ACover nm qs) $ matchClauses cs qs >>= \case
     (_As, qs, subRHS) <- accPSub rs _As qs
     case rhs of
       Caseless x -> subRHS (EVar x) >>= \case
-        EVar x -> return [(_As, qs, Caseless x)]
+        EVar x -> return [Clause _As qs (Caseless x)]
         _ -> throwGenErr "Non-renaming in caseless clause"
       Split x -> subRHS (EVar x) >>= \case
-        EVar x -> return [(_As, qs, Split x)]
+        EVar x -> return [Clause _As qs (Split x)]
         _ -> throwGenErr "Non-renaming in splitting clause"
       MapsTo a -> do
         a <- subRHS a
-        return [(_As, qs, MapsTo a)]
+        return [Clause _As qs (MapsTo a)]
   CSplit xs -> flip anyM xs $ \x -> do
     rss <- split _As x
     concat <$> mapM (\(_As' , rs') -> cover' nm cs _As' =<< psubPats qs rs') rss
@@ -109,7 +109,7 @@ splitClauseGoal :: Pats -> Tel -> Pats -> TCM Clause
 splitClauseGoal ps _As qs = match ps qs >>= \case
   MSolve rs -> do
     (_As, qs, _) <- accPSub rs _As qs
-    return (_As, qs, MapsTo hole)
+    return (Clause _As qs (MapsTo hole))
   _ -> throwGenErr "Split clause did not match original clause"
 
 splitClause :: Name -> Tel -> Pats -> TCM Clauses
@@ -118,7 +118,7 @@ splitClause x _As ps = do
     extCtxs _As (throwScopeErr x)
   rss <- split _As x
   if null rss
-  then return [(_As, ps, Caseless x)]
+  then return [Clause _As ps (Caseless x)]
   else mapM (\(_As, rs) -> splitClauseGoal ps _As =<< psubPats ps rs) rss
 
 ----------------------------------------------------------------------

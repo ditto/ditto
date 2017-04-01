@@ -291,7 +291,7 @@ ppClause ren (ps, rhs) = bar
   where ren' = patsRen ren ps
 
 ppSplitting :: Ren -> Clause -> Doc
-ppSplitting ren (_As, ps, rhs) = bar
+ppSplitting ren (Clause _As ps rhs) = bar
   <+> hcat1 (ppPats VSurface ren' ps)
   <@> ppRHS ren' rhs
   where ren' = telRen ren _As
@@ -316,7 +316,7 @@ ppStmt ren (SDef x a _A) = def
 ----------------------------------------------------------------------
 
 ppRed :: Ren -> PName -> Clause -> Doc
-ppRed ren x (_As, ps, rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
+ppRed ren x (Clause _As ps rhs) = ppRedTel ren x _As // ppRed' (telRen ren _As) x (ps, rhs)
 
 ppRed' :: Ren -> PName -> SClause -> Doc
 ppRed' ren x (ps, rhs) = ppPName x <+> hcat1 (ppPats VCore ren ps) <@> ppRHS ren rhs

@@ -81,7 +81,7 @@ reachable prev (c:cs) qs = do
 
 reachableClauses :: SClauses -> Clauses -> TCM SClauses
 reachableClauses cs cs' = nub . concat <$> mapM (reachable [] cs) qss
-  where qss = map (\(_, qs, _) -> qs) cs'
+  where qss = map (\(Clause _ qs _) -> qs) cs'
 
 unreachableClauses :: SClauses -> Clauses -> TCM SClauses
 unreachableClauses cs cs' = (cs \\) <$> reachableClauses cs cs'

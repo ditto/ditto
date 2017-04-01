@@ -93,19 +93,23 @@ addCon (x, _As, _X, _Is) = do
       _ -> throwGenErr $
         "Datatype does not exist in the environment: " ++ show _X
 
-addRedType :: PName -> Tel -> Exp -> TCM ()
-addRedType x _As _B = do
+----------------------------------------------------------------------
+
+addRed :: PName -> Tel -> Exp -> TCM ()
+addRed x _As _B = do
   env <- getEnv
   when (any (isPNamed x) env) $ throwGenErr
     $ "Reduction name already exists in the environment: " ++ show x
+  insertRed x _As _B
   addSig (DRed x [] _As _B)
   addDef (pname2name x) (lams _As (ERed x (varArgs _As))) (pis _As _B)
 
-addRedClauses :: PName -> Clauses -> TCM ()
-addRedClauses x cs = do
+addClauses :: PName -> Clauses -> TCM ()
+addClauses x cs = do
   env <- getEnv
   case find (isPNamed x) env of
     Just s@(DRed _ [] _As _B) -> do
+      insertClauses x cs
       updateSig s (DRed x cs _As _B)
     Just s@(DRed _ _ _As _B) -> throwGenErr $
       "Reduction already contains clauses: " ++ show x

@@ -87,11 +87,16 @@ data MKind = MInfer | MHole (Maybe String)
 
 ----------------------------------------------------------------------
 
+type Prog = [MStmt]
+type MStmt = Either Stmt [Stmt]
 data Stmt =
     SDef PName Exp Exp
   | SData PName Exp SCons
   | SDefn PName Exp SClauses
   deriving (Show, Read, Eq)
+type SCons = [(PName, Exp)]
+type SClauses = [SClause]
+type SClause = (Pats, RHS)
 
 data Sig =
     GDef PName Exp
@@ -116,9 +121,6 @@ data Exp =
 data Bind = Bind Name Exp
   deriving (Show, Read, Eq)
 
-type Prog = [MStmt]
-type MStmt = Either Stmt [Stmt]
-type SCons = [(PName, Exp)]
 type Icits = [Icit]
 type Args = [Arg]
 type Arg = (Icit, Exp)
@@ -127,19 +129,24 @@ type Tel = [(Icit, Name, Exp)]
 type Ren = [(Name, Name)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
-type SClauses = [SClause]
-type SClause = (Pats, RHS)
-type Clauses = [Clause]
-type Clause = (Tel, Pats, RHS)
-type Cons = [Con]
-type Con = (PName, Tel, Args)
-type Pats = [(Icit, Pat)]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type Flex = Either MName GName
 
+type Cons = [Con]
+type Con = (PName, Tel, Args) -- TODO data Con
+
 type Holes = [Hole]
 type Hole = (MName, Meta)
+
+type Reds = Map.Map PName Red
+data Red = Red Tel Exp
+  deriving (Show, Read, Eq)
+
+type Clausess = Map.Map PName Clauses
+type Clauses = [Clause]
+data Clause = Clause Tel Pats RHS
+  deriving (Show, Read, Eq)
 
 type Metas = Map.Map MName Meta
 data Meta = Meta Acts Tel Exp
@@ -158,6 +165,7 @@ data Prob =
   | ProbN Prob Acts Tel Args Args
   deriving (Show, Read, Eq)
 
+type Pats = [(Icit, Pat)]
 data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 

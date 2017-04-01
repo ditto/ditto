@@ -15,10 +15,10 @@ surfs' [] xs = return []
 surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
   cs <- mapM (\(y, _As, is) -> (y,) <$> surfExp (conType _As _X is)) cs
   (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env xs
-surfs' (DRed x [([], [], MapsTo a)] [] _A:env) ((x:) -> xs) = do
+surfs' (DRed x [Clause [] [] (MapsTo a)] [] _A:env) ((x:) -> xs) = do
   (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env xs
 surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
-  cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
+  cs <- mapM (\(Clause _ ps rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs
 
 isDeltaName :: Name -> [PName] -> Bool
@@ -76,7 +76,7 @@ surfClauses :: Clauses -> TCM Clauses
 surfClauses = mapM surfClause
 
 surfClause :: Clause -> TCM Clause
-surfClause (_As, ps, rhs) = (,,)
+surfClause (Clause _As ps rhs) = Clause
   <$> surfTel _As <*> surfPats ps <*> surfRHS rhs
 
 surfPats :: Pats -> TCM Pats

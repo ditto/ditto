@@ -13,8 +13,8 @@ whnf (EApp i1 f a) = whnf f >>= \case
     whnf =<< sub1 (x , a) b
   f' -> return $ EApp i1 f' a
 whnf (ERed x as) = do
-  cs <- fromJust <$> lookupRedClauses x
-  betaRed x (map (\(_, ps, rhs) -> (ps, rhs)) cs) as
+  cs <- lookupClauses x
+  betaRed x (map (\(Clause _ ps rhs) -> (ps, rhs)) cs) as
 whnf (EVar x) = lookupDef x >>= \case
   Just a -> whnf a
   Nothing -> return $ EVar x

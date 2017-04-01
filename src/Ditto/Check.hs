@@ -52,7 +52,7 @@ checkStmt (Right ds) = do
 checkSig :: Sig -> TCM ()
 checkSig (GDef x _A) = during (ADef x) $ do
   _A <- checkSolved _A EType
-  addRedType x [] _A
+  addRed x [] _A
 checkSig (GData x _A) = during (AData x) $ do
   _A <- checkSolved _A EType
   (tel, end) <- splitTel _A
@@ -63,25 +63,25 @@ checkSig (GData x _A) = during (AData x) $ do
 checkSig (GDefn x _A is) = during (ADefn x) $ do
   _A <- checkSolved _A EType
   (_As, _B) <- prefixTel _A is
-  addRedType x _As _B
+  addRed x _As _B
 
 checkBod :: Bod -> TCM ()
 checkBod (BDef x a) = during (ADef x) $ do
   _A <- fromJust <$> lookupType (pname2name x)
   a  <- checkSolved a _A
-  addRedClauses x [([], [], MapsTo a)]
+  addClauses x [Clause [] [] (MapsTo a)]
 checkBod (BData x cs) = during (AData x) $ do
   cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' EType)) cs
   mapM_ (\c -> addCon =<< buildCon x c) cs
 checkBod (BDefn x cs) = during (ADefn x) $ do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
-  (_As, _B) <- fromJust <$> lookupRedType x
+  Red _As _B <- fromJust <$> lookupRed x
   cs' <- cover x cs _As
   unreached <- unreachableClauses cs cs'
   unless (null unreached) $
     throwReachErr x unreached
-  addRedClauses x =<< mapM (\(_Delta, lhs, rhs) -> (_Delta, lhs,) <$> checkRHS _Delta lhs rhs _As _B) cs'
+  addClauses x =<< mapM (\(Clause _Delta lhs rhs) -> Clause _Delta lhs <$> checkRHS _Delta lhs rhs _As _B) cs'
 
 ----------------------------------------------------------------------
 

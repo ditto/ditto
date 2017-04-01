@@ -12,6 +12,8 @@ import qualified Data.Map as Map
 data DittoS = DittoS
   { env :: Env
   , defs :: Defs
+  , reds :: Reds
+  , clausess :: Clausess
   , metas :: Metas
   , sols :: Sols
   , guards :: Guards
@@ -48,6 +50,8 @@ initialS :: DittoS
 initialS = DittoS
   { env = []
   , defs = Map.empty
+  , reds = Map.empty
+  , clausess = Map.empty
   , metas = Map.empty
   , sols = Map.empty
   , guards = Map.empty
@@ -131,20 +135,30 @@ lookupCons x = do
   env <- getEnv
   return $ conSigs =<< find (isPNamed x) env
 
-lookupRedType :: PName -> TCM (Maybe (Tel, Exp))
-lookupRedType x = do
-  env <- getEnv
-  return $ redType =<< find (isPNamed x) env
+----------------------------------------------------------------------
 
-lookupRedClauses :: PName -> TCM (Maybe Clauses)
-lookupRedClauses x = do
-  env <- getEnv
-  return $ redClauses =<< find (isPNamed x) env
+lookupRed :: PName -> TCM (Maybe Red)
+lookupRed x = Map.lookup x <$> reds <$> get
 
-lookupRedDelta :: PName -> TCM (Maybe Exp)
-lookupRedDelta x = lookupRedClauses x >>= \case
-  Just [([], [], MapsTo a)] -> return (Just a)
+lookupClauses :: PName -> TCM Clauses
+lookupClauses x = Map.lookup x <$> clausess <$> get >>= \case
+  Nothing -> return []
+  Just cs -> return cs
+
+lookupDeltaClause :: PName -> TCM (Maybe Exp)
+lookupDeltaClause x = lookupClauses x >>= \case
+  [Clause [] [] (MapsTo a)] -> return (Just a)
   _ -> return Nothing
+
+insertRed :: PName -> Tel -> Exp -> TCM ()
+insertRed x _As _B = do
+  state@DittoS { reds = reds } <- get
+  put state { reds = Map.insert x (Red _As _B) reds }
+
+insertClauses :: PName -> Clauses -> TCM ()
+insertClauses x cs = do
+  state@DittoS { clausess = clausess } <- get
+  put state { clausess = Map.insert x cs clausess }
 
 ----------------------------------------------------------------------
 
