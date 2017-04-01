@@ -32,6 +32,9 @@ expand form (EApp i f a) = expand form f >>= \case
   f -> EApp i f <$> expand form a
 expand form (EForm x as) = EForm x <$> expands form as
 expand form (ECon x as) = ECon x <$> expands form as
+expand form (ERed x []) = eleM XDelta form (lookupRedDelta x) >>= \case
+  Just a -> expand form a
+  Nothing -> return (ERed x [])
 expand form (ERed x as) = ERed x <$> expands form as
 expand form (EMeta x as) = eleM XMeta form (lookupSol x) >>= \case
   Just a -> expand form (apps a as)

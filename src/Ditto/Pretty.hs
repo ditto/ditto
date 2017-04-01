@@ -104,7 +104,7 @@ ppActs :: Ren -> Acts -> Doc
 ppActs ren xs = vcatmap0 (\(ctx, act) -> ppAct (telRen ren ctx) act) xs
 
 ppAct :: Ren -> Act -> Doc
-ppAct ren (ADef x) = while "checking definition" $ ppName ren x
+ppAct ren (ADef x) = while "checking definition" $ ppPName x
 ppAct ren (ADefn x) = while "checking function" $ ppPName x
 ppAct ren (AData x) = while "checking datatype" $ ppPName x
 ppAct ren (ACon x) = while "checking constructor" $ ppPName x
@@ -331,8 +331,8 @@ ppRedTel ren x _As = ppPName x <+> hcat1 (ppTelBinds ren _As)
 
 ----------------------------------------------------------------------
 
-ppDefType :: Ren -> Name -> Exp -> Doc
-ppDefType ren x _A = ppName ren x <+> ppExpType ren _A
+ppDefType :: Ren -> PName -> Exp -> Doc
+ppDefType ren x _A = ppPName x <+> ppExpType ren _A
 
 ----------------------------------------------------------------------
 

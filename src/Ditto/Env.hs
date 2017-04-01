@@ -22,20 +22,12 @@ updateSig s s' = do
     (env1, []) -> throwGenErr $
       "Element being updated does not exist in the environment: " ++ show s
 
-addDef :: Name -> Maybe Exp -> Exp -> TCM ()
+addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = do
   env <- getEnv
   when (any (isNamed x) env) $ throwGenErr
     $ "Definition name already exists in the environment: " ++ show x
   addSig (Def x a _A)
-
-updateDef :: Name -> Exp -> TCM ()
-updateDef x a = do
-  env <- getEnv
-  case find (isNamed x) env of
-      Just s@(Def _ _ _A) -> updateSig s (Def x (Just a) _A)
-      _ -> throwGenErr $
-        "Definition does not exist in the environment: " ++ show x
 
 ----------------------------------------------------------------------
 
@@ -87,7 +79,7 @@ addForm x _Is = do
   when (any (isPNamed x) env) $ throwGenErr
     $ "Type former name already exists in the environment: " ++ show x
   addSig (DForm x [] _Is)
-  addDef (pname2name x) (Just (lams _Is (EForm x (varArgs _Is)))) (formType _Is)
+  addDef (pname2name x) (lams _Is (EForm x (varArgs _Is))) (formType _Is)
 
 addCon :: (PName, Tel, PName, Args) -> TCM ()
 addCon (x, _As, _X, _Is) = do
@@ -97,7 +89,7 @@ addCon (x, _As, _X, _Is) = do
   case find (isPNamed _X) env of
       Just s@(DForm _ cs _Js) -> do
         updateSig s (DForm _X (snoc cs (x, _As, _Is)) _Js)
-        addDef (pname2name x) (Just (lams _As (ECon x (varArgs _As)))) (conType _As _X _Is)
+        addDef (pname2name x) (lams _As (ECon x (varArgs _As))) (conType _As _X _Is)
       _ -> throwGenErr $
         "Datatype does not exist in the environment: " ++ show _X
 
@@ -107,7 +99,7 @@ addRedType x _As _B = do
   when (any (isPNamed x) env) $ throwGenErr
     $ "Reduction name already exists in the environment: " ++ show x
   addSig (DRed x [] _As _B)
-  addDef (pname2name x) (Just (lams _As (ERed x (varArgs _As)))) (pis _As _B)
+  addDef (pname2name x) (lams _As (ERed x (varArgs _As))) (pis _As _B)
 
 addRedClauses :: PName -> Clauses -> TCM ()
 addRedClauses x cs = do

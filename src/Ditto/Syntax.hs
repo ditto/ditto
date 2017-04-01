@@ -88,19 +88,19 @@ data MKind = MInfer | MHole (Maybe String)
 ----------------------------------------------------------------------
 
 data Stmt =
-    SDef Name Exp Exp
+    SDef PName Exp Exp
   | SData PName Exp SCons
   | SDefn PName Exp SClauses
   deriving (Show, Read, Eq)
 
 data Sig =
-    GDef Name Exp
+    GDef PName Exp
   | GData PName Exp
   | GDefn PName Exp Icits
   deriving (Show, Read, Eq)
 
 data Bod =
-    BDef Name Exp
+    BDef PName Exp
   | BData PName SCons
   | BDefn PName SClauses
   deriving (Show, Read, Eq)
@@ -161,7 +161,7 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
-    Def Name (Maybe Exp) Exp
+    Def Name Exp Exp
   | DForm PName Cons Tel
   | DRed PName Clauses Tel Exp
   deriving (Show, Read, Eq)
@@ -173,7 +173,7 @@ data Act =
     ACheck Exp Exp
   | AConv Exp Exp
   | ACover PName Pats
-  | ADef Name
+  | ADef PName
   | AData PName
   | ACon PName
   | ADefn PName
@@ -333,13 +333,13 @@ isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
 isDef _ = False
 
-filterDefs :: Env -> [(Name, Maybe Exp, Exp)]
+filterDefs :: Env -> [(Name, Exp, Exp)]
 filterDefs = catMaybes . map envDef . filter isDef
 
 defNames :: Env -> [Name]
 defNames = map (\(x,_,_) -> x) . filterDefs
 
-envDef :: Sigma -> Maybe (Name, Maybe Exp, Exp)
+envDef :: Sigma -> Maybe (Name, Exp, Exp)
 envDef (Def x a _A) = Just (x, a, _A)
 envDef _ = Nothing
 
@@ -348,7 +348,7 @@ envDefType (Def _ _ _A) = Just _A
 envDefType _ = Nothing
 
 envDefBody :: Sigma -> Maybe Exp
-envDefBody (Def _ a _) = a
+envDefBody (Def _ a _) = Just a
 envDefBody _ = Nothing
 
 isHole :: MName -> Bool

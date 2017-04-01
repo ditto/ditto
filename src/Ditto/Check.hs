@@ -51,7 +51,7 @@ checkStmt (Right ds) = do
 checkSig :: Sig -> TCM ()
 checkSig (GDef x _A) = during (ADef x) $ do
   _A <- checkSolved _A EType
-  addDef x Nothing _A
+  addRedType x [] _A
 checkSig (GData x _A) = during (AData x) $ do
   _A <- checkSolved _A EType
   (tel, end) <- splitTel _A
@@ -66,9 +66,9 @@ checkSig (GDefn x _A is) = during (ADefn x) $ do
 
 checkBod :: Bod -> TCM ()
 checkBod (BDef x a) = during (ADef x) $ do
-  _A <- fromJust <$> lookupType x
+  _A <- fromJust <$> lookupType (pname2name x)
   a  <- checkSolved a _A
-  updateDef x a
+  addRedClauses x [([], [], MapsTo a)]
 checkBod (BData x cs) = during (AData x) $ do
   cs <- mapM (\ (x, _A') -> (x,) <$> during (ACon x) (checkSolved _A' EType)) cs
   mapM_ (\c -> addCon =<< buildCon x c) cs

@@ -12,13 +12,12 @@ surfs env = map Left <$> (surfs' env [])
 
 surfs' :: Env -> [PName] -> TCM [Stmt]
 surfs' [] xs = return []
-surfs' (Def x a _A:env) xs = if isDeltaName x xs
-  then surfs' env xs
-  else (:) <$> (SDef x <$> defBod <*> surfExp _A) <*> surfs' env xs
-  where defBod = maybe (return hole) surfExp a
+surfs' (Def x a _A:env) xs = surfs' env xs
 surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
   cs <- mapM (\(y, _As, is) -> (y,) <$> surfExp (conType _As _X is)) cs
   (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env xs
+surfs' (DRed x [([], [], MapsTo a)] [] _A:env) ((x:) -> xs) = do
+  (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env xs
 surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
   cs <- mapM (\(_, ps, rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
   (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs

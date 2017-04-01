@@ -11,9 +11,8 @@ import Control.Monad.State
 
 ----------------------------------------------------------------------
 
-recheckDef :: (Name, Maybe Exp, Exp) -> TCM ()
-recheckDef (x, Nothing, _A) = return ()
-recheckDef (x, Just a, _A) = do
+recheckDef :: (Name, Exp, Exp) -> TCM ()
+recheckDef (x, a, _A) = do
   _A' <- whnf =<< expand deltaForm _A
   a' <- whnf =<< expand deltaForm a
   recheck a' _A'
@@ -75,7 +74,7 @@ reinfer (EApp i1 f a) = reinfer f >>= whnf >>= \case
     (x, _B) <- unbind bnd_B
     sub1 (x, a) _B
   otherwise -> throwGenErr "Function does not have Pi type"
-reinfer x = throwGenErr "Reinfer of a non-core term"
+reinfer x = throwGenErr ("Reinfer of a non-core term: " ++ show x)
 
 recheckAndAdd :: Sub -> ((Icit, Exp), (Icit, Name, Exp)) -> TCM Sub
 recheckAndAdd s ((i1, a) , (i2, x, _A)) | i1 == i2 = do

@@ -65,7 +65,7 @@ parseMutual = try $ do
 parseDef :: Parser Stmt
 parseDef = try $ do
   keyDef
-  x <- parseName
+  x <- parsePName
   optional $ symAscribe
   _A <- parseExp
   keyWhere
