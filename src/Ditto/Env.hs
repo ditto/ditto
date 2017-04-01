@@ -88,7 +88,7 @@ addCon (x, _As, _X, _Is) = do
     $ "Constructor name already exists in the environment: " ++ show x
   case find (isPNamed _X) env of
       Just s@(DForm _ cs _Js) -> do
-        updateSig s (DForm _X (snoc cs (x, _As, _Is)) _Js)
+        updateSig s (DForm _X (snoc cs (x, Con _As _Is)) _Js)
         addDef (pname2name x) (lams _As (ECon x (varArgs _As))) (conType _As _X _Is)
       _ -> throwGenErr $
         "Datatype does not exist in the environment: " ++ show _X

@@ -31,8 +31,8 @@ splitVar _As x _B _Cs = whnf _B >>= \case
     catMaybes <$> mapM (\_B' -> splitCon _As x _B' js _Cs) _Bs
   otherwise -> throwGenErr "Case splitting is only allowed on datatypes"
 
-splitCon :: Tel -> Name -> Con -> Args -> Tel -> TCM (Maybe (Tel, PSub))
-splitCon _As x (y, _Bs, is) js _Cs = funifies (names _As ++ names _Bs) js is >>= \case
+splitCon :: Tel -> Name -> (PName, Con) -> Args -> Tel -> TCM (Maybe (Tel, PSub))
+splitCon _As x (y, Con _Bs is) js _Cs = funifies (names _As ++ names _Bs) js is >>= \case
   Nothing -> return Nothing
   Just (injectSub -> qs) -> do
     _ABs' <- refineTel (_As ++ _Bs) qs

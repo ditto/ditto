@@ -79,14 +79,14 @@ freshTel e ((i, x, _A):_As) = do
 
 ----------------------------------------------------------------------
 
-freshCons :: Con -> TCM Con
-freshCons (y, _Bs, is) = do
+freshCon :: (PName, Con) -> TCM (PName, Con)
+freshCon (y, Con _Bs is) = do
   (_Bs', xs) <- freshTel Inacc _Bs
   is' <- subs is xs
-  return (y, _Bs', is')
+  return (y, Con _Bs' is')
 
 lookupConsFresh :: PName -> TCM Cons
-lookupConsFresh x = mapM freshCons =<< fromJust <$> lookupCons x
+lookupConsFresh x = mapM freshCon =<< fromJust <$> lookupCons x
 
 ----------------------------------------------------------------------
 

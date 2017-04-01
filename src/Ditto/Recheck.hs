@@ -56,15 +56,16 @@ reinfer (EForm x is) = lookupPSigma x >>= \case
     foldM_ recheckAndAdd [] (zip is _Is)
     return EType
   otherwise -> throwGenErr $ "Not a type former name: " ++ show x
-reinfer (ECon x as) = lookupCon x >>= \case
-  Just (_X, _As, is) -> do
+reinfer (ECon x as) = lookupCon undefined x >>= \case
+  Just (_X, Con _As is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as
     is' <- subs is s
     return $ EForm _X is'
   otherwise -> throwGenErr $ "Not a constructor name: " ++ show x
-reinfer (ERed x as) = lookupPSigma x >>= \case
-  Just (DRed y cs _As _B) -> do
+reinfer (ERed x as) = lookupRed x >>= \case
+  Just (Red _As _B) -> do
+    cs <- lookupClauses x
     foldM_ recheckAndAdd [] (zip as _As)
     sub _B (mkSub _As as)
   otherwise -> throwGenErr $ "Not a reduction name: " ++ show x

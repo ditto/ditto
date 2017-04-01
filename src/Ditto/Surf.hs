@@ -13,7 +13,7 @@ surfs env = map Left <$> (surfs' env [])
 surfs' :: Env -> [PName] -> TCM [Stmt]
 surfs' [] xs = return []
 surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
-  cs <- mapM (\(y, _As, is) -> (y,) <$> surfExp (conType _As _X is)) cs
+  cs <- mapM (\(y, Con _As is) -> (y,) <$> surfExp (conType _As _X is)) cs
   (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env xs
 surfs' (DRed x [Clause [] [] (MapsTo a)] [] _A:env) ((x:) -> xs) = do
   (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env xs

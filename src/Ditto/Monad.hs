@@ -12,6 +12,8 @@ import qualified Data.Map as Map
 data DittoS = DittoS
   { env :: Env
   , defs :: Defs
+  , forms :: Forms
+  , conss :: Conss
   , reds :: Reds
   , clausess :: Clausess
   , metas :: Metas
@@ -50,6 +52,8 @@ initialS :: DittoS
 initialS = DittoS
   { env = []
   , defs = Map.empty
+  , forms = Map.empty
+  , conss = Map.empty
   , reds = Map.empty
   , clausess = Map.empty
   , metas = Map.empty
@@ -125,8 +129,11 @@ mkProbN p as1 as2 = do
 
 ----------------------------------------------------------------------
 
-lookupCon :: PName -> TCM (Maybe Con)
-lookupCon x = do
+lookupForm :: PName -> TCM (Maybe Tel)
+lookupForm x = Map.lookup x <$> forms <$> get
+
+lookupCon :: PName -> PName -> TCM (Maybe (PName, Con))
+lookupCon _X x = do
   env <- getEnv
   return $ conSig x =<< find (isPNamed x) env
 

@@ -133,11 +133,15 @@ type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type Flex = Either MName GName
 
-type Cons = [Con]
-type Con = (PName, Tel, Args) -- TODO data Con
-
 type Holes = [Hole]
 type Hole = (MName, Meta)
+
+type Forms = Map.Map PName Tel
+
+type Conss = Map.Map PName Cons
+type Cons = [(PName, Con)]
+data Con = Con Tel Args
+  deriving (Show, Read, Eq)
 
 type Reds = Map.Map PName Red
 data Red = Red Tel Exp
@@ -329,16 +333,16 @@ isPNamed x (DRed y _ _ _) = x == y
 conNames :: Cons -> [PName]
 conNames = map conName
 
-conName :: Con -> PName
-conName (x, _, _) = x
+conName :: (PName, Con) -> PName
+conName (x, _) = x
 
 isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
 
-conSig :: PName -> Sigma -> Maybe Con
+conSig :: PName -> Sigma -> Maybe (PName, Con)
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
-  Just (x, _As, is) -> Just (_X, _As, is)
+  Just (x, Con _As is) -> Just (_X, Con _As is)
   Nothing -> Nothing
 conSig x _ = Nothing
 
