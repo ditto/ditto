@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 
 data DittoS = DittoS
   { env :: Env
+  , guards :: Guards
   , probs :: Probs
   , nameId :: Integer
   , verbosity :: Verbosity
@@ -43,6 +44,7 @@ anyM f [] = error "anyM applied to empty list"
 initialS :: DittoS
 initialS = DittoS
   { env = []
+  , guards = Map.empty
   , probs = Map.empty
   , nameId = 0
   , verbosity = Normal
@@ -147,17 +149,21 @@ lookupMetaType x = do
 
 ----------------------------------------------------------------------
 
+getGuards :: TCM Guards
+getGuards = guards <$> get
+
 lookupGuard :: GName -> TCM (Maybe Exp)
 lookupGuard x = lookupProb x >>= \case
   Just _ -> return Nothing
-  Nothing -> do
-    env <- getEnv
-    return $ envGuardBody =<< find (isGNamed x) env
+  Nothing -> liftM val . Map.lookup x <$> getGuards
 
 lookupGuardType :: GName -> TCM (Maybe Exp)
-lookupGuardType x = do
-  env <- getEnv
-  return $ envGuardType =<< find (isGNamed x) env
+lookupGuardType x = liftM typ . Map.lookup x <$> getGuards
+
+insertGuard :: GName -> Exp -> Exp -> TCM ()
+insertGuard x a _A = do
+  state@DittoS { guards = guards } <- get
+  put state { guards = Map.insert x (Ann a _A) guards }
 
 ----------------------------------------------------------------------
 

@@ -84,7 +84,7 @@ genGuard a _A p = do
   _As <- getCtx
   x <- gensymGuard
   insertProb x p
-  addSig (DGuard x (lams _As a) (pis _As _A))
+  insertGuard x (lams _As a) (pis _As _A)
   return $ apps (EGuard x) (varArgs _As)
 
 ----------------------------------------------------------------------

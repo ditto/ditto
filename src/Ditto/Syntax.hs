@@ -139,6 +139,10 @@ type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type Flex = Either MName GName
 
+type Guards = Map.Map GName Ann
+data Ann = Ann { val, typ :: Exp }
+  deriving (Show, Read, Eq)
+
 type MProb = Maybe Prob
 type Probs = Map.Map GName Prob
 data Prob =
@@ -151,7 +155,6 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
 
 data Sigma =
     Def Name (Maybe Exp) Exp
-  | DGuard GName Exp Exp
   | DForm PName Cons Tel
   | DRed PName Clauses Tel Exp
   | DMeta MName (Maybe Exp) Acts Tel Exp
@@ -320,10 +323,6 @@ isMNamed :: MName -> Sigma -> Bool
 isMNamed x (DMeta y _ _ _ _) = x == y
 isMNamed x _ = False
 
-isGNamed :: GName -> Sigma -> Bool
-isGNamed x (DGuard y _ _) = x == y
-isGNamed x _ = False
-
 isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
 isDef _ = False
@@ -369,14 +368,6 @@ envMetaBody _ = Nothing
 envMetaType :: Sigma -> Maybe (Tel, Exp)
 envMetaType (DMeta _ _ _ _As _B) = Just (_As, _B)
 envMetaType _ = Nothing
-
-envGuardBody :: Sigma -> Maybe Exp
-envGuardBody (DGuard _ a _) = Just a
-envGuardBody _ = Nothing
-
-envGuardType :: Sigma -> Maybe Exp
-envGuardType (DGuard _ _ _A) = Just _A
-envGuardType _ = Nothing
 
 conSig :: PName -> Sigma -> Maybe Con
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
