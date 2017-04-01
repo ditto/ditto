@@ -37,7 +37,7 @@ checkProg ds = do
   mapM_ checkStmt ds
   env <- getEnv
   prog <- surfs env
-  holes <- surfHoles =<< lookupHoles
+  holes <- surfHoles =<< holeMetas
   return (defNames env, prog, holes)
 
 checkStmt :: MStmt -> TCM ()
@@ -155,7 +155,7 @@ checkExtsSolved _As b _B = do
 ensureSolved :: TCM ()
 ensureSolved = do
   ps <- unsolvedProbs
-  hs <- lookupUndefMetas
+  hs <- unsolvedMetas
   unless (null ps && null hs) (throwUnsolvedErr ps hs)
 
 ----------------------------------------------------------------------
@@ -203,7 +203,7 @@ checkArgs ((i1, a):as) (EPi i2 _A bnd_B) | i1 == i2 = do
   (as, _B) <- checkArgs as =<< whnf =<< sub1 (x, a) _B
   return ((i1, a):as, _B)
 checkArgs as@((i, _):_) _M@(EMeta _X _) = do
-  (_As, _) <- fromJust <$> lookupMetaType _X
+  Meta _ _As _ <- lookupMeta _X
   _AB <- genMetaPi _As i
   conv _M _AB
   checkArgs as _AB

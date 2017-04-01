@@ -126,22 +126,28 @@ type Tel = [(Icit, Name, Exp)]
 type Ren = [(Name, Name)]
 type Sub = [(Name, Exp)]
 type PSub = [(Name, Pat)]
-type SClause = (Pats, RHS)
 type SClauses = [SClause]
+type SClause = (Pats, RHS)
 type Clauses = [Clause]
 type Clause = (Tel, Pats, RHS)
 type Cons = [Con]
 type Con = (PName, Tel, Args)
 type Pats = [(Icit, Pat)]
-type Hole = (MName, Acts, Tel, Exp)
-type Holes = [Hole]
 type Acts = [(Tel, Act)]
 type CtxErr = ([Name], Prog, Acts, Tel, Err)
 type Flex = Either MName GName
 
+type Holes = [Hole]
+type Hole = (MName, Meta)
+
+type Metas = Map.Map MName Meta
+data Meta = Meta Acts Tel Exp
+  deriving (Show, Read, Eq)
+type Sols = Map.Map MName Exp
+
 type Guards = Map.Map GName Ann
 data Ann = Ann { val, typ :: Exp }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read)
 
 type MProb = Maybe Prob
 type Probs = Map.Map GName Prob
@@ -157,7 +163,6 @@ data Sigma =
     Def Name (Maybe Exp) Exp
   | DForm PName Cons Tel
   | DRed PName Clauses Tel Exp
-  | DMeta MName (Maybe Exp) Acts Tel Exp
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
@@ -319,17 +324,9 @@ conNames = map conName
 conName :: Con -> PName
 conName (x, _, _) = x
 
-isMNamed :: MName -> Sigma -> Bool
-isMNamed x (DMeta y _ _ _ _) = x == y
-isMNamed x _ = False
-
 isDef :: Sigma -> Bool
 isDef (Def _ _ _) = True
 isDef _ = False
-
-isMeta :: Sigma -> Bool
-isMeta (DMeta _ _ _ _ _) = True
-isMeta _ = False
 
 filterDefs :: Env -> [(Name, Maybe Exp, Exp)]
 filterDefs = catMaybes . map envDef . filter isDef
@@ -352,22 +349,6 @@ envDefBody _ = Nothing
 isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
-
-envUndefMeta :: Sigma -> Maybe Hole
-envUndefMeta (DMeta x Nothing acts ctx _A) | not (isHole x) = Just (x, acts, ctx, _A)
-envUndefMeta _ = Nothing
-
-envHole :: Sigma -> Maybe Hole
-envHole (DMeta x ma acts ctx _A) | isHole x = Just (x, acts, ctx, _A)
-envHole _ = Nothing
-
-envMetaBody :: Sigma -> Maybe Exp
-envMetaBody (DMeta _ (Just a) _ _ _) = Just a
-envMetaBody _ = Nothing
-
-envMetaType :: Sigma -> Maybe (Tel, Exp)
-envMetaType (DMeta _ _ _ _As _B) = Just (_As, _B)
-envMetaType _ = Nothing
 
 conSig :: PName -> Sigma -> Maybe Con
 conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of

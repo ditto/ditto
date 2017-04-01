@@ -18,7 +18,7 @@ whnf (ERed x as) = do
 whnf (EVar x) = lookupDef x >>= \case
   Just a -> whnf a
   Nothing -> return $ EVar x
-whnf (EMeta x as) = lookupMeta x >>= \case
+whnf (EMeta x as) = lookupSol x >>= \case
   Just a -> whnf (apps a as)
   Nothing -> return $ EMeta x as
 whnf (EGuard x) = lookupGuard x >>= \case

@@ -33,7 +33,7 @@ expand form (EApp i f a) = expand form f >>= \case
 expand form (EForm x as) = EForm x <$> expands form as
 expand form (ECon x as) = ECon x <$> expands form as
 expand form (ERed x as) = ERed x <$> expands form as
-expand form (EMeta x as) = eleM XMeta form (lookupMeta x) >>= \case
+expand form (EMeta x as) = eleM XMeta form (lookupSol x) >>= \case
   Just a -> expand form (apps a as)
   Nothing -> EMeta x <$> expands form as
 expand form (EGuard x) = eleM XGuard form (lookupGuard x) >>= \case

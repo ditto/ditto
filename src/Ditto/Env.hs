@@ -63,19 +63,11 @@ genMeta m = do
 addMeta :: MKind -> Acts -> Tel -> Exp -> TCM MName
 addMeta k acts ctx _A = do
   x <- gensymMeta k
-  addSig (DMeta x Nothing acts ctx _A)
+  insertMeta x acts ctx _A
   return x
 
 solveMeta :: MName -> Exp -> TCM ()
-solveMeta x a = do
-  env <- getEnv
-  case find (isMNamed x) env of
-    Just s@(DMeta _ Nothing acts ctx _A) -> do
-      updateSig s (DMeta x (Just a) acts ctx _A)
-    Just s@(DMeta _ _ _ _ _) -> throwGenErr $
-      "Metavariable is already defined: " ++ show x
-    _ -> throwGenErr $
-      "Metavariable does not exist in the environment: " ++ show x
+solveMeta x a = insertSol x a
 
 ----------------------------------------------------------------------
 

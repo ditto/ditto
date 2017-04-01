@@ -11,6 +11,8 @@ import qualified Data.Map as Map
 
 data DittoS = DittoS
   { env :: Env
+  , metas :: Metas
+  , sols :: Sols
   , guards :: Guards
   , probs :: Probs
   , nameId :: Integer
@@ -44,6 +46,8 @@ anyM f [] = error "anyM applied to empty list"
 initialS :: DittoS
 initialS = DittoS
   { env = []
+  , metas = Map.empty
+  , sols = Map.empty
   , guards = Map.empty
   , probs = Map.empty
   , nameId = 0
@@ -137,15 +141,29 @@ lookupRedClauses x = do
 
 ----------------------------------------------------------------------
 
-lookupMeta :: MName -> TCM (Maybe Exp)
-lookupMeta x = do
-  env <- getEnv
-  return $ envMetaBody =<< find (isMNamed x) env
+getMetas :: TCM Metas
+getMetas = metas <$> get
 
-lookupMetaType :: MName -> TCM (Maybe (Tel, Exp))
-lookupMetaType x = do
-  env <- getEnv
-  return $ envMetaType =<< find (isMNamed x) env
+lookupMeta :: MName -> TCM Meta
+lookupMeta x = fromJust . Map.lookup x <$> getMetas
+
+insertMeta :: MName -> Acts -> Tel -> Exp -> TCM ()
+insertMeta x acts ctx _A = do
+  state@DittoS { metas = metas } <- get
+  put state { metas = Map.insert x (Meta acts ctx _A) metas }
+
+----------------------------------------------------------------------
+
+getSols :: TCM Sols
+getSols = sols <$> get
+
+lookupSol :: MName -> TCM (Maybe Exp)
+lookupSol x = Map.lookup x <$> getSols
+
+insertSol :: MName -> Exp -> TCM ()
+insertSol x a = do
+  state@DittoS { sols = sols } <- get
+  put state { sols = Map.insert x a sols }
 
 ----------------------------------------------------------------------
 
@@ -179,15 +197,16 @@ lookupDefs = do
   env <- getEnv
   return . filterDefs $ env
 
-lookupUndefMetas :: TCM Holes
-lookupUndefMetas = do
-  env <- getEnv
-  return . catMaybes . map envUndefMeta . filter isMeta $ env
+undefMetas :: (MName -> Bool) -> TCM Holes
+undefMetas f = do
+  xs <- (\\) <$> (Map.keys <$> getMetas) <*> (Map.keys <$> getSols)
+  mapM (\x -> (x,) <$> lookupMeta x) (filter f xs)
 
-lookupHoles :: TCM Holes
-lookupHoles = do
-  env <- getEnv
-  return . catMaybes . map envHole . filter isMeta $ env
+unsolvedMetas :: TCM Holes
+unsolvedMetas = undefMetas (not . isHole)
+
+holeMetas :: TCM Holes
+holeMetas = undefMetas isHole
 
 ----------------------------------------------------------------------
 

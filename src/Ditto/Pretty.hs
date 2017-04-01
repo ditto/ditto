@@ -129,7 +129,7 @@ ppHolesM ren [] = Nothing
 ppHolesM ren xs = Just $ vcatmap1 (ppHole ren) xs
 
 ppHole :: Ren -> Hole -> Doc
-ppHole ren (x, acts, ctx, _A) =
+ppHole ren (x, Meta acts ctx _A) =
   (text label <+> ppMName x <+> oft <+> ppExp (telRen ren ctx) _A)
   // dashes <> bottom
   where
