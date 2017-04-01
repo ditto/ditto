@@ -96,7 +96,7 @@ data Stmt =
 data Sig =
     GDef Name Exp
   | GData PName Exp
-  | GDefn PName Exp
+  | GDefn PName Exp Icits
   deriving (Show, Read, Eq)
 
 data Bod =
@@ -119,8 +119,9 @@ data Bind = Bind Name Exp
 type Prog = [MStmt]
 type MStmt = Either Stmt [Stmt]
 type SCons = [(PName, Exp)]
-type Arg = (Icit, Exp)
+type Icits = [Icit]
 type Args = [Arg]
+type Arg = (Icit, Exp)
 type Env = [Sigma]
 type Tel = [(Icit, Name, Exp)]
 type Ren = [(Name, Name)]
@@ -194,7 +195,7 @@ data Err =
 toSig :: Stmt -> Sig
 toSig (SDef x _ _A) = GDef x _A
 toSig (SData x _A _) = GData x _A
-toSig (SDefn x _A _) = GDefn x _A
+toSig (SDefn x _A cs) = GDefn x _A (coverIcits cs)
 
 toBod :: Stmt -> Bod
 toBod (SDef x a _) = BDef x a
@@ -205,6 +206,10 @@ toBod (SDefn x _ cs) = BDefn x cs
 
 names :: Tel -> [Name]
 names = map $ \(_,x,_) -> x
+
+coverIcits :: SClauses -> Icits
+coverIcits [] = []
+coverIcits ((ps,_):_) = map fst ps
 
 lookupTel :: Name -> Tel -> Maybe Exp
 lookupTel x = lookup x . map (\(_,x,a) -> (x, a))

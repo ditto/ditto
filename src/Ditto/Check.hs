@@ -59,9 +59,9 @@ checkSig (GData x _A) = during (AData x) $ do
     EType -> do
       addForm x tel
     otherwise -> throwGenErr "Datatype former does not end in Type"
-checkSig (GDefn x _A) = during (ADefn x) $ do
+checkSig (GDefn x _A is) = during (ADefn x) $ do
   _A <- checkSolved _A EType
-  (_As, _B) <- splitTel _A
+  (_As, _B) <- prefixTel _A is
   addRedType x _As _B
 
 checkBod :: Bod -> TCM ()
