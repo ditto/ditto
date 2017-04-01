@@ -22,13 +22,6 @@ updateSig s s' = do
     (env1, []) -> throwGenErr $
       "Element being updated does not exist in the environment: " ++ show s
 
-addDef :: Name -> Exp -> Exp -> TCM ()
-addDef x a _A = do
-  env <- getEnv
-  when (any (isNamed x) env) $ throwGenErr
-    $ "Definition name already exists in the environment: " ++ show x
-  addSig (Def x a _A)
-
 ----------------------------------------------------------------------
 
 genMetaPi :: Tel -> Icit -> TCM Exp
@@ -62,6 +55,13 @@ solveMeta :: MName -> Exp -> TCM ()
 solveMeta x a = insertSol x a
 
 ----------------------------------------------------------------------
+
+addDef :: Name -> Exp -> Exp -> TCM ()
+addDef x a _A = do
+  xs <- defNames
+  when (elem x xs) $ throwGenErr
+    $ "Definition name already exists in the environment: " ++ show x
+  insertDef x a _A
 
 genGuard :: Exp -> Exp -> Prob -> TCM Exp
 genGuard a _A p = do

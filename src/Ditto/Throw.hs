@@ -56,10 +56,11 @@ throwProbErr (ProbN p _ _ _ _) = throwProbErr p
 
 throwErr :: Err -> TCM a
 throwErr err = do
+  xs <- defNames
   env <- getEnv
   prog <- surfs env
   acts <- surfActs =<< getActs
   ctx <- surfTel =<< getCtx
-  throwError (defNames env, prog, acts, ctx, err)
+  throwError (xs, prog, acts, ctx, err)
 
 ----------------------------------------------------------------------

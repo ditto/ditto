@@ -11,6 +11,7 @@ import qualified Data.Map as Map
 
 data DittoS = DittoS
   { env :: Env
+  , defs :: Defs
   , metas :: Metas
   , sols :: Sols
   , guards :: Guards
@@ -46,6 +47,7 @@ anyM f [] = error "anyM applied to empty list"
 initialS :: DittoS
 initialS = DittoS
   { env = []
+  , defs = Map.empty
   , metas = Map.empty
   , sols = Map.empty
   , guards = Map.empty
@@ -149,6 +151,17 @@ lookupRedDelta x = lookupRedClauses x >>= \case
 getMetas :: TCM Metas
 getMetas = metas <$> get
 
+undefMetas :: (MName -> Bool) -> TCM Holes
+undefMetas f = do
+  xs <- (\\) <$> (Map.keys <$> getMetas) <*> (Map.keys <$> getSols)
+  mapM (\x -> (x,) <$> lookupMeta x) (filter f xs)
+
+unsolvedMetas :: TCM Holes
+unsolvedMetas = undefMetas (not . isHole)
+
+holeMetas :: TCM Holes
+holeMetas = undefMetas isHole
+
 lookupMeta :: MName -> TCM Meta
 lookupMeta x = fromJust . Map.lookup x <$> getMetas
 
@@ -197,45 +210,34 @@ lookupPSigma x = do
 
 ----------------------------------------------------------------------
 
-lookupDefs :: TCM [(Name, Exp, Exp)]
-lookupDefs = do
-  env <- getEnv
-  return . filterDefs $ env
+getDefs :: TCM Defs
+getDefs = defs <$> get
 
-undefMetas :: (MName -> Bool) -> TCM Holes
-undefMetas f = do
-  xs <- (\\) <$> (Map.keys <$> getMetas) <*> (Map.keys <$> getSols)
-  mapM (\x -> (x,) <$> lookupMeta x) (filter f xs)
+allDefs :: TCM [(Name, Ann)]
+allDefs = Map.assocs <$> getDefs
 
-unsolvedMetas :: TCM Holes
-unsolvedMetas = undefMetas (not . isHole)
-
-holeMetas :: TCM Holes
-holeMetas = undefMetas isHole
-
-----------------------------------------------------------------------
+defNames :: TCM [Name]
+defNames = Map.keys <$> getDefs
 
 lookupDef :: Name -> TCM (Maybe Exp)
-lookupDef x = do
-  s <- lookupSigma x
-  return $ envDefBody =<< s
+lookupDef x = liftM val . Map.lookup x <$> getDefs
 
 lookupType :: Name -> TCM (Maybe Exp)
 lookupType x = lookupCtx x >>= \case
-  Just _A -> return . Just $ _A
-  Nothing -> do
-    s <- lookupSigma x
-    return $ envDefType =<< s
+  Just _A -> return (Just _A)
+  Nothing -> liftM typ . Map.lookup x <$> getDefs
+
+insertDef :: Name -> Exp -> Exp -> TCM ()
+insertDef x a _A = do
+  state@DittoS { defs = defs } <- get
+  put state { defs = Map.insert x (Ann a _A) defs }
+
+----------------------------------------------------------------------
 
 lookupCtx :: Name -> TCM (Maybe Exp)
 lookupCtx x = do
   ctx <- getCtx
   return $ lookupTel x ctx
-
-lookupSigma :: Name -> TCM (Maybe Sigma)
-lookupSigma x = do
-  env <- getEnv
-  return $ return =<< find (isNamed x) env
 
 ----------------------------------------------------------------------
 

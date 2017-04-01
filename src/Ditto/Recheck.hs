@@ -11,14 +11,14 @@ import Control.Monad.State
 
 ----------------------------------------------------------------------
 
-recheckDef :: (Name, Exp, Exp) -> TCM ()
-recheckDef (x, a, _A) = do
+recheckDef :: (Name, Ann) -> TCM ()
+recheckDef (x, Ann a _A) = do
   _A' <- whnf =<< expand deltaForm _A
   a' <- whnf =<< expand deltaForm a
   recheck a' _A'
 
 recheckProg :: TCM ()
-recheckProg = mapM_ recheckDef =<< lookupDefs
+recheckProg = mapM_ recheckDef =<< allDefs
 
 ----------------------------------------------------------------------
 

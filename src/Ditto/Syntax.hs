@@ -146,6 +146,7 @@ data Meta = Meta Acts Tel Exp
   deriving (Show, Read, Eq)
 type Sols = Map.Map MName Exp
 
+type Defs = Map.Map Name Ann
 type Guards = Map.Map GName Ann
 data Ann = Ann { val, typ :: Exp }
   deriving (Show, Read)
@@ -161,8 +162,7 @@ data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
 data Sigma =
-    Def Name Exp Exp
-  | DForm PName Cons Tel
+    DForm PName Cons Tel
   | DRed PName Clauses Tel Exp
   deriving (Show, Read, Eq)
 
@@ -314,42 +314,15 @@ mvBind (Bind _ b) = mv b
 
 ----------------------------------------------------------------------
 
-isNamed :: Name -> Sigma -> Bool
-isNamed x (Def y _ _) = x == y
-isNamed x _ = False
-
 isPNamed :: PName -> Sigma -> Bool
 isPNamed x (DForm y (conNames -> ys) _) = x == y || any (x==) ys
 isPNamed x (DRed y _ _ _) = x == y
-isPNamed x _ = False
 
 conNames :: Cons -> [PName]
 conNames = map conName
 
 conName :: Con -> PName
 conName (x, _, _) = x
-
-isDef :: Sigma -> Bool
-isDef (Def _ _ _) = True
-isDef _ = False
-
-filterDefs :: Env -> [(Name, Exp, Exp)]
-filterDefs = catMaybes . map envDef . filter isDef
-
-defNames :: Env -> [Name]
-defNames = map (\(x,_,_) -> x) . filterDefs
-
-envDef :: Sigma -> Maybe (Name, Exp, Exp)
-envDef (Def x a _A) = Just (x, a, _A)
-envDef _ = Nothing
-
-envDefType :: Sigma -> Maybe Exp
-envDefType (Def _ _ _A) = Just _A
-envDefType _ = Nothing
-
-envDefBody :: Sigma -> Maybe Exp
-envDefBody (Def _ a _) = Just a
-envDefBody _ = Nothing
 
 isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
