@@ -58,7 +58,7 @@ solveMeta x a = insertSol x a
 
 addDef :: Name -> Exp -> Exp -> TCM ()
 addDef x a _A = do
-  xs <- defNames
+  xs <- allNames
   when (elem x xs) $ throwGenErr
     $ "Definition name already exists in the environment: " ++ show x
   insertDef x a _A

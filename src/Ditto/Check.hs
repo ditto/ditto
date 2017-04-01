@@ -35,7 +35,7 @@ runCheckProg v ds = runPipeline v (checkProg ds) post
 checkProg :: Prog -> TCM ([Name], Prog, Holes)
 checkProg ds = do
   mapM_ checkStmt ds
-  xs <- defNames
+  xs <- allNames
   env <- getEnv
   prog <- surfs env
   holes <- surfHoles =<< holeMetas

@@ -216,8 +216,8 @@ getDefs = defs <$> get
 allDefs :: TCM [(Name, Ann)]
 allDefs = Map.assocs <$> getDefs
 
-defNames :: TCM [Name]
-defNames = Map.keys <$> getDefs
+allNames :: TCM [Name]
+allNames = Map.keys <$> getDefs
 
 lookupDef :: Name -> TCM (Maybe Exp)
 lookupDef x = liftM val . Map.lookup x <$> getDefs
