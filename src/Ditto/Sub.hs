@@ -86,7 +86,7 @@ freshCon (y, Con _Bs is) = do
   return (y, Con _Bs' is')
 
 lookupConsFresh :: PName -> TCM Cons
-lookupConsFresh x = mapM freshCon =<< fromJust <$> lookupCons x
+lookupConsFresh x = mapM freshCon =<< lookupCons x
 
 ----------------------------------------------------------------------
 

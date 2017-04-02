@@ -51,13 +51,13 @@ reinfer (EPi i _A bnd_B) = do
 reinfer (ELam i _A b) = do
   recheck _A EType
   EPi i _A <$> reinferExtBind i _A b
-reinfer (EForm x is) = lookupPSigma x >>= \case
-  Just (DForm _X _ _Is) -> do
+reinfer (EForm x is) = lookupForm x >>= \case
+  Just _Is -> do
     foldM_ recheckAndAdd [] (zip is _Is)
     return EType
   otherwise -> throwGenErr $ "Not a type former name: " ++ show x
-reinfer (ECon _ x as) = lookupCon undefined x >>= \case
-  Just (_X, Con _As is) -> do
+reinfer (ECon _X x as) = lookupCon _X x >>= \case
+  Just (Con _As is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as
     is' <- subs is s

@@ -129,18 +129,32 @@ mkProbN p as1 as2 = do
 
 ----------------------------------------------------------------------
 
+getConss :: TCM Conss
+getConss = conss <$> get
+
 lookupForm :: PName -> TCM (Maybe Tel)
 lookupForm x = Map.lookup x <$> forms <$> get
 
-lookupCon :: PName -> PName -> TCM (Maybe (PName, Con))
-lookupCon _X x = do
-  env <- getEnv
-  return $ conSig x =<< find (isPNamed x) env
+conNamed :: PName -> TCM Bool
+conNamed x = elem x <$>
+  map fst . concat <$> Map.elems <$> getConss
 
-lookupCons :: PName -> TCM (Maybe Cons)
-lookupCons x = do
-  env <- getEnv
-  return $ conSigs =<< find (isPNamed x) env
+lookupCon :: PName -> PName -> TCM (Maybe Con)
+lookupCon _X x = lookup x <$> lookupCons _X
+
+lookupCons :: PName -> TCM Cons
+lookupCons x = maybe [] id <$> Map.lookup x <$> getConss
+
+insertForm :: PName -> Tel -> TCM ()
+insertForm x _As = do
+  state@DittoS { forms = forms } <- get
+  put state { forms = Map.insert x _As forms }
+
+insertCon :: PName -> (PName, Con) -> TCM ()
+insertCon x c = do
+  state@DittoS { conss = conss } <- get
+  let cs = maybe [c] (flip snoc c) (Map.lookup x conss)
+  put state { conss = Map.insert x cs conss }
 
 ----------------------------------------------------------------------
 
@@ -148,9 +162,7 @@ lookupRed :: PName -> TCM (Maybe Red)
 lookupRed x = Map.lookup x <$> reds <$> get
 
 lookupClauses :: PName -> TCM Clauses
-lookupClauses x = Map.lookup x <$> clausess <$> get >>= \case
-  Nothing -> return []
-  Just cs -> return cs
+lookupClauses x = maybe [] id <$> Map.lookup x <$> clausess <$> get
 
 lookupDeltaClause :: PName -> TCM (Maybe Exp)
 lookupDeltaClause x = lookupClauses x >>= \case
@@ -221,13 +233,6 @@ insertGuard :: GName -> Exp -> Exp -> TCM ()
 insertGuard x a _A = do
   state@DittoS { guards = guards } <- get
   put state { guards = Map.insert x (Ann a _A) guards }
-
-----------------------------------------------------------------------
-
-lookupPSigma :: PName -> TCM (Maybe Sigma)
-lookupPSigma x = do
-  env <- getEnv
-  return $ return =<< find (isPNamed x) env
 
 ----------------------------------------------------------------------
 
