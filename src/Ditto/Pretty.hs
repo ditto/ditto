@@ -9,6 +9,7 @@ import Ditto.Syntax
 import Data.Maybe
 import Data.List hiding ( group )
 import Text.PrettyPrint.Leijen
+import Data.ByteString.Char8 (ByteString, pack, unpack)
 
 ----------------------------------------------------------------------
 
@@ -16,7 +17,7 @@ nameFor :: [Name] -> Name -> Name
 nameFor xs (namesFor -> ys) = fromJust (find (flip notElem xs) ys)
 
 namesFor :: Name -> [Name]
-namesFor (Name e x _) = s2n e x : map (\n -> s2n e (x ++ show n)) [2..]
+namesFor (Name e x _) = bs2n e x : map (\n -> s2n e (unpack x ++ show n)) [2..]
 
 domRen :: Ren -> [Name]
 domRen = map fst
@@ -174,7 +175,7 @@ ppwExp ren w (EApp i f a) = lefty w $ ppwExp ren NoWrapL f <+> ppArg ren (i, a)
 ppInfer :: MKind -> Doc
 ppInfer MInfer = forced
 ppInfer (MHole Nothing) = qmark
-ppInfer (MHole (Just x)) = qmark <> text x
+ppInfer (MHole (Just x)) = qmark <> text (unpack x)
 
 ppPrim :: Ren -> Wrap -> PName -> Args -> Doc
 ppPrim ren w x [] = ppPName x
@@ -340,7 +341,7 @@ ppName :: Ren -> Name -> Doc
 ppName ren x = text . show $ maybe x id (lookup x (reverse ren))
 
 ppPName :: PName -> Doc
-ppPName (PName x) = text x
+ppPName (PName x) = text (unpack x)
 
 ppMName :: MName -> Doc
 ppMName = text . show

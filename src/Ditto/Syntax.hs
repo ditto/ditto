@@ -1,6 +1,7 @@
 module Ditto.Syntax where
 import Data.List
 import Data.Maybe
+import Data.ByteString.Char8 (ByteString, pack, unpack)
 import qualified Data.Map as Map
 
 ----------------------------------------------------------------------
@@ -24,17 +25,20 @@ data Essible = Acc | Inacc
 
 ----------------------------------------------------------------------
 
-data Name = Name Essible String (Maybe Integer)
+data Name = Name Essible ByteString (Maybe Integer)
   deriving (Read, Eq, Ord)
 
 instance Show Name where
-  show (Name e x m) = prefix ++ x ++ suffix
+  show (Name e x m) = prefix ++ unpack x ++ suffix
     where
     prefix = case e of Acc -> ""; Inacc -> "."
     suffix = case m of Nothing -> ""; Just n -> "$" ++ show n
 
+bs2n :: Essible -> ByteString -> Name
+bs2n e x = Name e x Nothing
+
 s2n :: Essible -> String -> Name
-s2n e x = Name e x Nothing
+s2n e x = bs2n e (pack x)
 
 uniqName :: Name -> Integer -> Name
 uniqName x@(Name e _ _) n = uniqEName e x n
@@ -48,11 +52,11 @@ isInacc _ = False
 
 ----------------------------------------------------------------------
 
-newtype PName = PName String
+newtype PName = PName ByteString
   deriving (Read, Eq, Ord)
 
 instance Show PName where
-  show (PName x) = "#" ++ x
+  show (PName x) = "#" ++ unpack x
 
 pname2name :: PName -> Name
 pname2name (PName x) = Name Acc x Nothing
@@ -80,9 +84,9 @@ instance Show MName where
     prefix :: MKind -> String
     prefix MInfer = ""
     prefix (MHole Nothing) = ""
-    prefix (MHole (Just nm)) = nm ++ "-"
+    prefix (MHole (Just nm)) = unpack nm ++ "-"
 
-data MKind = MInfer | MHole (Maybe String)
+data MKind = MInfer | MHole (Maybe ByteString)
   deriving (Show, Read, Eq, Ord)
 
 ----------------------------------------------------------------------

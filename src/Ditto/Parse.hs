@@ -6,6 +6,7 @@ import Text.Parsec.Char
 import Text.Parsec.Combinator
 import Control.Applicative ((<*), many, (<$>), (<*>), (<|>))
 import Control.Monad
+import Data.ByteString.Char8 (ByteString, pack, unpack)
 
 ----------------------------------------------------------------------
 
@@ -221,20 +222,20 @@ parseName :: Parser Name
 parseName = parseAccName <|> parseInaccName
 
 parseAccName :: Parser Name
-parseAccName = s2n Acc <$> parseIdent
+parseAccName = bs2n Acc <$> parseIdent
 
 parseInaccName :: Parser Name
 parseInaccName = try $ do
   symInacc
   return (s2n Inacc "x")
 
-parseIdent :: Parser String
+parseIdent :: Parser ByteString
 parseIdent = try $ do
   notFollowedBy keywords
   prefix <- many (char '`')
   body <- (:) <$> letter <*> many alphaNum
   suffix <- many (char '\'')
-  lexeme $ return $ prefix ++ body ++ suffix
+  lexeme $ return $ pack $ prefix ++ body ++ suffix
 
 ----------------------------------------------------------------------
 
