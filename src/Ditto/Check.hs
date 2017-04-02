@@ -76,7 +76,7 @@ checkBod (BData x cs) = during (AData x) $ do
 checkBod (BDefn x cs) = during (ADefn x) $ do
   cs <- atomizeClauses cs
   checkLinearClauses x cs
-  Red _As _B <- fromJust <$> lookupRed x
+  Red _As _B <- lookupRed x
   cs' <- cover x cs _As
   unreached <- unreachableClauses cs cs'
   unless (null unreached) $
@@ -132,7 +132,7 @@ atomizePatterns = mapM (\(i, p) -> (i,) <$> atomizePattern p)
 
 atomizePattern :: Pat -> TCM Pat
 atomizePattern (PVar x) = case name2pname x of
-  Just x' -> conNamed x' >>= \case
+  Just x' -> usedConPName x' >>= \case
     True -> return $ PCon x' []
     False -> return $ PVar x
   Nothing -> return $ PVar x

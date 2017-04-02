@@ -7,23 +7,6 @@ import Control.Monad.State
 
 ----------------------------------------------------------------------
 
-addSig :: Sigma -> TCM ()
-addSig s = do
-  state@DittoS {env = env} <- get
-  when (s `elem` env) $ throwGenErr $
-    "Element being added already exists in the environment: " ++ show s
-  put state { env = snoc env s }
-
-updateSig :: Sigma -> Sigma -> TCM ()
-updateSig s s' = do
-  state@DittoS {env = env} <- get
-  case break (== s) env of
-    (env1, _:env2) -> put state { env = env1 ++ s':env2 }
-    (env1, []) -> throwGenErr $
-      "Element being updated does not exist in the environment: " ++ show s
-
-----------------------------------------------------------------------
-
 genMetaPi :: Tel -> Icit -> TCM Exp
 genMetaPi _As i = do
   acts <- getActs
@@ -56,11 +39,23 @@ solveMeta x a = insertSol x a
 
 ----------------------------------------------------------------------
 
-addDef :: Name -> Exp -> Exp -> TCM ()
-addDef x a _A = do
+ensureUniqName :: Name -> TCM ()
+ensureUniqName x = do
   xs <- allNames
   when (elem x xs) $ throwGenErr
     $ "Definition name already exists in the environment: " ++ show x
+
+ensureUniqPName :: PName -> TCM ()
+ensureUniqPName x = do
+  xs <- allPNames
+  when (elem x xs) $ throwGenErr
+    $ "Primitive name already exists in the environment: " ++ show x
+
+----------------------------------------------------------------------
+
+addDef :: Name -> Exp -> Exp -> TCM ()
+addDef x a _A = do
+  ensureUniqName x
   insertDef x a _A
 
 genGuard :: Exp -> Exp -> Prob -> TCM Exp
@@ -75,47 +70,27 @@ genGuard a _A p = do
 
 addForm :: PName -> Tel -> TCM ()
 addForm x _Is = do
-  env <- getEnv
-  when (any (isPNamed x) env) $ throwGenErr
-    $ "Type former name already exists in the environment: " ++ show x
+  ensureUniqPName x
   insertForm x _Is
-  addSig (DForm x [] _Is)
   addDef (pname2name x) (lams _Is (EForm x (varArgs _Is))) (formType _Is)
+  insertCrumb (CData x)
 
 addCon :: (PName, Tel, PName, Args) -> TCM ()
 addCon (x, _As, _X, _Is) = do
-  env <- getEnv
-  when (any (isPNamed x) env) $ throwGenErr
-    $ "Constructor name already exists in the environment: " ++ show x
-  case find (isPNamed _X) env of
-      Just s@(DForm _ cs _Js) -> do
-        insertCon _X (x, Con _As _Is)
-        updateSig s (DForm _X (snoc cs (x, Con _As _Is)) _Js)
-        addDef (pname2name x) (lams _As (ECon _X x (varArgs _As))) (conType _As _X _Is)
-      _ -> throwGenErr $
-        "Datatype does not exist in the environment: " ++ show _X
+  ensureUniqPName x
+  insertCon _X (x, Con _As _Is)
+  addDef (pname2name x) (lams _As (ECon _X x (varArgs _As))) (conType _As _X _Is)
 
 ----------------------------------------------------------------------
 
 addRed :: PName -> Tel -> Exp -> TCM ()
 addRed x _As _B = do
-  env <- getEnv
-  when (any (isPNamed x) env) $ throwGenErr
-    $ "Reduction name already exists in the environment: " ++ show x
+  ensureUniqPName x
   insertRed x _As _B
-  addSig (DRed x [] _As _B)
   addDef (pname2name x) (lams _As (ERed x (varArgs _As))) (pis _As _B)
+  insertCrumb (CDefn x)
 
 addClauses :: PName -> Clauses -> TCM ()
-addClauses x cs = do
-  env <- getEnv
-  case find (isPNamed x) env of
-    Just s@(DRed _ [] _As _B) -> do
-      insertClauses x cs
-      updateSig s (DRed x cs _As _B)
-    Just s@(DRed _ _ _As _B) -> throwGenErr $
-      "Reduction already contains clauses: " ++ show x
-    _ -> throwGenErr $
-      "Reduction does not exist in the environment: " ++ show x
+addClauses x cs = insertClauses x cs
 
 ----------------------------------------------------------------------

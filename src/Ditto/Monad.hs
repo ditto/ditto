@@ -129,15 +129,39 @@ mkProbN p as1 as2 = do
 
 ----------------------------------------------------------------------
 
+allPNames :: TCM [PName]
+allPNames = do
+  xs1 <- formPNames
+  xs2 <- conPNames
+  xs3 <- redPNames
+  xs4 <- clausesPNames
+  return (xs1 ++ xs2 ++ xs3 ++ xs4)
+
+formPNames :: TCM [PName]
+formPNames = Map.keys <$> getForms
+
+conPNames :: TCM [PName]
+conPNames = map fst . concat <$> Map.elems <$> getConss
+
+redPNames :: TCM [PName]
+redPNames = Map.keys <$> getReds
+
+clausesPNames :: TCM [PName]
+clausesPNames = Map.keys <$> getClausess
+
+usedConPName :: PName -> TCM Bool
+usedConPName x = elem x <$> conPNames
+
+----------------------------------------------------------------------
+
+getForms :: TCM Forms
+getForms = forms <$> get
+
 getConss :: TCM Conss
 getConss = conss <$> get
 
-lookupForm :: PName -> TCM (Maybe Tel)
-lookupForm x = Map.lookup x <$> forms <$> get
-
-conNamed :: PName -> TCM Bool
-conNamed x = elem x <$>
-  map fst . concat <$> Map.elems <$> getConss
+lookupForm :: PName -> TCM Tel
+lookupForm x = fromJust . Map.lookup x <$> getForms
 
 lookupCon :: PName -> PName -> TCM (Maybe Con)
 lookupCon _X x = lookup x <$> lookupCons _X
@@ -158,11 +182,17 @@ insertCon x c = do
 
 ----------------------------------------------------------------------
 
-lookupRed :: PName -> TCM (Maybe Red)
-lookupRed x = Map.lookup x <$> reds <$> get
+getReds :: TCM Reds
+getReds = reds <$> get
+
+getClausess :: TCM Clausess
+getClausess = clausess <$> get
+
+lookupRed :: PName -> TCM Red
+lookupRed x = fromJust . Map.lookup x <$> getReds
 
 lookupClauses :: PName -> TCM Clauses
-lookupClauses x = maybe [] id <$> Map.lookup x <$> clausess <$> get
+lookupClauses x = maybe [] id <$> Map.lookup x <$> getClausess
 
 lookupDeltaClause :: PName -> TCM (Maybe Exp)
 lookupDeltaClause x = lookupClauses x >>= \case
@@ -274,6 +304,11 @@ getCtx = do
 
 getEnv :: TCM Env
 getEnv = env <$> get
+
+insertCrumb :: Crumb -> TCM ()
+insertCrumb c = do
+  state@DittoS { env = env } <- get
+  put state { env = snoc env c }
 
 ----------------------------------------------------------------------
 

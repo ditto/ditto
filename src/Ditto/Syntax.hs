@@ -124,7 +124,7 @@ data Bind = Bind Name Exp
 type Icits = [Icit]
 type Args = [Arg]
 type Arg = (Icit, Exp)
-type Env = [Sigma]
+type Env = [Crumb]
 type Tel = [(Icit, Name, Exp)]
 type Ren = [(Name, Name)]
 type Sub = [(Name, Exp)]
@@ -173,9 +173,7 @@ type Pats = [(Icit, Pat)]
 data RHS = MapsTo Exp | Caseless Name | Split Name
   deriving (Show, Read, Eq)
 
-data Sigma =
-    DForm PName Cons Tel
-  | DRed PName Clauses Tel Exp
+data Crumb = CData PName | CDefn PName
   deriving (Show, Read, Eq)
 
 data Pat = PVar Name | PInacc (Maybe Exp) | PCon PName Pats
@@ -326,10 +324,6 @@ mvBind (Bind _ b) = mv b
 
 ----------------------------------------------------------------------
 
-isPNamed :: PName -> Sigma -> Bool
-isPNamed x (DForm y (conNames -> ys) _) = x == y || any (x==) ys
-isPNamed x (DRed y _ _ _) = x == y
-
 conNames :: Cons -> [PName]
 conNames = map conName
 
@@ -339,23 +333,5 @@ conName (x, _) = x
 isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
-
-conSig :: PName -> Sigma -> Maybe (PName, Con)
-conSig x (DForm _X cs _) = case find (\c -> x == conName c) cs of
-  Just (x, Con _As is) -> Just (_X, Con _As is)
-  Nothing -> Nothing
-conSig x _ = Nothing
-
-conSigs :: Sigma -> Maybe Cons
-conSigs (DForm _ cs _) = Just cs
-conSigs _ = Nothing
-
-redType :: Sigma -> Maybe (Tel, Exp)
-redType (DRed _ _ _As _B) = Just (_As, _B)
-redType _ = Nothing
-
-redClauses :: Sigma -> Maybe Clauses
-redClauses (DRed _ cs _ _) = Just cs
-redClauses _ = Nothing
 
 ----------------------------------------------------------------------

@@ -51,11 +51,10 @@ reinfer (EPi i _A bnd_B) = do
 reinfer (ELam i _A b) = do
   recheck _A EType
   EPi i _A <$> reinferExtBind i _A b
-reinfer (EForm x is) = lookupForm x >>= \case
-  Just _Is -> do
-    foldM_ recheckAndAdd [] (zip is _Is)
-    return EType
-  otherwise -> throwGenErr $ "Not a type former name: " ++ show x
+reinfer (EForm x is) = do
+  _Is <- lookupForm x
+  foldM_ recheckAndAdd [] (zip is _Is)
+  return EType
 reinfer (ECon _X x as) = lookupCon _X x >>= \case
   Just (Con _As is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
@@ -63,12 +62,11 @@ reinfer (ECon _X x as) = lookupCon _X x >>= \case
     is' <- subs is s
     return $ EForm _X is'
   otherwise -> throwGenErr $ "Not a constructor name: " ++ show x
-reinfer (ERed x as) = lookupRed x >>= \case
-  Just (Red _As _B) -> do
-    cs <- lookupClauses x
-    foldM_ recheckAndAdd [] (zip as _As)
-    sub _B (mkSub _As as)
-  otherwise -> throwGenErr $ "Not a reduction name: " ++ show x
+reinfer (ERed x as) = do
+  Red _As _B <- lookupRed x
+  cs <- lookupClauses x
+  foldM_ recheckAndAdd [] (zip as _As)
+  sub _B (mkSub _As as)
 reinfer (EApp i1 f a) = reinfer f >>= whnf >>= \case
   EPi i2 _A bnd_B | i1 == i2 -> do
     recheck a _A

@@ -8,18 +8,24 @@ import Data.Maybe
 ----------------------------------------------------------------------
 
 surfs :: Env -> TCM Prog
-surfs env = map Left <$> (surfs' env [])
+surfs env = map Left <$> (surfs' env)
 
-surfs' :: Env -> [PName] -> TCM [Stmt]
-surfs' [] xs = return []
-surfs' (DForm _X cs _Is:env) (((_X:conNames cs)++) -> xs) = do
+surfs' :: Env -> TCM [Stmt]
+surfs' [] = return []
+surfs' (CData _X:env) = do
+  _Is <- lookupForm _X
+  cs <- lookupCons _X
   cs <- mapM (\(y, Con _As is) -> (y,) <$> surfExp (conType _As _X is)) cs
-  (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env xs
-surfs' (DRed x [Clause [] [] (MapsTo a)] [] _A:env) ((x:) -> xs) = do
-  (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env xs
-surfs' (DRed x cs _As _B:env) ((x:) -> xs) = do
-  cs <- mapM (\(Clause _ ps rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
-  (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env xs
+  (:) <$> (SData _X <$> surfExp (formType _Is) <*> return cs) <*> surfs' env
+surfs' (CDefn x:env) = lookupDeltaClause x >>= \case
+  Just a -> do
+    Red [] _A <- lookupRed x
+    (:) <$> (SDef x <$> surfExp a <*> surfExp _A) <*> surfs' env
+  Nothing -> do
+    Red _As _B <- lookupRed x
+    cs <- lookupClauses x
+    cs <- mapM (\(Clause _ ps rhs) -> (,) <$> surfPats ps <*> surfRHS rhs) cs
+    (:) <$> (SDefn x <$> surfExp (pis _As _B) <*> return cs) <*> surfs' env
 
 isDeltaName :: Name -> [PName] -> Bool
 isDeltaName x xs = maybe False (flip elem xs) (name2pname x)
