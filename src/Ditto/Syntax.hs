@@ -324,12 +324,6 @@ mvBind (Bind _ b) = mv b
 
 ----------------------------------------------------------------------
 
-conNames :: Cons -> [PName]
-conNames = map conName
-
-conName :: (PName, Con) -> PName
-conName (x, _) = x
-
 isHole :: MName -> Bool
 isHole (MName (MHole _) _) = True
 isHole (MName _ _) = False
