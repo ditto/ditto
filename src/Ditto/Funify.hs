@@ -33,8 +33,8 @@ funify' xs (EVar x) a | x `elem` fv a = return Nothing
 funify' xs a (EVar x) | x `elem` fv a = return Nothing
 funify' xs (EVar x) a | x `elem` xs = return . Just $ [(x, a)]
 funify' xs a (EVar x) | x `elem` xs = return . Just $ [(x, a)]
-funify' xs (ECon x1 as1) (ECon x2 as2) | x1 /= x2 = return Nothing
-funify' xs (ECon x1 as1) (ECon x2 as2) = funifies xs as1 as2
+funify' xs (ECon _ x1 as1) (ECon _ x2 as2) | x1 /= x2 = return Nothing
+funify' xs (ECon _ x1 as1) (ECon _ x2 as2) = funifies xs as1 as2
 funify' xs a1 a2 = convStatic (Just []) a1 a2
 
 ----------------------------------------------------------------------

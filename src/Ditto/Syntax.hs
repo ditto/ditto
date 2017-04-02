@@ -112,7 +112,7 @@ data Bod =
 
 data Exp =
     EType | EPi Icit Exp Bind | ELam Icit Exp Bind
-  | EForm PName Args | ECon PName Args
+  | EForm PName Args | ECon PName PName Args
   | ERed PName Args | EMeta MName Args
   | EVar Name | EGuard GName
   | EApp Icit Exp Exp | EInfer MKind
@@ -273,7 +273,7 @@ fv EType = []
 fv (EInfer _) = []
 fv (EGuard _) = []
 fv (EForm _ is) = fvs is
-fv (ECon _ as) = fvs as
+fv (ECon _ _ as) = fvs as
 fv (ERed _ as) = fvs as
 fv (EMeta _ as) = fvs as
 fv (EPi _ _A _B) = fv _A ++ fvBind _B
@@ -311,7 +311,7 @@ mv EType = []
 mv (EInfer _) = []
 mv (EGuard x) = [Right x]
 mv (EForm _ is) = mvs is
-mv (ECon _ as) = mvs as
+mv (ECon _ _ as) = mvs as
 mv (ERed _ as) = mvs as
 mv (EMeta x as) = Left x : mvs as
 mv (EPi _ _A _B) = mv _A ++ mvBind _B

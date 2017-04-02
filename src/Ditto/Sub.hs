@@ -35,7 +35,7 @@ unbind2 (Bind x a) (Bind y b) = freshen2 x a y b
 
 sub1 :: (Name , Exp) -> Exp -> TCM Exp
 sub1 xa (EForm y is) = EForm y <$> subs1 xa is
-sub1 xa (ECon y as) = ECon y <$> subs1 xa as
+sub1 xa (ECon _Y y as) = ECon _Y y <$> subs1 xa as
 sub1 xa (ERed y as) = ERed y <$> subs1 xa as
 sub1 xa (EMeta y as) = EMeta y <$> subs1 xa as
 sub1 xa (EGuard y) = return $ EGuard y

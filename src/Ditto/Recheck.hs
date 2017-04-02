@@ -56,7 +56,7 @@ reinfer (EForm x is) = lookupPSigma x >>= \case
     foldM_ recheckAndAdd [] (zip is _Is)
     return EType
   otherwise -> throwGenErr $ "Not a type former name: " ++ show x
-reinfer (ECon x as) = lookupCon undefined x >>= \case
+reinfer (ECon _ x as) = lookupCon undefined x >>= \case
   Just (_X, Con _As is) -> do
     foldM_ recheckAndAdd [] (zip as _As)
     let s = mkSub _As as

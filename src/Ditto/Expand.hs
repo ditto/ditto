@@ -31,7 +31,7 @@ expand form (EApp i f a) = expand form f >>= \case
     expand form =<< sub1 (x , a) b
   f -> EApp i f <$> expand form a
 expand form (EForm x as) = EForm x <$> expands form as
-expand form (ECon x as) = ECon x <$> expands form as
+expand form (ECon _X x as) = ECon _X x <$> expands form as
 expand form (ERed x []) = eleM XDelta form (lookupDeltaClause x) >>= \case
   Just a -> expand form a
   Nothing -> return (ERed x [])

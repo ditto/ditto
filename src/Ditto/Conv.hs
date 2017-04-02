@@ -18,8 +18,8 @@ alpha' dict EType EType = True
 alpha' dict (EInfer _) (EInfer _) = False
 alpha' dict (EForm x1 as1) (EForm x2 as2) =
   x1 == x2 && alphas' dict as1 as2
-alpha' dict (ECon x1 as1) (ECon x2 as2) =
-  x1 == x2 && alphas' dict as1 as2
+alpha' dict (ECon _X1 x1 as1) (ECon _X2 x2 as2) =
+  _X1 == _X2 && x1 == x2 && alphas' dict as1 as2
 alpha' dict (ERed x1 as1) (ERed x2 as2) =
   x1 == x2 && alphas' dict as1 as2
 alpha' dict (EMeta x1 as1) (EMeta x2 as2) =
@@ -79,7 +79,7 @@ conv' (EPi i1 _A1 bnd_B1) (EPi i2 _A2 bnd_B2) | i1 == i2 = do
   where f a = [(Expl, a)]
 conv' (EForm x1 _Is1) (EForm x2 _Is2) | x1 == x2 =
   convArgs _Is1 _Is2
-conv' (ECon x1 as1) (ECon x2 as2) | x1 == x2 =
+conv' (ECon _ x1 as1) (ECon _ x2 as2) | x1 == x2 =
   convArgs as1 as2
 
 -- Function Eta Expansion
