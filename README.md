@@ -46,7 +46,7 @@ concerned with type checking code rather than running code.
 
 ## Installation
 
-* Make sure you have [Stack](https://github.com/commercialhaskell/stack#how-to-install) installed.
+* Make sure you have [Stack](https://docs.haskellstack.org/en/stable/README/#how-to-install) installed.
 * Make sure `$HOME/.local/bin` is in your `$PATH`.
 * Run `stack install` in this directory.
 * Run `dtt -t PATH/TO/Foo.dtt` to type check a file.
