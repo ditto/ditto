@@ -38,7 +38,7 @@ concerned with type checking code rather than running code.
 
 ## Development
 
-* Make sure you have [Stack](https://github.com/commercialhaskell/stack#how-to-install) installed.
+* Make sure you have [Stack](https://docs.haskellstack.org/en/stable/README/#how-to-install) installed.
 * Build the project with `stack build`.
 * Run the tests with `stack test`.
 * Work interactively with `stack ghci`.
