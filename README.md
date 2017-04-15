@@ -36,7 +36,7 @@ concerned with type checking code rather than running code.
   * Case splitting.
 * Tracking user vs machine-introduced variables.
 
-## Notable Missing Features
+## Missing Features
 
 * Universe hierarchy (currently Type : Type)
 * Termination checker
