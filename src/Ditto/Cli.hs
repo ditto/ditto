@@ -3,6 +3,7 @@ import Ditto.Syntax
 import Ditto.Parse
 import Ditto.Check
 import Options.Applicative
+import Data.Semigroup ((<>))
 import Control.Monad
 
 ----------------------------------------------------------------------
