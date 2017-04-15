@@ -1,0 +1,52 @@
+name: ditto
+license: GPL-3
+author: [Larry Diehl, Francisco Ferreira]
+maintainer: larrytheliquid@gmail.com
+github: ditto/ditto
+stability: Alpha
+category: Dependent Types
+synopsis: A Super Kawaii Dependently Typed Programming Language
+description: Please see README.md
+
+ghc-prof-options:
+  - -fprof-auto
+
+library:
+  source-dirs: src
+
+  dependencies:
+    - base >=4 && <5
+    - parsec
+    - mtl
+    - wl-pprint
+    - optparse-applicative
+    - HUnit
+    - directory
+    - filepath
+    - containers
+    - bytestring
+
+  default-extensions:
+    - LambdaCase
+    - TupleSections
+    - ViewPatterns
+
+executables:
+  dtt:
+    source-dirs: src/main
+    main: Main.hs
+    dependencies:
+      - ditto
+      - base
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+
+tests:
+  ditto-tests:
+    source-dirs: src/main
+    main: Test.hs
+    dependencies:
+      - ditto
+      - base
