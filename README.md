@@ -36,6 +36,12 @@ concerned with type checking code rather than running code.
   * Case splitting.
 * Tracking user vs machine-introduced variables.
 
+## Notable Missing Features
+
+* Universe hierarchy (currently Type : Type)
+* Termination checker
+* Positivity checker
+
 ## Development
 
 * Make sure you have [Stack](https://docs.haskellstack.org/en/stable/README/#how-to-install) installed.
