@@ -1,5 +1,7 @@
 # Ditto
 
+[![Build Status](https://travis-ci.org/ditto/ditto.svg?branch=master)](https://travis-ci.org/ditto/ditto)
+
 Ditto is a super kawaii dependently typed programming language.
 It is _super kawaii_ due to its small and straightfoward
 implementation, and adorable syntax ;)
