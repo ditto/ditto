@@ -1,0 +1,28 @@
+language: c
+sudo: false
+
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+
+before_install:
+  - mkdir -p ~/.local/bin
+  - mkdir -p ~/tmp
+  - export PATH=~/.local/bin:$PATH
+  - curl -L https://github.com/commercialhaskell/stack/releases/download/v1.3.2/stack-1.3.2-linux-x86_64.tar.gz | tar xz -C ~/tmp
+  - mv ~/tmp/stack-1.3.2-linux-x86_64/stack ~/.local/bin/
+  - cd ${TRAVIS_BUILD_DIR}
+
+matrix:
+  include:
+    - env: GHCVER=8.0.2 STACK_YAML=stack.yaml
+      addons: {apt: {packages: [ghc-8.0.2], sources: [hvr-ghc]}}
+
+install:
+  - stack --no-terminal --skip-ghc-check setup
+  - stack --no-terminal --skip-ghc-check test --only-snapshot
+
+script:
+  - stack --no-terminal --skip-ghc-check test
