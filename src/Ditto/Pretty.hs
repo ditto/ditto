@@ -110,6 +110,7 @@ ppAct ren (ADefn x) = while "checking function" $ ppPName x
 ppAct ren (AData x) = while "checking datatype" $ ppPName x
 ppAct ren (ACon x) = while "checking constructor" $ ppPName x
 
+ppAct ren (AClause c) = while "checking clause" $ ppSplitting ren c
 ppAct ren (ACheck a _A) = while "checking" $ ppExp ren a <@> oft2 <+> ppExp ren _A
 ppAct ren (AConv x y) = while "equating" $ ppExp ren x <+> conv <+> ppExp ren y
 ppAct ren (ACover x qs) = while "covering" $ ppPName x <+> hcat1 (ppPats VCore ren qs)

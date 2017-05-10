@@ -81,13 +81,19 @@ checkBod (BDefn x cs) = during (ADefn x) $ do
   unreached <- unreachableClauses cs cs'
   unless (null unreached) $
     throwReachErr x unreached
-  addClauses x =<< mapM (\(Clause _Delta lhs rhs) -> Clause _Delta lhs <$> checkRHS _Delta lhs rhs _As _B) cs'
+  addClauses x =<< mapM (\c -> checkClause c _As _B) cs'
+
+----------------------------------------------------------------------
+
+checkClause :: Clause -> Tel -> Exp -> TCM Clause
+checkClause c@(Clause _Delta lhs rhs) _As _B = during (AClause c) $
+  Clause _Delta lhs <$> checkRHS _Delta lhs rhs _As _B
 
 ----------------------------------------------------------------------
 
 checkRHS :: Tel -> Pats -> RHS -> Tel -> Exp -> TCM RHS
-checkRHS _Delta lhs (MapsTo a) _As _B
-  = MapsTo <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
+checkRHS _Delta lhs (MapsTo a) _As _B =
+  MapsTo <$> (checkExtsSolved _Delta a =<< subClauseType _B _As lhs)
 checkRHS _Delta lhs (Caseless x) _ _ = split _Delta x >>= \case
   [] -> return (Caseless x)
   otherwise -> throwCaselessErr x
@@ -227,6 +233,9 @@ inferAtom (ELam i _A b) = do
   _A <- check _A EType
   (b , _B) <- inferExtBind i _A b
   return (ELam i _A b, EPi i _A _B)
+inferAtom (EForm _X as) = infer (apps (EVar (pname2name _X)) as)
+inferAtom (ECon _X x as) = infer (apps (EVar (pname2name x)) as)
+inferAtom (ERed x as) = infer (apps (EVar (pname2name x)) as)
 inferAtom x = throwAtomErr x
 
 ----------------------------------------------------------------------
