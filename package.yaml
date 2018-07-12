@@ -45,7 +45,7 @@ executables:
 
 tests:
   ditto-tests:
-    source-dirs: src/main
+    source-dirs: src/test
     main: Test.hs
     dependencies:
       - ditto
